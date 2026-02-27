@@ -1,74 +1,28 @@
-const express = require('express');
-const { Sequelize, DataTypes } = require('sequelize');
-const app = express();
-app.use(express.urlencoded({ extended: true })); app.use(express.json());
+const express=require('express'),{Sequelize,DataTypes}=require('sequelize'),app=express();
+app.use(express.urlencoded({extended:true}));app.use(express.json());
+const db=new Sequelize(process.env.DATABASE_URL,{dialect:'postgres',logging:false,dialectOptions:{ssl:{require:true,rejectUnauthorized:false}}});
 
-const db = new Sequelize(process.env.DATABASE_URL, {
-  dialect: 'postgres', logging: false, dialectOptions: { ssl: { require: true, rejectUnauthorized: false } }
+const C=db.define('Carga',{
+  oficina:DataTypes.STRING,emp_gen:DataTypes.STRING,comercial:DataTypes.STRING,pto:DataTypes.STRING,refleja:DataTypes.STRING,f_doc:DataTypes.STRING,h_doc:DataTypes.STRING,do_bl:DataTypes.STRING,cli:DataTypes.STRING,subc:DataTypes.STRING,mod:DataTypes.STRING,lcl:DataTypes.STRING,cont:DataTypes.STRING,peso:DataTypes.STRING,unid:DataTypes.STRING,prod:DataTypes.STRING,esq:DataTypes.STRING,vence:DataTypes.STRING,orig:DataTypes.STRING,dest:DataTypes.STRING,t_v:DataTypes.STRING,ped:DataTypes.STRING,f_c:DataTypes.STRING,h_c:DataTypes.STRING,f_d:DataTypes.STRING,h_d:DataTypes.STRING,placa:DataTypes.STRING,f_p:DataTypes.STRING,f_f:DataTypes.STRING,obs_e:{type:DataTypes.STRING,defaultValue:'PENDIENTE'},f_act:DataTypes.STRING,obs:DataTypes.TEXT,cond:DataTypes.TEXT,h_t:DataTypes.STRING,muc:DataTypes.STRING,desp:DataTypes.STRING,f_fin:DataTypes.STRING
+},{timestamps:true});
+
+const css=`<style>body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}.sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}.fs{height:12px;margin-bottom:5px}.fc{width:5200px;height:1px}table{border-collapse:collapse;min-width:5200px;font-size:10px}th{background:#1e40af;padding:12px;text-align:left;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6}td{padding:8px;border:1px solid #334155;white-space:nowrap}.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}.fg{display:flex;flex-direction:column;gap:4px}label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}input,select{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000}.btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}</style>`;
+
+app.get('/',async(req,res)=>{
+  const d=await C.findAll({order:[['id','DESC']]}),rows=d.map(c=>`<tr><td><b>${c.id}</b></td><td>${new Date(c.createdAt).toLocaleString('es-CO')}</td><td>${c.oficina||''}</td><td>${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td><td>${c.vence||''}</td><td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td><td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:3px"><input name="placa" value="${c.placa||''}" style="width:70px"><button style="background:#10b981;color:#fff;border:none;padding:4px;border-radius:3px">OK</button></form></td><td>${c.f_p||''}</td><td>${c.f_f||''}</td><td>${c.obs_e||''}</td><td>${c.f_act||''}</td><td>${c.obs||''}</td><td>${c.cond||''}</td><td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td><td>${c.f_fin||''}</td><td><a href="/d/${c.id}" style="color:#f87171" onclick="return confirm('¿Borrar?')">X</a></td></tr>`).join('');
+  
+  const fields=[['oficina','Oficina'],['emp_gen','Generadora'],['comercial','Comercial'],['pto','Pto Cargue'],['refleja','Refleja'],['f_doc','F.Doc','date'],['h_doc','H.Doc','time'],['do_bl','DO/BL/OC'],['cli','Cliente'],['subc','Subcliente'],['mod','Modalidad'],['lcl','LCL/FCL'],['cont','N.Contenedor'],['peso','Peso Kg'],['unid','Unidades'],['prod','Producto'],['esq','Esq.Seguridad'],['vence','Vence Pto','date'],['orig','Origen'],['dest','Destino'],['t_v','Tipo Veh'],['ped','Pedido'],['f_c','F.Cargue','date'],['h_c','H.Cargue','time'],['f_d','F.Descargue','date'],['h_d','H.Descargue','time'],['f_p','Flete Pagar'],['f_f','Flete Facturar'],['h_t','Horario'],['muc','MUC'],['desp','Despachador']].map(f=>`<div class="fg"><label>${f[1]}</label><input name="${f[0]}" type="${f[2]||'text'}"></div>`).join('');
+
+  res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body>
+    <h2 style="color:#3b82f6;margin:0 0 20px 0">CONTROL DE CARGAS PENDIENTES</h2>
+    <form action="/add" method="POST" class="form">${fields}<button class="btn">💾 REGISTRAR NUEVA LÍNEA</button></form>
+    <div class="sc fs" id="st"><div class="fc"></div></div>
+    <div class="sc" id="sm"><table><thead><tr><th>ITEM</th><th>SISTEMA</th><th>OFICINA</th><th>GENERADORA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL/OC</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL/FCL</th><th>N.CONT</th><th>PESO</th><th>UNID</th><th>PROD</th><th>SEGURIDAD</th><th>VENCE</th><th>ORIGEN</th><th>DESTINO</th><th>TIPO VEH</th><th>PEDIDO</th><th>F.CARGUE</th><th>H.CARGUE</th><th>F.DESC</th><th>H.DESC</th><th>PLACA</th><th>F.PAGAR</th><th>F.FACT</th><th>ESTADO</th><th>ACT.EST</th><th>OBS</th><th>COND</th><th>HORARIO</th><th>MUC</th><th>DESPACHADOR</th><th>FIN</th><th>DEL</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <script>const t=document.getElementById('st'),m=document.getElementById('sm');t.onscroll=()=>m.scrollLeft=t.scrollLeft;m.onscroll=()=>t.scrollLeft=m.scrollLeft;</script>
+  </body></html>`);
 });
 
-const C = db.define('Carga', {
-  oficina: DataTypes.STRING, empresa_gen: DataTypes.STRING, comercial: DataTypes.STRING,
-  puerto: DataTypes.STRING, refleja_en: DataTypes.STRING, fecha_doc: DataTypes.STRING,
-  hora_doc: DataTypes.STRING, do_bl_oc: DataTypes.STRING, cliente: DataTypes.STRING,
-  subcliente: DataTypes.STRING, modalidad: DataTypes.STRING, lcl_fcl: DataTypes.STRING,
-  n_cont: DataTypes.STRING, peso: DataTypes.STRING, unid: DataTypes.STRING,
-  prod: DataTypes.STRING, esq_seg: DataTypes.STRING, f_vence_pto: DataTypes.STRING,
-  orig: DataTypes.STRING, dest: DataTypes.STRING, t_veh: DataTypes.STRING,
-  pedido: DataTypes.STRING, f_cargue: DataTypes.STRING, h_cargue: DataTypes.STRING,
-  f_descargue: DataTypes.STRING, h_descargue: DataTypes.STRING,
-  placa: DataTypes.STRING, f_pagar: DataTypes.STRING, f_facturar: DataTypes.STRING,
-  obs_est: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' },
-  f_act_est: DataTypes.STRING, obs: DataTypes.TEXT, cond: DataTypes.TEXT,
-  h_trans: DataTypes.STRING, muc: DataTypes.STRING, desp: DataTypes.STRING, f_fin: DataTypes.STRING
-}, { timestamps: true });
-
-const css = `<style>
-  body { background: #0f172a; color: #f1f5f9; font-family: sans-serif; margin: 0; padding: 20px; }
-  .sc { width: 100%; overflow-x: auto; background: #1e293b; border: 1px solid #334155; border-radius: 8px; }
-  .fs { height: 12px; margin-bottom: 5px; } .fc { width: 4500px; height: 1px; }
-  table { border-collapse: collapse; min-width: 4500px; font-size: 11px; }
-  th { background: #1e40af; color: white; padding: 12px; text-align: left; position: sticky; top: 0; white-space: nowrap; border-right: 1px solid #3b82f6; }
-  td { padding: 8px; border: 1px solid #334155; white-space: nowrap; }
-  .form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 25px; background: #1e293b; padding: 20px; border-radius: 8px; border: 1px solid #2563eb; }
-  .fg { display: flex; flex-direction: column; gap: 4px; }
-  label { font-size: 10px; font-weight: bold; color: #94a3b8; text-transform: uppercase; }
-  input, select, textarea { background: #fff; border: 1px solid #334155; padding: 8px; border-radius: 4px; font-size: 12px; color: #000; }
-  .btn { grid-column: 1/-1; background: #2563eb; color: white; border: none; padding: 15px; cursor: pointer; border-radius: 6px; font-weight: bold; }
-</style>`;
-
-app.get('/', async (req, res) => {
-  const d = await C.findAll({ order: [['id', 'DESC']] });
-  const rows = d.map(c => `<tr>
-    <td><b>${c.id}</b></td><td>${new Date(c.createdAt).toLocaleString('es-CO')}</td><td>${c.oficina||''}</td><td>${c.empresa_gen||''}</td>
-    <td>${c.comercial||''}</td><td>${c.puerto||''}</td><td>${c.refleja_en||''}</td><td>${c.fecha_doc||''}</td>
-    <td>${c.hora_doc||''}</td><td>${c.do_bl_oc||''}</td><td>${c.cliente||''}</td><td>${c.subcliente||''}</td>
-    <td>${c.modalidad||''}</td><td>${c.lcl_fcl||''}</td><td>${c.n_cont||''}</td><td>${c.peso||''}</td>
-    <td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq_seg||''}</td><td>${c.f_vence_pto||''}</td>
-    <td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_veh||''}</td><td>${c.pedido||''}</td>
-    <td>${c.f_cargue||''}</td><td>${c.h_cargue||''}</td><td>${c.f_descargue||''}</td><td>${c.h_descargue||''}</td>
-    <td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:3px;"><input name="placa" value="${c.placa||''}" style="width:80px"><button style="background:#10b981;border:none;color:white;cursor:pointer;padding:4px">OK</button></form></td>
-    <td>${c.f_pagar||''}</td><td>${c.f_facturar||''}</td><td>${c.obs_est||''}</td><td>${c.f_act_est||''}</td>
-    <td>${c.obs||''}</td><td>${c.cond||''}</td><td>${c.h_trans||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td><td>${c.f_fin||''}</td>
-    <td><a href="/del/${c.id}" style="color:#f87171" onclick="return confirm('¿Eliminar?')">BORRAR</a></td>
-  </tr>`).join('');
-
-  res.send(`<html><head><meta charset="UTF-8"><title>Control Cargas</title>${css}</head><body>
-    <h2 style="color:#3b82f6">CONTROL DE CARGAS PENDIENTES</h2>
-    <form action="/add" method="POST" class="form">
-      <div class="fg"><label>Oficina</label><select name="oficina"><option>CARTAGENA</option><option>BOGOTÁ</option><option>BUENAVENTURA</option></select></div>
-      <div class="fg"><label>Empresa Generadora</label><input name="empresa_gen"></div>
-      <div class="fg"><label>Comercial</label><input name="comercial"></div>
-      <div class="fg"><label>Puerto/Sitio Cargue</label><input name="puerto"></div>
-      <div class="fg"><label>Refleja en Puerto</label><input name="refleja_en"></div>
-      <div class="fg"><label>Fecha Doc</label><input name="fecha_doc" type="date"></div>
-      <div class="fg"><label>Hora Doc</label><input name="hora_doc" type="time"></div>
-      <div class="fg"><label>DO / BL / OC</label><input name="do_bl_oc"></div>
-      <div class="fg"><label>Cliente</label><input name="cliente"></div>
-      <div class="fg"><label>Subcliente</label><input name="subcliente"></div>
-      <div class="fg"><label>Modalidad</label><input name="modalidad"></div>
-      <div class="fg"><label>LCL / FCL</label><input name="lcl_fcl"></div>
-      <div class="fg"><label>N° Contenedor</label><input name="n_cont"></div>
-      <div class="fg"><label>Peso Kg</label><input name="peso"></div>
-      <div class="fg"><label>Unidades</label><input name="unid"></div>
-      <div
+app.post('/add',async(req,res)=>{await C.create(req.body);res.redirect('/')});
+app.get('/d/:id',async(req,res)=>{await C.destroy({where:{id:req.params.id}});res.redirect('/')});
+app.post('/u/:id',async(req,res)=>{await C.update({placa:req.body.placa.toUpperCase()},{where:{id:req.params.id}});res.redirect('/')});
+db.sync({alter:true}).then(()=>app.listen(3000));
