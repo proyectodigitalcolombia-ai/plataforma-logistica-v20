@@ -1,57 +1,70 @@
 const express = require('express');
 const { Sequelize, DataTypes } = require('sequelize');
 const app = express();
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.urlencoded({ extended: true })); app.use(express.json());
 
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-  dialect: 'postgres', logging: false,
-  dialectOptions: { ssl: { require: true, rejectUnauthorized: false } }
+const db = new Sequelize(process.env.DATABASE_URL, {
+  dialect: 'postgres', logging: false, dialectOptions: { ssl: { require: true, rejectUnauthorized: false } }
 });
 
-const Carga = sequelize.define('Carga', {
-  empresa: DataTypes.STRING, comercial: DataTypes.STRING, do_bl: DataTypes.STRING,
-  cliente: DataTypes.STRING, subcliente: DataTypes.STRING, peso: DataTypes.STRING,
-  producto: DataTypes.STRING, origen: DataTypes.STRING, dest: DataTypes.STRING,
-  tipo_v: DataTypes.STRING, despachador: DataTypes.STRING,
-  estado: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' },
-  placa: { type: DataTypes.STRING, defaultValue: '' }
+const Carga = db.define('Carga', {
+  empresa: DataTypes.STRING, comercial: DataTypes.STRING, cliente: DataTypes.STRING,
+  subcliente: DataTypes.STRING, do_bl: DataTypes.STRING, peso: DataTypes.STRING,
+  origen: DataTypes.STRING, dest: DataTypes.STRING, tipo_v: DataTypes.STRING,
+  despachador: DataTypes.STRING, placa: DataTypes.STRING,
+  estado: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' }
 });
+
+const css = `<style>
+  :root { --bg: #0f172a; --card: #1e293b; --acc: #3b82f6; --text: #f1f5f9; }
+  body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; margin: 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; background: var(--card); padding: 15px; border-radius: 8px; border: 1px solid var(--acc); }
+  input, select { padding: 8px; border-radius: 4px; border: none; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; background: var(--card); border-radius: 8px; overflow: hidden; }
+  th { background: var(--acc); color: white; padding: 10px; font-size: 12px; text-align: left; }
+  td { padding: 10px; border-bottom: 1px solid #334155; font-size: 12px; }
+  .btn { background: var(--acc); color: white; border: none; padding: 10px; cursor: pointer; border-radius: 4px; font-weight: bold; width: 100%; grid-column: 1/-1; }
+  .del { color: #f87171; text-decoration: none; font-weight: bold; }
+  .badge { background: #10b981; padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+</style>`;
 
 app.get('/', async (req, res) => {
-  try {
-    const p = await Carga.findAll({ where: { estado: 'PENDIENTE' }, order: [['createdAt', 'DESC']] });
-    const r = await Carga.findAll({ where: { estado: 'EN TRANSITO' }, order: [['updatedAt', 'DESC']] });
-    const rowP = (c) => `<tr class="dr"><td>#${c.id}</td><td><b>${c.empresa}</b><br>${c.comercial}</td><td><b>${c.cliente}</b><br>${c.subcliente}</td><td>${c.origen}→${c.dest}</td><td>${c.peso}kg</td><td><a href="/del/${c.id}" class="bd">BORRAR</a></td></tr>`;
-    const rowD = (c) => `<tr class="dr"><td>#${c.id}</td><td><b>${c.cliente}</b><br>${c.tipo_v}</td><td><form action="/vink/${c.id}" method="POST" class="f"><input name="placa" placeholder="PLACA" required maxlength="7"><button type="submit">GO</button></form></td></tr>`;
-    const rowR = (c) => `<tr class="dr"><td>#${c.id}</td><td><b>${c.cliente}</b></td><td>${c.origen}→${c.dest}</td><td><span class="l lg"></span> <b>${c.placa}</b><br><small>${c.despachador}</small></td></tr>`;
+  const p = await Carga.findAll({ where: { estado: 'PENDIENTE' }, order: [['id','DESC']] });
+  const r = await Carga.findAll({ where: { estado: 'EN TRANSITO' }, order: [['updatedAt','DESC']] });
+  
+  res.send(`<html><head><meta charset="UTF-8">${css}</head><body>
+    <h2 style="color:var(--acc)">LOGISV20 PRO - GESTIÓN DE CARGAS</h2>
+    <form action="/add" method="POST" class="grid">
+      <select name="empresa"><option>YEGO ECO-T SAS</option><option>PLEXA ESP SAS</option><option>MAERSK</option></select>
+      <select name="comercial"><option>RAÚL LÓPEZ</option><option>ZULEIMA RIASCOS</option></select>
+      <input name="cliente" placeholder="Cliente" required>
+      <input name="subcliente" placeholder="Subcliente">
+      <input name="do_bl" placeholder="DO/BL/OC">
+      <input name="peso" placeholder="Peso Kg">
+      <select name="origen"><option>CARTAGENA</option><option>BUENAVENTURA</option></select>
+      <select name="dest"><option>BOGOTÁ</option><option>MEDELLÍN</option><option>CALI</option></select>
+      <select name="tipo_v"><option>TURBO</option><option>SENCILLO</option><option>TRACTOMULA 3S3</option></select>
+      <input name="despachador" placeholder="Despachador">
+      <button type="submit" class="btn">REGISTRAR CARGA</button>
+    </form>
 
-    res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>LOGISV20</title>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-      :root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --acc: #3b82f6; --brd: #334155; }
-      body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; }
-      .nv { background: #fff; color: #000; padding: 10px 40px; display: flex; justify-content: space-between; border-bottom: 4px solid var(--acc); }
-      .ts { display: flex; gap: 8px; padding: 20px 40px; }
-      .tb { background: var(--card); color: var(--text); border: 1px solid var(--brd); padding: 12px; border-radius: 8px; cursor: pointer; font-family: 'Rajdhani'; font-weight: bold; }
-      .tb.active { background: var(--acc); color: white; }
-      .md { display: none; padding: 0 40px; } .md.active { display: block; }
-      .tc { background: var(--card); border-radius: 12px; overflow: auto; max-height: 400px; border: 1px solid var(--brd); }
-      table { width: 100%; border-collapse: collapse; font-size: 11px; }
-      th { background: rgba(0,0,0,0.2); padding: 10px; text-align: left; color: var(--acc); position: sticky; top: 0; }
-      td { padding: 8px; border-bottom: 1px solid var(--brd); }
-      .form-pro { background: var(--card); padding: 15px; border-radius: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 20px; border: 1px solid var(--acc); }
-      input, select { padding: 6px; border-radius: 4px; border: 1px solid var(--brd); font-size: 11px; }
-      .btn-add { grid-column: 1/-1; background: var(--acc); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-      .bd { color: #ef4444; text-decoration: none; border: 1px solid #ef4444; padding: 2px 4px; border-radius: 4px; }
-      .l { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-      .lg { background: #10b981; box-shadow: 0 0 5px #10b981; }
-      .f input { width: 70px; } .f button { background: var(--acc); color: white; border: none; padding: 5px 10px; border-radius: 4px; }
-    </style></head><body>
-    <div class="nv"><div style="font-family:'Rajdhani'; font-size:24px;">LOGISV20 <b>PRO</b></div></div>
-    <div class="ts">
-      <button class="tb active" onclick="s('m1',this)">📦 CARGAS PENDIENTES (${p.length})</button>
-      <button class="tb" onclick="s('m2',this)">⚠️ POR DESPACHO (${p.length})</button>
-      <button class="tb" onclick="s('m3',this)">🚚 EN RUTA (${r.length})</button>
-    </div>
-    <div id="m
+    <h3>📦 CARGAS PENDIENTES (${p.length})</h3>
+    <table>
+      <thead><tr><th>ID</th><th>EMPRESA</th><th>CLIENTE</th><th>RUTA</th><th>ACCIÓN / DESPACHO</th></tr></thead>
+      <tbody>${p.map(c => `<tr>
+        <td>${c.id}</td><td>${c.empresa}</td><td>${c.cliente}</td><td>${c.origen}-${c.dest}</td>
+        <td>
+          <form action="/go/${c.id}" method="POST" style="display:inline-flex; gap:5px;">
+            <input name="placa" placeholder="PLACA" required style="width:70px">
+            <button style="background:#10b981; color:white; border:none; border-radius:3px">GO</button>
+          </form>
+          <a href="/del/${c.id}" class="del" style="margin-left:10px">BORRAR</a>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>
+
+    <h3>🚚 EN RUTA (${r.length})</h3>
+    <table>
+      <thead><tr><th>PLACA</th><th>CLIENTE</th><th>RUTA</th><th>DESPACHADOR</th></tr></thead>
+      <tbody>${r.map(c => `<tr><td><b style="color:var(--acc)">${c.placa}</b></td><td>${c.cliente}</td><td>${c.origen}-${c.dest}</td><td><span class="badge">${c.despachador}</span></td></tr>`).join('')}</tbody>
+    </table>
