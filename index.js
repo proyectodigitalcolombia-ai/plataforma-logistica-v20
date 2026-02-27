@@ -40,8 +40,8 @@ app.get('/', async (req, res) => {
         @keyframes b { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         .nv { background: #fff; padding: 10px 40px; display: flex; justify-content: space-between; border-bottom: 4px solid var(--acc); align-items: center; }
         .ts { display: flex; gap: 8px; padding: 20px 40px; background: rgba(0,0,0,0.05); }
-        .tb { background: var(--card); color: var(--text); border: 1px solid var(--brd); padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Rajdhani'; }
-        .tb.active { background: var(--acc); color: white; border-color: var(--acc); }
+        .tb { background: var(--card); color: var(--text); border: 1px solid var(--brd); padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: 'Rajdhani'; font-size: 13px; }
+        .tb.active { background: var(--acc); color: white; border-color: var(--acc); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .md { display: none; padding: 0 40px; } .md.active { display: block; }
         .tc { background: var(--card); border-radius: 12px; border: 1px solid var(--brd); overflow: hidden; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; } th { background: rgba(0,0,0,0.05); padding: 15px; text-align: left; font-size: 11px; color: var(--acc); }
@@ -54,14 +54,14 @@ app.get('/', async (req, res) => {
       <div style="font-family:'Rajdhani'; font-size:24px; font-weight:700;">LOGISV20 <span style="color:var(--acc)">COMMAND</span></div>
       <button onclick="document.body.classList.toggle('dark')" style="cursor:pointer; padding:8px 15px; border-radius:6px; font-weight:bold;">🌓 MODO</button>
     </div><div class="ts">
-      <button class="tb active" onclick="s('m1',this)">📦 CARGAS (${p.length})</button>
-      <button class="tb" onclick="s('m2',this)">⚠️ DESPACHO (${p.length})</button>
+      <button class="tb active" onclick="s('m1',this)">📦 CARGAS PENDIENTES (${p.length})</button>
+      <button class="tb" onclick="s('m2',this)">⚠️ POR DESPACHO (${p.length})</button>
       <button class="tb" onclick="s('m3',this)">🚚 EN RUTA (${r.length})</button>
       <a href="/seed" class="tb" style="text-decoration:none; background:#10b981; color:white; border:none;">➕ DATOS</a>
     </div>
-    <div id="m1" class="md active"><h3>CARGAS PENDIENTES</h3><div class="tc"><table><thead><tr><th>ID</th><th>CLIENTE</th><th>RUTA</th><th>ESTADO</th></tr></thead><tbody>${p.map(rowP).join('')||'<td>-</td>'}</tbody></table></div></div>
-    <div id="m2" class="md"><h3>PENDIENTE POR DESPACHO</h3><div class="tc"><table><thead><tr><th>ID</th><th>GENERADOR</th><th>ASIGNAR</th></tr></thead><tbody>${p.map(rowD).join('')||'<td>-</td>'}</tbody></table></div></div>
-    <div id="m3" class="md"><h3>VEHÍCULOS EN RUTA</h3><div class="tc"><table><thead><tr><th>ID</th><th>CLIENTE</th><th>RUTA</th><th>PLACA</th></tr></thead><tbody>${r.map(rowR).join('')||'<td>-</td>'}</tbody></table></div></div>
+    <div id="m1" class="md active"><h3>CONTENEDOR DE CARGAS PENDIENTES</h3><div class="tc"><table><thead><tr><th>ID</th><th>CLIENTE</th><th>RUTA</th><th>ESTADO</th></tr></thead><tbody>${p.map(rowP).join('')||'<td>-</td>'}</tbody></table></div></div>
+    <div id="m2" class="md"><h3>PENDIENTE POR DESPACHO (ASIGNACIÓN)</h3><div class="tc"><table><thead><tr><th>ID</th><th>GENERADOR</th><th>VINCULAR VEHÍCULO</th></tr></thead><tbody>${p.map(rowD).join('')||'<td>-</td>'}</tbody></table></div></div>
+    <div id="m3" class="md"><h3>VEHÍCULOS EN RUTA (MONITOREO)</h3><div class="tc"><table><thead><tr><th>ID</th><th>CLIENTE</th><th>RUTA</th><th>PLACA</th></tr></thead><tbody>${r.map(rowR).join('')||'<td>-</td>'}</tbody></table></div></div>
     <script>function s(id,b){document.querySelectorAll('.md').forEach(m=>m.classList.remove('active'));document.querySelectorAll('.tb').forEach(t=>t.classList.remove('active'));document.getElementById(id).classList.add('active');b.classList.add('active');}</script>
     </body></html>`);
   } catch (e) { res.status(500).send(e.message); }
@@ -73,7 +73,7 @@ app.post('/vink/:id', async (req, res) => {
 });
 
 app.get('/seed', async (req, res) => {
-  await Carga.bulkCreate([{ cliente: 'AMBIPAR', origen: 'BOG', destino: 'CTG' },{ cliente: 'SARVI', origen: 'CLO', destino: 'MDE' }]);
+  await Carga.bulkCreate([{ cliente: 'AMBIPAR LOGISTICS', origen: 'BOG', destino: 'CTG' },{ cliente: 'SARVI S.A.', origen: 'CLO', destino: 'MDE' }]);
   res.redirect('/');
 });
 
