@@ -32,46 +32,96 @@ const Carga = sequelize.define('Carga', {
   fecha_entrega: DataTypes.DATE
 });
 
-// 3. VISTA PRINCIPAL PROFESIONAL
+// 3. VISTA PRINCIPAL
 app.get('/', async (req, res) => {
-  const q = req.query.q || '';
-  
-  // Estadísticas para los cuadros superiores
-  const total = await Carga.count();
-  const enTransito = await Carga.count({ where: { estado: 'EN TRANSITO' } });
-  const entregados = await Carga.count({ where: { estado: 'ENTREGADO' } });
+  try {
+    const q = req.query.q || '';
+    const total = await Carga.count();
+    const enTransito = await Carga.count({ where: { estado: 'EN TRANSITO' } });
+    const entregados = await Carga.count({ where: { estado: 'ENTREGADO' } });
 
-  // Consulta de la tabla con buscador
-  const cargas = await Carga.findAll({
-    where: {
-      [Op.or]: [
-        { placa: { [Op.iLike]: `%${q}%` } },
-        { cliente: { [Op.iLike]: `%${q}%` } },
-        { destino: { [Op.iLike]: `%${q}%` } }
-      ]
-    },
-    order: [['createdAt', 'DESC']]
-  });
+    const cargas = await Carga.findAll({
+      where: {
+        [Op.or]: [
+          { placa: { [Op.iLike]: `%${q}%` } },
+          { cliente: { [Op.iLike]: `%${q}%` } }
+        ]
+      },
+      order: [['createdAt', 'DESC']]
+    });
 
-  let filas = cargas.length > 0 ? cargas.map(c => `
-    <tr class="data-row">
-      <td><strong>${c.cliente}</strong></td>
-      <td>${c.destino}</td>
-      <td>${c.peso}</td>
-      <td><span class="badge ${c.estado.toLowerCase().replace(/\s/g, '-')}">${c.estado}</span></td>
-      <td>
-        ${c.estado === 'PENDIENTE' ? `
-          <form action="/vincular-gps/${c.id}" method="POST" class="gps-form">
-            <input type="text" name="placa" placeholder="Placa" required>
-            <input type="password" name="pass" placeholder="Clave GPS" required>
-            <button type="submit">Activar</button>
-          </form>
-        ` : c.estado === 'EN TRANSITO' ? `
-          <div class="tracking-box">
-            <span class="placa-tag">${c.placa}</span>
-            <a href="https://www.google.com/maps?q=${c.ultima_latitud},${c.ultima_longitud}" target="_blank" class="map-btn">📍 GPS</a>
+    let filas = cargas.length > 0 ? cargas.map(c => `
+      <tr style="border-bottom:1px solid #eee;">
+        <td style="padding:12px;"><strong>${c.cliente}</strong></td>
+        <td>${c.destino}</td>
+        <td>${c.peso}</td>
+        <td><span style="padding:4px 8px; border-radius:12px; color:white; font-size:11px; background:${c.estado === 'PENDIENTE' ? '#f59e0b' : c.estado === 'EN TRANSITO' ? '#10b981' : '#94a3b8'}">${c.estado}</span></td>
+        <td>
+          ${c.estado === 'PENDIENTE' ? `
+            <form action="/vincular-gps/${c.id}" method="POST">
+              <input type="text" name="placa" placeholder="Placa" required style="width:60px;">
+              <button type="submit">Activar</button>
+            </form>` : 
+            c.estado === 'EN TRANSITO' ? `
+            <a href="http://maps.google.com/?q=${c.ultima_latitud},${c.ultima_longitud}" target="_blank">📍 Ver</a>
             <form action="/finalizar/${c.id}" method="POST" style="display:inline;">
-              <button type="submit" class="btn-finish">Finalizar</button>
-            </form>
+              <button type="submit" style="color:red; cursor:pointer;">Finalizar</button>
+            </form>` : '✅ Entregado'}
+        </td>
+      </tr>`).join('') : '<tr><td colspan="5" style="text-align:center; padding:20px;">No hay datos. <a href="/seed">Cargar Demo</a></td></tr>';
+
+    res.send(`
+      <body style="font-family:sans-serif; background:#f8fafc; color:#1e293b; padding:20px;">
+        <div style="max-width:1000px; margin:auto; background:white; padding:20px; border-radius:12px; shadow: 0 4px 6px rgba(0,0,0,0.1);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2>🚚 Logisv20 PRO</h2>
+            <button onclick="document.body.style.filter = document.body.style.filter === 'invert(1)' ? 'invert(0)' : 'invert(1)'">🌓 Modo</button>
           </div>
-        ` : `<span class="ent
+          <div style="display:flex; gap:10px; margin:20px 0;">
+             <div style="flex:1; background:#ebf8ff; padding:15px; border-radius:10px;">Total: ${total}</div>
+             <div style="flex:1; background:#f0fff4; padding:15px; border-radius:10px;">En Ruta: ${enTransito}</div>
+             <div style="flex:1; background:#edf2f7; padding:15px; border-radius:10px;">Hecho: ${entregados}</div>
+          </div>
+          <form action="/upload" method="POST" encType="multipart/form-data" style="margin-bottom:20px; padding:15px; background:#f1f5f9; border-radius:8px;">
+            <input type="file" name="excel" accept=".xlsx"> <button type="submit">Importar Excel</button>
+          </form>
+          <table style="width:100%; border-collapse:collapse;">
+            <thead><tr style="text-align:left; border-bottom:2px solid #e2e8f0;"><th>Cliente</th><th>Destino</th><th>Peso</th><th>Estado</th><th>Acción</th></tr></thead>
+            <tbody>${filas}</tbody>
+          </table>
+        </div>
+      </body>
+    `);
+  } catch (e) { res.send("Error: " + e.message); }
+});
+
+// 4. RUTAS DE ACCIÓN
+app.get('/seed', async (req, res) => {
+  await Carga.bulkCreate([
+    { cliente: 'Ejemplo S.A.', destino: 'Bogotá', peso: '1000' },
+    { cliente: 'Prueba Ltda', destino: 'Medellín', peso: '500' }
+  ]);
+  res.redirect('/');
+});
+
+app.post('/upload', async (req, res) => {
+  if (!req.files) return res.redirect('/');
+  const workbook = new exceljs.Workbook();
+  await workbook.xlsx.load(req.files.excel.data);
+  const sheet = workbook.getWorksheet(1);
+  for (let i = 2; i <= sheet.rowCount; i++) {
+    const row = sheet.getRow(i);
+    if (row.getCell(9).value) {
+      await Carga.create({ cliente: row.getCell(9).text, destino: row.getCell(18).text, peso: row.getCell(16).text });
+    }
+  }
+  res.redirect('/');
+});
+
+app.post('/vincular-gps/:id', async (req, res) => {
+  await Carga.update({ placa: req.body.placa, estado: 'EN TRANSITO', ultima_actualizacion: new Date() }, { where: { id: req.params.id } });
+  res.redirect('/');
+});
+
+app.post('/finalizar/:id', async (req, res) => {
+  await Carga
