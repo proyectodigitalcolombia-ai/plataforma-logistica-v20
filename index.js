@@ -8,20 +8,21 @@ app.use(fileUpload());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// 1. CONEXIÓN A BD
+// 1. CONEXIÓN A POSTGRES
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: 'postgres',
   logging: false,
   dialectOptions: { ssl: { require: true, rejectUnauthorized: false } }
 });
 
-// 2. MODELO DE DATOS (Asegurando la columna 'placa')
+// 2. MODELO DE DATOS (Estructura Blindada)
 const Carga = sequelize.define('Carga', {
   cliente: DataTypes.STRING,
   destino: DataTypes.STRING,
   peso: DataTypes.STRING,
   estado: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' },
-  placa: { type: DataTypes.STRING, allowNull: true }, // Columna crítica
+  placa: { type: DataTypes.STRING, defaultValue: '' },
+  gps_password: { type: DataTypes.STRING, defaultValue: '' }, // La columna del error
   ultima_latitud: { type: DataTypes.STRING, defaultValue: '4.6097' },
   ultima_longitud: { type: DataTypes.STRING, defaultValue: '-74.0817' },
   fecha_entrega: DataTypes.DATE
@@ -35,54 +36,31 @@ app.get('/', async (req, res) => {
 
     let filas = cargas.map(c => `
       <tr style="border-bottom:1px solid #eee;">
-        <td style="padding:10px;"><strong>${c.cliente}</strong></td>
+        <td style="padding:12px;"><strong>${c.cliente}</strong></td>
         <td>${c.destino}</td>
-        <td><span style="background:${c.estado === 'PENDIENTE' ? '#f59e0b' : '#10b981'}; color:white; padding:3px 8px; border-radius:10px; font-size:10px;">${c.estado}</span></td>
+        <td><span style="padding:4px 8px; border-radius:10px; color:white; font-size:11px; background:${c.estado === 'PENDIENTE' ? '#f59e0b' : '#10b981'}">${c.estado}</span></td>
         <td>
           ${c.estado === 'PENDIENTE' ? `
             <form action="/vincular/${c.id}" method="POST">
-              <input name="placa" placeholder="Placa" style="width:70px;" required>
-              <button type="submit">Ir</button>
-            </form>` : `<b>${c.placa || 'S/N'}</b>`}
+              <input name="placa" placeholder="Placa" style="width:60px;" required>
+              <input type="password" name="pass" placeholder="GPS Pass" style="width:60px;" required>
+              <button type="submit">Activar</button>
+            </form>` : `<b>${c.placa}</b>`}
         </td>
       </tr>`).join('');
 
     res.send(`
-      <body style="font-family:sans-serif; padding:20px; background:#f1f5f9;">
-        <div style="max-width:800px; margin:auto; background:white; padding:20px; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-          <h2>🚚 Logisv20 PRO</h2>
-          <div style="margin-bottom:20px;">
-            <a href="/seed" style="background:#3b82f6; color:white; text-decoration:none; padding:8px 12px; border-radius:5px; font-size:13px;">🚀 Cargar Demo</a>
-            <span style="margin-left:20px;">Total: ${total}</span>
+      <body style="font-family:sans-serif; padding:20px; background:#f1f5f9; color:#1e293b;">
+        <div style="max-width:850px; margin:auto; background:white; padding:25px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 style="color:#2563eb; margin:0;">🚚 Logisv20 PRO</h2>
+            <div>
+              <a href="/seed" style="text-decoration:none; background:#3b82f6; color:white; padding:8px 12px; border-radius:6px; font-size:13px; font-weight:bold;">🚀 Cargar Demo</a>
+              <span style="margin-left:15px; font-weight:bold;">Total: ${total}</span>
+            </div>
           </div>
-          <table style="width:100%; text-align:left; border-collapse:collapse;">
-            <thead><tr style="background:#f8fafc;"><th>Cliente</th><th>Destino</th><th>Estado</th><th>Placa</th></tr></thead>
-            <tbody>${filas || '<tr><td colspan="4" style="text-align:center; padding:20px;">Sin datos</td></tr>'}</tbody>
-          </table>
-        </div>
-      </body>`);
-  } catch (e) { res.status(500).send("Error en tabla: " + e.message); }
-});
-
-// 4. RUTAS DE ACCIÓN
-app.get('/seed', async (req, res) => {
-  try {
-    await Carga.bulkCreate([{ cliente: 'Eurofarma', destino: 'Bogotá' }, { cliente: 'Alpina', destino: 'Cali' }]);
-    res.redirect('/');
-  } catch (e) { res.send(e.message); }
-});
-
-app.post('/vincular/:id', async (req, res) => {
-  try {
-    await Carga.update({ placa: req.body.placa, estado: 'EN TRANSITO' }, { where: { id: req.params.id } });
-    res.redirect('/');
-  } catch (e) { res.send(e.message); }
-});
-
-// 5. INICIO (Aquí es donde ocurre la magia de la columna faltante)
-const PORT = process.env.PORT || 3000;
-sequelize.sync({ alter: true }) // <--- ESTO REPARA LA COLUMNA PLACA AUTOMÁTICAMENTE
-  .then(() => {
-    app.listen(PORT, () => console.log('🚀 Servidor listo y base de datos actualizada'));
-  })
-  .catch(err => console.error('Error al sincronizar:', err));
+          <table style="width:100%; border-collapse:collapse; text-align:left;">
+            <thead style="background:#f8fafc;">
+              <tr><th style="padding:12px;">Cliente</th><th>Destino</th><th>Estado</th><th>Gestión</th></tr>
+            </thead>
+            <tbody>${filas || '<tr><td colspan="4" style="text-align:center; padding:30px; color:gray;">No hay datos en la base de datos de
