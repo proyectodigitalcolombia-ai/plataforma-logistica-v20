@@ -1,6 +1,7 @@
 {
-  "name": "plataforma-logistica",
+  "name": "plataforma-logistica-v20",
   "version": "1.0.0",
+  "description": "PLATAFORMA",
   "main": "index.js",
   "engines": {
     "node": "20.x"
@@ -10,9 +11,10 @@
   },
   "dependencies": {
     "express": "^4.18.2",
+    "express-fileupload": "^1.4.3",
     "exceljs": "^4.4.0",
     "pg": "^8.11.3",
-    "sequelize": "^6.37.1",
-    "dotenv": "^16.4.5"
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.1"
   }
 }
