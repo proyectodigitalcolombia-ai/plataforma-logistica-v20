@@ -1,61 +1,70 @@
-// 3. Panel de Control con Asignación de Tráfico
-app.get('/', async (req, res) => {
-  try {
-    const cargas = await Carga.findAll({ order: [['createdAt', 'DESC']] });
+const express = require('express');
+const fileUpload = require('express-fileupload');
+const exceljs = require('exceljs');
+const { Sequelize, DataTypes } = require('sequelize');
+const axios = require('axios');
 
-    let filasHtml = cargas.map(c => `
-      <tr>
-        <td style="border: 1px solid #ddd; padding: 8px;">${c.cliente}</td>
-        <td style="border: 1px solid #ddd; padding: 8px;">${c.destino}</td>
-        <td style="border: 1px solid #ddd; padding: 8px;">${c.peso}</td>
-        <td style="border: 1px solid #ddd; padding: 8px;">
-           <span style="padding: 4px 8px; border-radius: 4px; background: ${c.estado === 'PENDIENTE' ? '#fff3cd' : '#d4edda'};">
-             ${c.estado}
-           </span>
-        </td>
-        <td style="border: 1px solid #ddd; padding: 8px;">
-          ${c.estado === 'PENDIENTE' ? `
-            <form action="/asignar/${c.id}" method="POST" style="display: flex; gap: 5px;">
-              <input type="text" name="placa" placeholder="Placa" required style="width: 70px;">
-              <input type="text" name="conductor" placeholder="Conductor" required>
-              <button type="submit" style="background: #28a745; color: white; border: none; cursor: pointer;">Despachar</button>
-            </form>
-          ` : `<strong>${c.placa}</strong>`}
-        </td>
-      </tr>
-    `).join('');
+const app = express();
+app.use(fileUpload());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
-    res.send(`
-      <div style="font-family: sans-serif; padding: 20px;">
-        <h2 style="color: #2c3e50;">🚚 Control de Tráfico - Node 20</h2>
-        
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #dee2e6;">
-          <strong>Cargar nuevo Excel:</strong>
-          <form action="/upload" method="POST" encType="multipart/form-data" style="display: inline-block; margin-left: 10px;">
-            <input type="file" name="excel" accept=".xlsx" />
-            <button type="submit">Subir</button>
-          </form>
-        </div>
-
-        <table style="width: 100%; border-collapse: collapse; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-          <thead>
-            <tr style="background: #2c3e50; color: white;">
-              <th style="padding: 12px; text-align: left;">Cliente</th>
-              <th style="padding: 12px; text-align: left;">Destino</th>
-              <th style="padding: 12px; text-align: left;">Peso</th>
-              <th style="padding: 12px; text-align: left;">Estado</th>
-              <th style="padding: 12px; text-align: left;">Acción / Asignación</th>
-            </tr>
-          </thead>
-          <tbody>${filasHtml}</tbody>
-        </table>
-      </div>
-    `);
-  } catch (error) { res.send("Error: " + error.message); }
+// 1. CONEXIÓN A POSTGRES 17 (Usa tu variable de entorno de Render)
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialect: 'postgres',
+  dialectOptions: { ssl: { require: true, rejectUnauthorized: false } }
 });
 
-// 4. Nueva Ruta para procesar la asignación (El "Salto" a Tráfico)
-app.post('/asignar/:id', async (req, res) => {
-  const { placa, conductor } = req.body;
-  await Carga.update(
-    { estado: 'EN TRANSITO', placa: `${
+// 2. MODELOS DE DATOS
+const Carga = sequelize.define('Carga', {
+  cliente: DataTypes.STRING,
+  destino: DataTypes.STRING,
+  peso: DataTypes.STRING,
+  estado: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' },
+  placa: DataTypes.STRING,
+  conductor: DataTypes.STRING,
+  // Datos de vinculación GPS real
+  gps_url_api: DataTypes.STRING,
+  gps_usuario: DataTypes.STRING,
+  gps_password: DataTypes.STRING, // Nota: En producción usar cifrado
+  ultima_latitud: DataTypes.STRING,
+  ultima_longitud: DataTypes.STRING
+});
+
+// 3. INTERFAZ WEB (HTML + CSS)
+app.get('/', async (req, res) => {
+  const cargas = await Carga.findAll({ order: [['createdAt', 'DESC']] });
+  
+  let filas = cargas.map(c => `
+    <tr>
+      <td>${c.cliente}</td>
+      <td>${c.destino}</td>
+      <td>${c.peso}</td>
+      <td><span style="background:${c.estado === 'PENDIENTE' ? '#ffc107' : '#28a745'}; padding:3px 7px; border-radius:4px;">${c.estado}</span></td>
+      <td>
+        ${c.estado === 'PENDIENTE' ? `
+          <form action="/vincular-gps/${c.id}" method="POST" style="font-size: 0.8em; display: grid; gap: 5px;">
+            <input type="text" name="placa" placeholder="Placa" required>
+            <input type="text" name="url" placeholder="URL API (Ej: http://api.gps.com)" required>
+            <input type="text" name="user" placeholder="Usuario GPS" required>
+            <input type="password" name="pass" placeholder="Contraseña GPS" required>
+            <button type="submit" style="background:#007bff; color:white; border:none; cursor:pointer;">Vincular GPS Real</button>
+          </form>
+        ` : `
+          <strong>${c.placa}</strong><br>
+          <small>Enlace: ${c.gps_url_api}</small><br>
+          <a href="https://www.google.com/maps?q=${c.ultima_latitud},${c.ultima_longitud}" target="_blank">📍 Ver Ubicación Real</a>
+        `}
+      </td>
+    </tr>
+  `).join('');
+
+  res.send(`
+    <body style="font-family:sans-serif; background:#f4f7f6; padding:40px;">
+      <div style="max-width:1000px; margin:auto; background:white; padding:20px; border-radius:10px; box-shadow:0 4px 15px rgba(0,0,0,0.1);">
+        <h2 style="color:#2c3e50;">🚚 Sistema Logístico - Control de Tráfico Real</h2>
+        
+        <div style="border:1px dashed #ccc; padding:15px; margin-bottom:20px;">
+          <strong>Subir Excel de Cargas:</strong>
+          <form action="/upload" method="POST" encType="multipart/form-data" style="margin-top:10px;">
+            <input type
