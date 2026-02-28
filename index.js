@@ -41,20 +41,21 @@ const css = `<style>
   body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}
   .sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}
   .fs{height:12px;margin-bottom:5px}
-  .fc{width:8400px;height:1px}
-  table{border-collapse:collapse;min-width:8400px;font-size:10px;table-layout: fixed;}
-  th{background:#1e40af;padding:8px;text-align:center;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6; overflow: hidden;}
+  .fc{width:8600px;height:1px}
+  table{border-collapse:collapse;min-width:8600px;font-size:10px;table-layout: fixed;}
+  
+  /* TITULOS COMPLETOS */
+  th{background:#1e40af;padding:10px 5px;text-align:center;position:sticky;top:0;border-right:1px solid #3b82f6; color: white; word-wrap: break-word; white-space: normal; vertical-align: middle;}
+  
   td{padding:6px;border:1px solid #334155;white-space:nowrap;text-align:center; overflow: hidden; text-overflow: ellipsis;}
   
-  .col-num { width: 30px; }
-  .col-id { width: 45px; font-weight: bold; }
-  .col-reg { width: 110px; font-size: 9px; }
-  .col-emp { width: 140px; text-align: center !important; }
-  .col-placa { width: 115px; }
-  .in-placa { width: 70px !important; font-size: 11px !important; font-weight: bold; height: 25px; }
-
-  /* ESTADO AJUSTADO A NEGLIGENCIA OPERATIVA */
-  .col-est { width: 210px; padding: 0 !important; }
+  .col-num { width: 35px; }
+  .col-id { width: 50px; font-weight: bold; }
+  .col-reg { width: 115px; font-size: 9px; }
+  .col-emp { width: 150px; text-align: center !important; }
+  .col-placa { width: 125px; }
+  .in-placa { width: 80px !important; font-size: 11px !important; font-weight: bold; height: 26px; }
+  .col-est { width: 220px; padding: 0 !important; }
   .sel-est { background:#334155; color:#fff; border:none; padding:4px; font-size:9px; width:100%; height: 100%; cursor:pointer; text-align: center; }
 
   .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}
@@ -114,10 +115,10 @@ app.get('/', async (req, res) => {
         </td>
         <td>${c.f_p||''}</td><td>${c.f_f||''}</td>
         <td class="col-est">${selectEstado}</td>
-        <td style="width:110px;color:#fbbf24">${c.f_act||''}</td>
-        <td><span style="padding:2px 6px;border-radius:10px;font-weight:bold;font-size:8px;${stClass}">${displayReal}</span></td>
-        <td style="white-space:normal;min-width:200px;text-align:left">${c.obs||''}</td>
-        <td style="white-space:normal;min-width:200px;text-align:left">${c.cond||''}</td>
+        <td style="width:115px;color:#fbbf24">${c.f_act||''}</td>
+        <td style="width:100px"><span style="padding:2px 6px;border-radius:10px;font-weight:bold;font-size:8px;${stClass}">${displayReal}</span></td>
+        <td style="white-space:normal;min-width:250px;text-align:left">${c.obs||''}</td>
+        <td style="white-space:normal;min-width:250px;text-align:left">${c.cond||''}</td>
         <td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td>
         <td>${accionFin}</td>
         <td><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
@@ -184,7 +185,7 @@ app.get('/', async (req, res) => {
         <table id="tabla">
           <thead>
             <tr>
-              <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLI</th><th>SUB</th><th>MOD</th><th>LCL</th><th>CONT</th><th>PESO</th><th>UNID</th><th>PROD</th><th>ESQ</th><th>VENCE</th><th>ORIGEN</th><th>DEST</th><th>VEHICULO</th><th>PED</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th class="col-placa">PLACA</th><th>PAGAR</th><th>FACT</th><th class="col-est">ESTADO</th><th>ACTU</th><th>REAL</th><th>OBS</th><th>COND</th><th>HORA</th><th>MUC</th><th>DESP</th><th>FIN</th><th>H.FIN</th><th>ACCIONES</th>
+              <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL/FCL</th><th>CONTENEDOR</th><th>PESO</th><th>UNID</th><th>PRODUCTO</th><th>ESQUEMA</th><th>VENCE</th><th>ORIGEN</th><th>DESTINO</th><th>VEHICULO</th><th>PEDIDO</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th class="col-placa">PLACA</th><th>PAGAR</th><th>FACTURA</th><th class="col-est">ESTADO</th><th>ACTUALIZACIÓN</th><th>REAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORA</th><th>MUC</th><th>DESPACHADOR</th><th>FIN</th><th>H.FIN</th><th>ACCIONES</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
