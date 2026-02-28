@@ -26,7 +26,7 @@ const C = db.define('Carga', {
   muc: DataTypes.STRING, desp: DataTypes.STRING, f_fin: DataTypes.STRING
 }, { timestamps: true });
 
-// 3. Listas de Opciones Restauradas
+// 3. Opciones
 const opts = {
   oficina: ['CARTAGENA', 'BOGOTÁ', 'BUENAVENTURA', 'MEDELLÍN'],
   comerciales: ['RAÚL LÓPEZ'],
@@ -46,8 +46,8 @@ const css = `<style>
   body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}
   .sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}
   .fs{height:12px;margin-bottom:5px}
-  .fc{width:5600px;height:1px}
-  table{border-collapse:collapse;min-width:5600px;font-size:10px}
+  .fc{width:7000px;height:1px}
+  table{border-collapse:collapse;min-width:7000px;font-size:10px}
   th{background:#1e40af;padding:12px;text-align:center;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6}
   td{padding:10px;border:1px solid #334155;white-space:nowrap;text-align:center}
   .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}
@@ -77,34 +77,34 @@ app.get('/', async (req, res) => {
       <form action="/add" method="POST" class="form">
         <datalist id="list_ciud">${opts.ciudades.map(c=>`<option value="${c}">`).join('')}</datalist>
         <div class="fg"><label>Oficina</label><select name="oficina">${opts.oficina.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>Generadora</label><select name="emp_gen"><option value="YEGO ECO-T SAS">YEGO ECO-T SAS</option></select></div>
+        <div class="fg"><label>EMPRESA GENERADORA DE CARGA</label><select name="emp_gen"><option value="YEGO ECO-T SAS">YEGO ECO-T SAS</option></select></div>
         <div class="fg"><label>Comercial</label><select name="comercial">${opts.comerciales.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Pto Cargue</label><select name="pto">${opts.puertos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>Refleja</label><select name="refleja"><option value="SI">SI</option><option value="NO">NO</option></select></div>
+        <div class="fg"><label>REFLEJA EN PUERTO Y / O PATIO DE RETIRO</label><select name="refleja"><option value="SI">SI</option><option value="NO">NO</option></select></div>
         <div class="fg"><label>F.Doc</label><input name="f_doc" type="date"></div>
         <div class="fg"><label>H.Doc</label><input name="h_doc" type="time"></div>
         <div class="fg"><label>DO/BL/OC</label><input name="do_bl"></div>
         <div class="fg"><label>Cliente</label><select name="cli">${opts.clientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Subcliente</label><select name="subc">${opts.subclientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Modalidad</label><select name="mod">${opts.modalidades.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>LCL/FCL</label><select name="lcl">${opts.lcl_fcl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>Contenedor</label><input name="cont" oninput="this.value=this.value.toUpperCase()"></div>
-        <div class="fg"><label>Peso</label><input name="peso"></div>
+        <div class="fg"><label>LCL / FCL</label><select name="lcl">${opts.lcl_fcl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>N.Contenedor</label><input name="cont" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="fg"><label>Peso Kg</label><input name="peso"></div>
         <div class="fg"><label>Unidades</label><input name="unid"></div>
         <div class="fg"><label>Producto</label><input name="prod"></div>
-        <div class="fg"><label>Seguridad</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>Vence</label><input name="vence" type="date"></div>
+        <div class="fg"><label>Esq.Seguridad</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>Vence Pto</label><input name="vence" type="date"></div>
         <div class="fg"><label>Origen</label><input name="orig" list="list_ciud"></div>
         <div class="fg"><label>Destino</label><input name="dest" list="list_ciud"></div>
-        <div class="fg"><label>Tipo Veh</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>Tipo Vehículo</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Pedido</label><input name="ped"></div>
         <div class="fg"><label>F.Cargue</label><input name="f_c" type="date"></div>
         <div class="fg"><label>H.Cargue</label><input name="h_c" type="time"></div>
-        <div class="fg"><label>F.Desc</label><input name="f_d" type="date"></div>
-        <div class="fg"><label>H.Desc</label><input name="h_d" type="time"></div>
+        <div class="fg"><label>F.Descargue</label><input name="f_d" type="date"></div>
+        <div class="fg"><label>H.Descargue</label><input name="h_d" type="time"></div>
         <div class="fg"><label>Flete Pagar</label><input name="f_p"></div>
-        <div class="fg"><label>Flete Fact</label><input name="f_f"></div>
-        <div class="fg"><label>Estado</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>Flete Facturar</label><input name="f_f"></div>
+        <div class="fg"><label>Estado / Obs</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Horario</label><input name="h_t"></div>
         <div class="fg"><label>MUC</label><input name="muc"></div>
         <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
@@ -115,7 +115,7 @@ app.get('/', async (req, res) => {
         <table>
           <thead>
             <tr>
-              <th>ITEM</th><th>REGISTRO</th><th>OFICINA</th><th>GEN</th><th>COM</th><th>PTO</th><th>REFL</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL/OC</th><th>CLI</th><th>SUB</th><th>MOD</th><th>LCL</th><th>CONT</th><th>PESO</th><th>UNID</th><th>PROD</th><th>SEG</th><th>VENCE</th><th>ORIG</th><th>DEST</th><th>T.VEH</th><th>PED</th><th>F.CAR</th><th>H.CAR</th><th>F.DESC</th><th>H.DESC</th><th>PLACA</th><th>F.PAG</th><th>F.FAC</th><th>EST</th><th>ACT</th><th>OBS</th><th>COND</th><th>HORA</th><th>MUC</th><th>DESP</th><th>ESTADO FINAL</th><th>HORA EXACTA</th><th>DEL</th>
+              <th>ITEM</th><th>FECHA Y HORA DE REGISTRO</th><th>OFICINA</th><th>EMPRESA GENERADORA DE CARGA</th><th>COMERCIAL</th><th>PUERTO CARGUE</th><th>REFLEJA EN PUERTO Y / O PATIO DE RETIRO</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL/OC</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL / FCL</th><th>N.CONTENEDOR</th><th>PESO KG</th><th>UNIDADES</th><th>PRODUCTO</th><th>ESQ.SEGURIDAD</th><th>VENCE PTO</th><th>ORIGEN</th><th>DESTINO</th><th>TIPO VEHÍCULO</th><th>PEDIDO</th><th>F.CARGUE</th><th>H.CARGUE</th><th>F.DESCARGUE</th><th>H.DESCARGUE</th><th>PLACA</th><th>FLETE PAGAR</th><th>FLETE FACTURAR</th><th>ESTADO / OBS</th><th>ACTUALIZACIÓN ESTADO</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORARIO</th><th>MUC</th><th>DESPACHADOR</th><th>FECHA DE FINALIZACIÓN DEL DESPACHO</th><th>HORA FINALIZACIÓN</th><th>ACCIONES</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -141,4 +141,4 @@ app.get('/finish/:id', async (req, res) => {
 
 db.sync({ alter: true }).then(() => {
   app.listen(process.env.PORT || 3000, () => console.log('Server OK'));
-});
+}); 
