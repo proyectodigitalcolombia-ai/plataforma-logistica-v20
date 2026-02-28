@@ -104,41 +104,4 @@ app.get('/', async (req, res) => {
         <div class="fg"><label>H.Descargue</label><input name="h_d" type="time"></div>
         <div class="fg"><label>Flete Pagar</label><input name="f_p"></div>
         <div class="fg"><label>Flete Facturar</label><input name="f_f"></div>
-        <div class="fg"><label>Estado / Obs</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>Horario</label><input name="h_t"></div>
-        <div class="fg"><label>MUC</label><input name="muc"></div>
-        <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <button class="btn">💾 REGISTRAR NUEVA CARGA</button>
-      </form>
-      <div class="sc fs" id="st"><div class="fc"></div></div>
-      <div class="sc" id="sm">
-        <table>
-          <thead>
-            <tr>
-              <th>ITEM</th><th>FECHA Y HORA DE REGISTRO</th><th>OFICINA</th><th>EMPRESA GENERADORA DE CARGA</th><th>COMERCIAL</th><th>PUERTO CARGUE</th><th>REFLEJA EN PUERTO Y / O PATIO DE RETIRO</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL/OC</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL / FCL</th><th>N.CONTENEDOR</th><th>PESO KG</th><th>UNIDADES</th><th>PRODUCTO</th><th>ESQ.SEGURIDAD</th><th>VENCE PTO</th><th>ORIGEN</th><th>DESTINO</th><th>TIPO VEHÍCULO</th><th>PEDIDO</th><th>F.CARGUE</th><th>H.CARGUE</th><th>F.DESCARGUE</th><th>H.DESCARGUE</th><th>PLACA</th><th>FLETE PAGAR</th><th>FLETE FACTURAR</th><th>ESTADO / OBS</th><th>ACTUALIZACIÓN ESTADO</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORARIO</th><th>MUC</th><th>DESPACHADOR</th><th>FECHA DE FINALIZACIÓN DEL DESPACHO</th><th>HORA FINALIZACIÓN</th><th>ACCIONES</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-      <script>
-        const t=document.getElementById('st'),m=document.getElementById('sm');
-        t.onscroll=()=>m.scrollLeft=t.scrollLeft;
-        m.onscroll=()=>t.scrollLeft=m.scrollLeft;
-      </script>
-    </body></html>`);
-  } catch (e) { res.send(e.message); }
-});
-
-app.post('/add', async (req, res) => { await C.create(req.body); res.redirect('/'); });
-app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
-app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.toUpperCase() }, { where: { id: req.params.id } }); res.redirect('/'); });
-app.get('/finish/:id', async (req, res) => {
-  const ahora = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' });
-  await C.update({ f_fin: ahora, obs_e: 'FINALIZADO' }, { where: { id: req.params.id } });
-  res.redirect('/');
-});
-
-db.sync({ alter: true }).then(() => {
-  app.listen(process.env.PORT || 3000, () => console.log('Server OK'));
-}); 
+        <div class="fg"><label>OBSERVACIÓN / ESTADO</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select
