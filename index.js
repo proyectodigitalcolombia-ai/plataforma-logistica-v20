@@ -21,36 +21,30 @@ const C = db.define('Carga', {
 }, { timestamps: true });
 
 const opts = {
-  oficina: ['CARTAGENA', 'BOGOTÁ', 'BUENAVENTURA', 'MEDELLÍN'],
-  puertos: ['SPIA', 'SPRB', 'TCBUEN', 'CONTECAR', 'SPRC', 'PUERTO COMPAS CCTO', 'PUERTO BAHÍA', 'SOCIEDAD PORTUARIA REGIONAL DE CARTAGENA', 'SPIA - AGUADULCE', 'PLANTA ESENTTIA KM 8 VIA MAMONAL', 'PLANTA YARA CARTAGENA MAMONAL', 'N/A'],
-  clientes: ['GEODIS COLOMBIA LTDA', 'MAERSK LOGISTICS SERVICES LTDA', 'SAMSUNG SDS COLOMBIA GLOBAL', 'ENVAECOL', 'SEA CARGO COLOMBIA LTDA', 'YARA COLOMBIA', 'ESENTTIA SA', 'BRINSA SA', 'ACERIAS PAZ DEL RIO', 'TERNIUM DEL ATLANTICO', 'PLASTICOS ESPECIALES SAS', 'INGENIO MAYAGUEZ', 'TENARIS', 'CASA LUKER', 'CORONA', 'EDITORIAL NOMOS', 'ALIMENTOS POLAR', 'PLEXA SAS ESP', 'FAJOBE'],
-  modalidades: ['NACIONALIZADO', 'OTM', 'DTA', 'TRASLADO', 'NACIONALIZADO EXP', 'ITR', 'VACÍO EN EXPRESO', 'VACÍO CONSOLIDADO', 'NACIONALIZADO IMP'],
-  lcl_fcl: ['CARGA SUELTA', 'CONTENEDOR 40', 'CONTENEDOR 20', 'REFER 40', 'REFER 20', 'FLAT RACK 20', 'FLAT RACK 40'],
-  esquemas: ['1 ESCOLTA - SELLO', '2 ESCOLTAS SELLO - SPIA', 'SELLO', '1 ESCOLTA', '2 ESCOLTA', 'NO REQUIERE', '2 ESCOLTAS SELLO', 'INSPECTORES VIALES'],
-  vehiculos: ['TURBO 2.5 TN', 'TURBO 4.5 TN', 'TURBO SENCILLO', 'SENCILLO 9 TN', 'PATINETA 2S3', 'TRACTOMULA 3S2', 'TRACTOMULA 3S3', 'CAMA BAJA', 'DOBLE TROQUE'],
-  ciudades: ['BOGOTÁ', 'MEDELLÍN', 'CALI', 'BARRANQUILLA', 'CARTAGENA', 'BUENAVENTURA', 'SANTA MARTA', 'CÚCUTA', 'IBAGUÉ', 'PEREIRA', 'MANIZALES', 'NEIVA', 'VILLAVICENCIO', 'YOPAL', 'SIBERIA', 'FUNZA', 'MOSQUERA', 'MADRID', 'FACATATIVÁ', 'TOCANCIPÁ', 'CHÍA', 'CAJICÁ'],
-  subclientes: ['HIKVISION', 'PAYLESS COLOMBIA', 'INDUSTRIAS DONSSON', 'SAMSUNG SDS', 'ÉXITO', 'ALKOSTO', 'FALABELLA', 'SODIMAC', 'ENVAECOL', 'ALPLA', 'AMCOR', 'MEXICHEM', 'KOBA D1', 'JERONIMO MARTINS', 'TERNIUM', 'BRINSA', 'TENARIS', 'CORONA', 'FAJOBE'],
-  estados: ['ASIGNADO VEHÍCULO', 'PENDIENTE CITA ASIGNADO', 'VEHÍCULO CON CITA', 'CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CONTENEDOR EN INSPECCIÓN', 'CONTENEDOR RETIRADO PARA ITR', 'DESPACHADO', 'DESPACHADO CON NOVEDAD', 'EN CONSECUCIÓN', 'EN PROGRAMACIÓN', 'EN SITIO DE CARGUE', 'FINALIZADO CON NOVEDAD', 'FINALIZADO SIN NOVEDAD', 'HOJA DE VIDA EN ESTUDIO', 'MERCANCÍA EN INSPECCIÓN', 'NOVEDAD', 'PENDIENTE BAJAR A PATIO', 'PENDIENTE INSTRUCCIONES', 'PRE ASIGNADO', 'RETIRADO DE PUERTO PENDIENTE CONSOLIDADO', 'CANCELADO POR GERENCIA', 'VEHICULO EN RUTA'],
-  despachadores: ['ABNNER MARTINEZ', 'CAMILO TRIANA', 'FREDY CARRILLO', 'RAUL LOPEZ', 'EDDIER RIVAS']
+  ofic: ['CARTAGENA', 'BOGOTÁ', 'BUENAVENTURA', 'MEDELLÍN'],
+  ptos: ['SPIA', 'SPRB', 'TCBUEN', 'CONTECAR', 'SPRC', 'PUERTO BAHÍA', 'N/A'],
+  clis: ['GEODIS COLOMBIA', 'MAERSK', 'SAMSUNG SDS', 'ENVAECOL', 'SEA CARGO', 'YARA COLOMBIA', 'ESENTTIA', 'BRINSA', 'ACERIAS PAZ DEL RIO', 'TENARIS', 'CORONA'],
+  mods: ['NACIONALIZADO', 'OTM', 'DTA', 'TRASLADO', 'ITR', 'VACÍO'],
+  lcls: ['CARGA SUELTA', 'CONT 40', 'CONT 20', 'REFER 40', 'REFER 20'],
+  esqs: ['1 ESCOLTA - SELLO', 'SELLO', 'NO REQUIERE', 'INSPECTORES VIALES'],
+  vehs: ['TURBO', 'SENCILLO', 'PATINETA', 'TRACTOMULA 3S2', 'TRACTOMULA 3S3', 'CAMA BAJA'],
+  ciud: ['BOGOTÁ', 'MEDELLÍN', 'CALI', 'BARRANQUILLA', 'CARTAGENA', 'BUENAVENTURA', 'SANTA MARTA', 'SIBERIA', 'FUNZA'],
+  ests: ['ASIGNADO VEHÍCULO', 'PENDIENTE CITA', 'DESPACHADO', 'VEHICULO EN RUTA', 'CANCELADO']
 };
 
 const css = `<style>
   body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}
-  .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}
-  .fg{display:flex;flex-direction:column;gap:4px}
-  label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}
-  input,select{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000}
-  .btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}
+  .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px;background:#1e293b;padding:15px;border-radius:8px;border:1px solid #2563eb}
+  .fg{display:flex;flex-direction:column;gap:3px}
+  label{font-size:8px;color:#94a3b8;text-transform:uppercase;font-weight:700}
+  input,select{padding:6px;border-radius:4px;border:none;font-size:10px;color:#000}
+  .btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:12px;cursor:pointer;border:none;font-weight:700;border-radius:6px}
   
-  /* CONTENEDOR CON SCROLL */
-  .sc-container{height:75vh;overflow:auto;background:#1e293b;border:1px solid #334155;border-radius:8px;position:relative}
-  table{border-collapse:separate;border-spacing:0;min-width:8500px;font-size:10px}
+  /* ESTO ES LO QUE INMOVILIZA LOS NOMBRES */
+  .sc-container{height:65vh;overflow:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}
+  table{border-collapse:separate;border-spacing:0;min-width:6000px}
+  thead{position:sticky;top:0;z-index:99}
+  th{background:#1e40af;color:white;padding:12px;font-size:10px;border-bottom:2px solid #3b82f6;border-right:1px solid #334155;text-align:center}
+  td{padding:8px;border-bottom:1px solid #334155;border-right:1px solid #334155;text-align:center;font-size:10px;background:#1e293b}
   
-  /* FIJAR ENCABEZADO */
-  thead th{
-    position:sticky;
-    top:0;
-    background:#1e40af !important;
-    color:white;
-    z-index:100;
-    padding:1
+  .st-real{padding:4px 8px;border-radius:15px;font-weight:bold;font-
