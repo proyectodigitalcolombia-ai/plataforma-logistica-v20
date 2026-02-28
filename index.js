@@ -1,13 +1,14 @@
 const express = require('express'), { Sequelize, DataTypes, Op } = require('sequelize'), app = express();
 app.use(express.urlencoded({ extended: true })); app.use(express.json());
 
+// 1. Conexión a DB
 const db = new Sequelize(process.env.DATABASE_URL, { 
   dialect: 'postgres', 
   logging: false, 
   dialectOptions: { ssl: { require: true, rejectUnauthorized: false } } 
 });
 
-// El ID de la DB se mantiene como identidad única
+// 2. Modelo
 const C = db.define('Carga', {
   oficina: DataTypes.STRING, emp_gen: DataTypes.STRING, comercial: DataTypes.STRING, pto: DataTypes.STRING,
   refleja: DataTypes.STRING, f_doc: DataTypes.STRING, h_doc: DataTypes.STRING, do_bl: DataTypes.STRING,
@@ -38,6 +39,7 @@ const opts = {
 
 const getNow = () => new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', hour12: false });
 
+// 3. CSS Actualizado con anchos optimizados
 const css = `<style>
   body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}
   .sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}
@@ -47,8 +49,9 @@ const css = `<style>
   th{background:#1e40af;padding:12px;text-align:center;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6}
   td{padding:8px;border:1px solid #334155;white-space:nowrap;text-align:center}
   
-  .col-num { min-width: 40px; background: #334155; font-weight: bold; color: #fbbf24; }
-  .col-id { min-width: 60px; background: #1e293b; color: #3b82f6; font-weight: bold; border-right: 2px solid #3b82f6 !important; }
+  /* AJUSTES SOLICITADOS */
+  .col-num { min-width: 35px; width: 35px; }
+  .col-id { min-width: 55px; width: 55px; font-weight: bold; }
   .col-reg { min-width: 140px; }
   .col-emp { min-width: 220px; text-align: left; padding-left: 10px; }
   .col-placa { min-width: 110px; }
@@ -71,8 +74,6 @@ app.get('/', async (req, res) => {
     const d = await C.findAll({ order: [['id', 'DESC']] });
     let rows = '';
     const hoy = new Date(); hoy.setHours(0,0,0,0);
-    
-    // Usamos el índice de la base de datos para la numeración visual
     let index = 1;
 
     for (let c of d) {
@@ -91,7 +92,6 @@ app.get('/', async (req, res) => {
       const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)" style="background:#334155;color:#fff;border:none;padding:8px 4px;font-size:9px;width:100%;min-width:165px;cursor:pointer;text-align:center">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
       let accionFin = c.f_fin ? `<span style="color:#10b981">✓ FINALIZADO</span>` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:5px 8px;border-radius:4px;font-weight:bold;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">🏁 FINALIZAR</a>` : `<span style="font-size:8px;color:#94a3b8">PENDIENTE PLACA</span>`);
       
-      // Formatear el ID de la base de datos a 4 dígitos (Ej: 0084)
       const idUnico = c.id.toString().padStart(4, '0');
 
       rows += `<tr class="fila-datos">
@@ -107,7 +107,7 @@ app.get('/', async (req, res) => {
         <td class="col-placa">
           <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:2px;justify-content:center">
             <input name="placa" value="${c.placa||''}" ${isLocked} style="width:55px" oninput="this.value=this.value.toUpperCase()">
-            <button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:3px;border-radius:2px">OK</button>
+            <button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:3px;border-radius:2px;cursor:pointer">OK</button>
           </form>
         </td>
         <td>${c.f_p||''}</td><td>${c.f_f||''}</td>
@@ -184,12 +184,7 @@ app.get('/', async (req, res) => {
         <table id="tabla">
           <thead>
             <tr>
-              <th class="col-num">#</th>
-              <th class="col-id">ID ÚNICO</th>
-              <th class="col-reg">REGISTRO</th>
-              <th>OFICINA</th>
-              <th class="col-emp">EMPRESA</th>
-              <th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLI</th><th>SUB</th><th>MOD</th><th>LCL</th><th>CONT</th><th>PESO</th><th>UNID</th><th>PROD</th><th>ESQ</th><th>VENCE</th><th>ORIGEN</th><th>DEST</th><th>VEHICULO</th><th>PED</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th class="col-placa">PLACA</th><th>PAGAR</th><th>FACT</th><th>ESTADO</th><th>ACTU</th><th>REAL</th><th>OBS</th><th>COND</th><th>HORA</th><th>MUC</th><th>DESP</th><th>FIN</th><th>H.FIN</th><th>ACCIONES</th>
+              <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLI</th><th>SUB</th><th>MOD</th><th>LCL</th><th>CONT</th><th>PESO</th><th>UNID</th><th>PROD</th><th>ESQ</th><th>VENCE</th><th>ORIGEN</th><th>DEST</th><th>VEHICULO</th><th>PED</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th class="col-placa">PLACA</th><th>PAGAR</th><th>FACT</th><th>ESTADO</th><th>ACTU</th><th>REAL</th><th>OBS</th><th>COND</th><th>HORA</th><th>MUC</th><th>DESP</th><th>FIN</th><th>H.FIN</th><th>ACCIONES</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -219,12 +214,8 @@ app.get('/', async (req, res) => {
       function eliminarSeleccionados(){ 
         const checked = document.querySelectorAll('.row-check:checked');
         const ids = Array.from(checked).map(cb => cb.value);
-        if(!confirm('¿Eliminar definitivamente ' + ids.length + ' registros?')) return; 
-        fetch('/delete-multiple',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({ids})
-        }).then(()=>location.reload()); 
+        if(!confirm('¿Eliminar ' + ids.length + ' registros?')) return; 
+        fetch('/delete-multiple',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}).then(()=>location.reload()); 
       }
 
       function updState(id,v){fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:v})}).then(()=>location.reload());}
@@ -235,10 +226,7 @@ app.get('/', async (req, res) => {
         filas.forEach(fila => {
           let mostrar = fila.innerText.toUpperCase().includes(f);
           fila.style.display = mostrar ? "" : "none";
-          // RE-NUMERACIÓN VISUAL AL BUSCAR
-          if(mostrar) {
-            fila.querySelector('.col-num').innerText = visibleCount++;
-          }
+          if(mostrar) { fila.querySelector('.col-num').innerText = visibleCount++; }
         });
       }
 
@@ -254,21 +242,17 @@ app.get('/', async (req, res) => {
           }
         });
         const b=new Blob(["\\ufeff"+csv],{type:"text/csv;charset=utf-8;"}),u=URL.createObjectURL(b),a=document.createElement("a");
-        a.href=u;a.download="Reporte_Logistica.csv";a.click();
+        a.href=u;a.download="Reporte.csv";a.click();
       }
 
-      let audioContext; 
-      function activarAudio(){ if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); playAlert(); }
+      let audioContext; function activarAudio(){ if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); playAlert(); }
       function silenciar(el){ el.dataset.silenced = "true"; el.style.animation = "none"; el.style.background = "#450a0a"; }
-      
       function playAlert(){ 
         let reds = Array.from(document.querySelectorAll('.vence-rojo')).filter(el => el.dataset.silenced !== "true");
         if(reds.length > 0 && audioContext){ 
           let osc=audioContext.createOscillator(),gain=audioContext.createGain(); 
           osc.type='square'; osc.frequency.setValueAtTime(440, audioContext.currentTime); 
-          osc.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime+0.1); 
           gain.gain.setValueAtTime(0.1, audioContext.currentTime); 
-          gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime+0.5); 
           osc.connect(gain); gain.connect(audioContext.destination); 
           osc.start(); osc.stop(audioContext.currentTime+0.5); 
           setTimeout(playAlert, 2000); 
@@ -279,29 +263,11 @@ app.get('/', async (req, res) => {
   } catch (e) { res.send(e.message); }
 });
 
-// RUTAS DE OPERACIÓN
 app.post('/add', async (req, res) => { req.body.f_act = getNow(); await C.create(req.body); res.redirect('/'); });
 app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
-
-app.post('/delete-multiple', async (req, res) => { 
-  await C.destroy({ where: { id: { [Op.in]: req.body.ids } } }); 
-  res.sendStatus(200); 
-});
-
-app.post('/u/:id', async (req, res) => { 
-  await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); 
-  res.redirect('/'); 
-});
-
-app.post('/state/:id', async (req, res) => { 
-  await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); 
-  res.sendStatus(200); 
-});
-
-app.get('/finish/:id', async (req, res) => { 
-  const ahora = getNow(); 
-  await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); 
-  res.redirect('/'); 
-});
+app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id: { [Op.in]: req.body.ids } } }); res.sendStatus(200); });
+app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); res.redirect('/'); });
+app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
+app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
 
 db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
