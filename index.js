@@ -74,4 +74,92 @@ app.get('/', async (req, res) => {
         <td style="padding:0;width:1px">${selectEstado}</td>
         <td style="width:135px;color:#fbbf24;font-weight:bold">${c.f_act||''}</td>
         <td><span style="padding:4px 8px;border-radius:12px;font-weight:bold;font-size:9px;text-transform:uppercase;${stClass}">${displayReal}</span></td>
-        <td style="white-space:normal;min-width:300px;text-align:left
+        <td style="white-space:normal;min-width:300px;text-align:left">${c.obs||''}</td>
+        <td style="white-space:normal;min-width:300px;text-align:left">${c.cond||''}</td>
+        <td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td>
+        <td>${accionFin}</td>
+        <td><b style="color:#3b82f6">${c.f_fin||'--:--'}</b></td>
+        <td style="display:flex;align-items:center;justify-content:center;gap:10px;height:45px">
+          <a href="/d/${c.id}" style="color:#f87171;text-decoration:none;font-weight:bold" onclick="return confirm('¿Eliminar despacho?')">BORRAR</a>
+          <input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()" style="width:18px;height:18px;cursor:pointer">
+        </td>
+      </tr>`;
+    }
+
+    res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
+      <h2 style="color:#3b82f6">SISTEMA DE CONTROL LOGÍSTICO V20</h2>
+      <div style="display:flex;gap:15px;margin-bottom:15px;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:10px">
+          <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Filtrar...">
+          <button class="btn-xls" onclick="exportExcel()">📥 EXPORTAR A EXCEL</button>
+          <button id="btnDelMult" class="btn-del-mult" onclick="eliminarSeleccionados()">🗑️ ELIMINAR SELECCIONADOS (<span id="count">0</span>)</button>
+        </div>
+        <div style="background:#2563eb;padding:8px 15px;border-radius:6px;display:flex;align-items:center;gap:10px;box-shadow: 0 2px 4px rgba(0,0,0,0.3)">
+          <label style="font-size:11px;font-weight:bold;color:#fff;cursor:pointer">SELECCIONAR TODOS</label>
+          <input type="checkbox" id="checkAll" onclick="selectAll(this)" style="cursor:pointer;width:16px;height:16px">
+        </div>
+      </div>
+      <form action="/add" method="POST" class="form">...</form>
+      <div class="sc fs" id="st"><div class="fc"></div></div>
+      <div class="sc" id="sm"><table id="tabla"><thead><tr><th>ID</th><th>REGISTRO</th><th>OFICINA</th><th>EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLI</th><th>SUB</th><th>MOD</th><th>LCL</th><th>CONT</th><th>PESO</th><th>UNID</th><th>PROD</th><th>ESQ</th><th>VENCE</th><th>ORIGEN</th><th>DEST</th><th>VEHICULO</th><th>PED</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th>PLACA</th><th>PAGAR</th><th>FACT</th><th>ESTADO</th><th>ACTU</th><th>REAL</th><th>OBS</th><th>COND</th><th>HORA</th><th>MUC</th><th>DESP</th><th>FIN</th><th>H.FIN</th><th>ACCIONES</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <script>
+      const t=document.getElementById('st'),m=document.getElementById('sm');t.onscroll=()=>m.scrollLeft=t.scrollLeft;m.onscroll=()=>t.scrollLeft=m.scrollLeft;
+      
+      function selectAll(source){ 
+        const checkboxes = document.getElementsByClassName('row-check'); 
+        for(let i=0; i<checkboxes.length; i++) {
+          if(checkboxes[i].closest('tr').style.display !== 'none') {
+            checkboxes[i].checked = source.checked;
+          }
+        }
+        toggleDelBtn(); 
+      }
+
+      function toggleDelBtn(){ 
+        const checked = document.querySelectorAll('.row-check:checked');
+        const btn = document.getElementById('btnDelMult');
+        document.getElementById('count').innerText = checked.length;
+        btn.style.display = checked.length > 0 ? 'inline-block' : 'none'; 
+      }
+
+      function eliminarSeleccionados(){ 
+        const checked = document.querySelectorAll('.row-check:checked');
+        const ids = Array.from(checked).map(cb => cb.value);
+        if(!confirm('¿Eliminar definitivamente ' + ids.length + ' registros?')) return; 
+        fetch('/delete-multiple',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ids})
+        }).then(()=>location.reload()); 
+      }
+
+      function updState(id,v){fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:v})}).then(()=>location.reload());}
+      function buscar(){let f=document.getElementById("busq").value.toUpperCase(),filas=document.getElementById("tabla").getElementsByTagName("tr");for(let i=1;i<filas.length;i++){filas[i].style.display=filas[i].innerText.toUpperCase().includes(f)?"":"none";}}
+      function exportExcel(){...}
+      </script></body></html>`);
+  } catch (e) { res.send(e.message); }
+});
+
+// 5. Rutas de Acción
+app.post('/add', async (req, res) => { req.body.f_act = getNow(); await C.create(req.body); res.redirect('/'); });
+
+// ELIMINACIÓN INDIVIDUAL
+app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
+
+// ELIMINACIÓN MASIVA (Aquí se usa C)
+app.post('/delete-multiple', async (req, res) => {
+  try {
+    const ids = req.body.ids;
+    await C.destroy({ where: { id: { [Op.in]: ids } } });
+    res.sendStatus(200);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); res.redirect('/'); });
+app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
+app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
+
+// 6. Sincronización e Inicio
+db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
