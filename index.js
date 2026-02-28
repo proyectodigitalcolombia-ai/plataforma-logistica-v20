@@ -68,8 +68,14 @@ app.get('/', async (req, res) => {
     for (let c of d) {
       const isLocked = c.f_fin ? 'disabled' : '';
       const tienePlaca = (c.placa && c.placa.trim().length >= 5);
-      const displayReal = (c.est_real === 'FINALIZADO' || c.est_real === 'DESPACHADO') ? 'DESPACHADO' : 'PENDIENTE';
-      const stClass = displayReal === 'DESPACHADO' ? 'background:#065f46;color:#34d399' : 'background:#475569;color:#cbd5e1';
+      
+      // Lógica de visualización de Estado Real
+      let stClass = 'background:#475569;color:#cbd5e1'; // PENDIENTE (Gris)
+      if (c.est_real === 'FINALIZADO') {
+        stClass = 'background:#1e40af;color:#fff'; // FINALIZADO (Azul oscuro)
+      } else if (c.est_real === 'DESPACHADO') {
+        stClass = 'background:#065f46;color:#34d399'; // DESPACHADO (Verde)
+      }
       
       let accionFin = c.f_fin 
         ? `<div style="display:flex;flex-direction:column;gap:2px">
@@ -97,7 +103,7 @@ app.get('/', async (req, res) => {
         <td>${c.f_p||''}</td><td>${c.f_f||''}</td>
         <td class="col-est"><select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select></td>
         <td style="width:115px;color:#fbbf24">${c.f_act||''}</td>
-        <td style="width:100px"><span style="padding:2px 6px;border-radius:10px;font-weight:bold;font-size:8px;${stClass}">${displayReal}</span></td>
+        <td style="width:100px"><span style="padding:2px 6px;border-radius:10px;font-weight:bold;font-size:8px;${stClass}">${c.est_real}</span></td>
         <td style="white-space:normal;min-width:250px;text-align:left">${c.obs||''}</td>
         <td style="white-space:normal;min-width:250px;text-align:left">${c.cond||''}</td>
         <td>${c.h_t||''}</td><td>${c.muc||''}</td><td style="width:130px">${c.desp||''}</td>
@@ -105,8 +111,8 @@ app.get('/', async (req, res) => {
         <td style="width:115px"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
         <td style="width:70px">
           <div style="display:flex;gap:8px;justify-content:center;align-items:center">
-            ${tienePlaca ? '🔒' : `<a href="/d/${c.id}" style="color:#f87171;text-decoration:none" onclick="return confirm('¿Borrar?')">🗑️</a>`}
-            ${tienePlaca ? '' : `<input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()">`}
+            <a href="/d/${c.id}" style="color:#f87171;text-decoration:none" onclick="return confirm('¿Borrar?')">🗑️</a>
+            <input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()">
           </div>
         </td>
       </tr>`;
@@ -135,7 +141,6 @@ app.get('/', async (req, res) => {
         <div class="fg"><label>Origen</label><input name="orig" list="list_ciud"></div>
         <div class="fg"><label>Destino</label><input name="dest" list="list_ciud"></div>
         <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg" style="grid-column: span 2"><label>Obs</label><textarea name="obs" rows="1"></textarea></div>
         <button class="btn">💾 REGISTRAR</button>
       </form>
 
@@ -213,7 +218,13 @@ app.get('/finish/:id', async (req, res) => {
   const serv = await C.findByPk(req.params.id);
   if(!serv.placa || serv.placa.trim().length < 5) return res.send("<script>alert('Error: Falta placa'); window.location='/';</script>");
   const ahora = getNow(); 
-  await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); 
+  // CAMBIO A "FINALIZADO"
+  await C.update({ 
+    f_fin: ahora, 
+    obs_e: 'FINALIZADO SIN NOVEDAD', 
+    est_real: 'FINALIZADO', 
+    f_act: ahora 
+  }, { where: { id: req.params.id } }); 
   res.redirect('/'); 
 });
 
