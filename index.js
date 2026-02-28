@@ -45,20 +45,18 @@ const css = `<style>
   table{border-collapse:collapse;min-width:8600px;font-size:10px;table-layout: fixed;}
   th{background:#1e40af;padding:10px 5px;text-align:center;position:sticky;top:0;border-right:1px solid #3b82f6; word-wrap: break-word; white-space: normal; vertical-align: middle;}
   td{padding:6px;border:1px solid #334155;white-space:nowrap;text-align:center; overflow: hidden; text-overflow: ellipsis;}
-  
   .col-num { width: 30px; }
   .col-id { width: 40px; font-weight: bold; }
   .col-reg { width: 110px; font-size: 9px; }
-  .col-emp { width: 150px; text-align: center !important; }
+  .col-emp { width: 150px; }
   .col-placa { width: 120px; }
   .in-placa { width: 75px !important; font-size: 11px !important; font-weight: bold; height: 25px; }
   .col-est { width: 210px; padding: 0 !important; }
-  .sel-est { background:#334155; color:#fff; border:none; padding:4px; font-size:9px; width:100%; height: 100%; cursor:pointer; text-align: center; }
+  .sel-est { background:#334155; color:#fff; border:none; padding:4px; font-size:9px; width:100%; height: 100%; text-align: center; }
   .col-desp { width: 130px; }
   .col-hfin { width: 115px; font-size: 9px; }
   .col-acc { width: 70px; }
   .acc-cell { display: flex; align-items: center; justify-content: center; gap: 8px; height: 35px; }
-
   .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}
   .fg{display:flex;flex-direction:column;gap:4px}
   label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}
@@ -67,7 +65,7 @@ const css = `<style>
   .btn-xls{background:#10b981;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer}
   .btn-del-mult{background:#ef4444;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;display:none}
   #busq{padding:10px;width:250px;border-radius:6px;border:1px solid #3b82f6;background:#1e293b;color:white;font-weight:bold}
-  .vence-rojo{background:#dc2626 !important;color:#fff !important;font-weight:bold;animation: blink 2s infinite;cursor:pointer}
+  .vence-rojo{background:#dc2626 !important;color:#fff !important;font-weight:bold;animation: blink 2s infinite;}
   .vence-amarillo{background:#fbbf24 !important;color:#000 !important;font-weight:bold}
   @keyframes blink { 0% {opacity:1} 50% {opacity:0.6} 100% {opacity:1} }
   tr:hover td { background: #334155; }
@@ -94,7 +92,14 @@ app.get('/', async (req, res) => {
       }
 
       const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
-      let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
+      
+      // LÓGICA DE RECUPERACIÓN EN COLUMNA FIN
+      let accionFin = c.f_fin 
+        ? `<div style="display:flex;flex-direction:column;gap:2px">
+             <span style="color:#10b981">✓</span>
+             <a href="/reversar/${c.id}" style="background:#6366f1;color:white;padding:2px 4px;border-radius:3px;text-decoration:none;font-size:8px" onclick="return confirm('¿Reversar finalización?')">↩ REVERSAR</a>
+           </div>` 
+        : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
       
       const idUnico = c.id.toString().padStart(4, '0');
 
@@ -224,29 +229,18 @@ app.get('/', async (req, res) => {
 
       function updState(id,v){fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:v})}).then(()=>location.reload());}
       
-      // NUEVA FUNCIÓN DE BÚSQUEDA QUE INCLUYE INPUTS (PLACA)
       function buscar(){
         let f = document.getElementById("busq").value.toUpperCase();
         let filas = document.querySelectorAll(".fila-datos");
         let visibleCount = 1;
-
         filas.forEach(fila => {
-          // Obtener texto de las celdas normales
           let textoCeldas = fila.innerText.toUpperCase();
-          
-          // Obtener valores de los inputs dentro de la fila (como la PLACA)
           let inputs = Array.from(fila.querySelectorAll("input")).map(i => i.value.toUpperCase()).join(" ");
-          
-          // Obtener valores de los selects (como el ESTADO)
           let selects = Array.from(fila.querySelectorAll("select")).map(s => s.value.toUpperCase()).join(" ");
-
           let contenidoTotal = textoCeldas + " " + inputs + " " + selects;
           let mostrar = contenidoTotal.includes(f);
-
           fila.style.display = mostrar ? "" : "none";
-          if(mostrar) { 
-            fila.querySelector('.col-num').innerText = visibleCount++; 
-          }
+          if(mostrar) { fila.querySelector('.col-num').innerText = visibleCount++; }
         });
       }
 
@@ -289,5 +283,16 @@ app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id
 app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); res.redirect('/'); });
 app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
 app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
+
+// NUEVA RUTA PARA REVERSAR
+app.get('/reversar/:id', async (req, res) => {
+  await C.update({ 
+    f_fin: null, 
+    est_real: 'DESPACHADO', 
+    obs_e: 'DESPACHADO', 
+    f_act: getNow() 
+  }, { where: { id: req.params.id } });
+  res.redirect('/');
+});
 
 db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
