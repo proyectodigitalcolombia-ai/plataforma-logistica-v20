@@ -56,8 +56,6 @@ const css = `<style>
   .sel-est { background:#334155; color:#fff; border:none; padding:4px; font-size:9px; width:100%; height: 100%; cursor:pointer; text-align: center; }
   .col-desp { width: 130px; }
   .col-hfin { width: 115px; font-size: 9px; }
-
-  /* COLUMNA ACCIONES AJUSTADA */
   .col-acc { width: 70px; }
   .acc-cell { display: flex; align-items: center; justify-content: center; gap: 8px; height: 35px; }
 
@@ -137,7 +135,7 @@ app.get('/', async (req, res) => {
     res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
       <h2 style="color:#3b82f6; margin: 0 0 10px 0;">SISTEMA LOGÍSTICO V20</h2>
       <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">
-          <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Filtrar...">
+          <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Filtrar por Placa, Cliente, ID...">
           <button class="btn-xls" onclick="exportExcel()">Excel</button>
           <button id="btnDelMult" class="btn-del-mult" onclick="eliminarSeleccionados()">Borrar (<span id="count">0</span>)</button>
           <div style="background:#2563eb;padding:5px 10px;border-radius:6px;display:flex;align-items:center;gap:5px;">
@@ -226,13 +224,29 @@ app.get('/', async (req, res) => {
 
       function updState(id,v){fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:v})}).then(()=>location.reload());}
       
+      // NUEVA FUNCIÓN DE BÚSQUEDA QUE INCLUYE INPUTS (PLACA)
       function buscar(){
-        let f=document.getElementById("busq").value.toUpperCase(),filas=document.querySelectorAll(".fila-datos");
+        let f = document.getElementById("busq").value.toUpperCase();
+        let filas = document.querySelectorAll(".fila-datos");
         let visibleCount = 1;
+
         filas.forEach(fila => {
-          let mostrar = fila.innerText.toUpperCase().includes(f);
+          // Obtener texto de las celdas normales
+          let textoCeldas = fila.innerText.toUpperCase();
+          
+          // Obtener valores de los inputs dentro de la fila (como la PLACA)
+          let inputs = Array.from(fila.querySelectorAll("input")).map(i => i.value.toUpperCase()).join(" ");
+          
+          // Obtener valores de los selects (como el ESTADO)
+          let selects = Array.from(fila.querySelectorAll("select")).map(s => s.value.toUpperCase()).join(" ");
+
+          let contenidoTotal = textoCeldas + " " + inputs + " " + selects;
+          let mostrar = contenidoTotal.includes(f);
+
           fila.style.display = mostrar ? "" : "none";
-          if(mostrar) { fila.querySelector('.col-num').innerText = visibleCount++; }
+          if(mostrar) { 
+            fila.querySelector('.col-num').innerText = visibleCount++; 
+          }
         });
       }
 
