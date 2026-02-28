@@ -225,4 +225,4 @@ app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.
 app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
 app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
 
-db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));   
+db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
