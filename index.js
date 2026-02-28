@@ -18,7 +18,7 @@ const C = db.define('Carga', {
 
 const opts = {
   oficina: ['CARTAGENA', 'BOGOTÁ', 'BUENAVENTURA', 'MEDELLÍN'],
-  puertos: ['SPIA', 'SPRB', 'TCBUEN', 'CONTECAR', 'SPRC', 'PUERTO COMPAS CCTO', 'PUERTO BAHÍA', 'SOCIEDAD PORTUARIA REGIONAL DE CARTAGENA', 'SPIA - AGUADULCE', 'PLANTA ESENTTIA KM 8 VIA MAMONAL', 'PLANTA YARA CARTAGENA MAMONAL', 'N/A'],
+  puertos: ['SPIA', 'SPRB', 'TCBUEN', 'CONTECAR', 'SPRC', 'PUERTO COMPAS CCTO', 'PUERTO BAHÍA', 'SOCIEDAD PORTUARIA REGIONAL DE CARTAGENA', 'SPIA - AGUADULCE', 'N/A'],
   clientes: ['GEODIS COLOMBIA LTDA', 'MAERSK LOGISTICS SERVICES LTDA', 'SAMSUNG SDS COLOMBIA GLOBAL', 'ENVAECOL', 'SEA CARGO COLOMBIA LTDA', 'YARA COLOMBIA', 'ESENTTIA SA', 'BRINSA SA', 'ACERIAS PAZ DEL RIO', 'TERNIUM DEL ATLANTICO', 'PLASTICOS ESPECIALES SAS', 'INGENIO MAYAGUEZ', 'TENARIS', 'CASA LUKER', 'CORONA', 'EDITORIAL NOMOS', 'ALIMENTOS POLAR', 'PLEXA SAS ESP', 'FAJOBE'],
   modalidades: ['NACIONALIZADO', 'OTM', 'DTA', 'TRASLADO', 'NACIONALIZADO EXP', 'ITR', 'VACÍO EN EXPRESO', 'VACÍO CONSOLIDADO', 'NACIONALIZADO IMP'],
   lcl_fcl: ['CARGA SUELTA', 'CONTENEDOR 40', 'CONTENEDOR 20', 'REFER 40', 'REFER 20', 'FLAT RACK 20', 'FLAT RACK 40'],
@@ -32,25 +32,57 @@ const opts = {
 
 const getNow = () => new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', hour12: false });
 
-const css = `<style>body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}.sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}.fs{height:12px;margin-bottom:5px}.fc{width:8500px;height:1px}table{border-collapse:collapse;min-width:8500px;font-size:10px}th{background:#1e40af;padding:12px;text-align:center;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6}td{padding:8px;border:1px solid #334155;white-space:nowrap;text-align:center}.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}.fg{display:flex;flex-direction:column;gap:4px}label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}input,select,textarea{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000;text-align:center}.btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}.btn-xls{background:#10b981;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer}#busq{padding:10px;width:250px;border-radius:6px;border:1px solid #3b82f6;background:#1e293b;color:white;font-weight:bold}.vence-rojo{background:#dc2626 !important;color:#fff !important;font-weight:bold;animation: blink 2s infinite;cursor:pointer}.vence-amarillo{background:#fbbf24 !important;color:#000 !important;font-weight:bold}@keyframes blink { 0% {opacity:1} 50% {opacity:0.6} 100% {opacity:1} }#alert-status{position:fixed;bottom:10px;right:10px;font-size:10px;background:rgba(0,0,0,0.5);padding:5px;border-radius:5px;z-index:1000}</style>`;
-
 app.get('/', async (req, res) => {
   try {
-    const d = await C.findAll({ order: [['id', 'DESC']] });
-    let rows = '';
-    const hoy = new Date(); hoy.setHours(0,0,0,0);
-    for (let c of d) {
+    const d = await C.findAll({ order: [['id', 'DESC']] }), hoy = new Date(); hoy.setHours(0,0,0,0);
+    let rows = d.map(c => {
       const isLocked = c.f_fin ? 'disabled' : '';
-      const displayReal = (c.est_real === 'FINALIZADO' || c.est_real === 'DESPACHADO') ? 'DESPACHADO' : 'PENDIENTE';
-      let venceStyle = '';
+      let vStyle = '';
       if (c.vence && !c.f_fin) {
-        const fVence = new Date(c.vence);
-        const diffDays = Math.ceil((fVence - hoy) / (1000 * 60 * 60 * 24));
-        if (diffDays <= 2) venceStyle = 'vence-rojo';
-        else if (diffDays >= 3 && diffDays <= 6) venceStyle = 'vence-amarillo';
+        const diff = Math.ceil((new Date(c.vence) - hoy) / 864e5);
+        if (diff <= 2) vStyle = 'v-rojo'; else if (diff <= 6) vStyle = 'v-ama';
       }
-      let stOptions = '';
-      opts.estados.forEach(st => { stOptions += `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`; });
-      const selectEstado = `<select onchange="updState(${c.id}, this.value)" style="background:#334155;color:#fff;border:none;padding:4px;font-size:9px;width:160px" ${isLocked}>${stOptions}</select>`;
-      let accionFin = c.f_fin ? `<span style="color:#10b981">✓ FINALIZADO</span>` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:5px 8px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">🏁 FINALIZAR</a>` : `<span style="font-size:8px;color:#94a3b8">PENDIENTE PLACA</span>`);
-      rows += `<tr><td>
+      return `<tr><td>${c.id}</td><td>${c.oficina||''}</td><td>${c.pto||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.cont||''}</td><td class="${vStyle}" onclick="silenciar(this)">${c.vence||''}</td><td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex"><input name="placa" value="${c.placa||''}" ${isLocked} style="width:65px"><button ${isLocked}>OK</button></form></td><td><select onchange="updState(${c.id},this.value)" ${isLocked}>${opts.estados.map(s=>`<option value="${s}" ${c.obs_e===s?'selected':''}>${s}</option>`).join('')}</select></td><td>${c.est_real}</td><td>${c.f_act||''}</td><td style="white-space:normal">${c.obs||''}</td><td>${c.f_fin?`FIN` : (c.placa?`<a href="/finish/${c.id}">🏁</a>`:'')}</td><td><a href="/d/${c.id}" onclick="return confirm('¿Borrar?')">🗑️</a></td></tr>`;
+    }).join('');
+
+    res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>LOGISV20</title>
+      <style>body{background:#0f172a;color:#fff;font-family:sans-serif;font-size:10px} table{width:100%;border-collapse:collapse} th,td{border:1px solid #334155;padding:5px;text-align:center} th{background:#1e40af} .v-rojo{background:#dc2626;animation:bk 1s infinite;cursor:pointer} .v-ama{background:#fbbf24;color:#000} @keyframes bk{0%{opacity:1}50%{opacity:0.6}100%{opacity:1}} .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;background:#1e293b;padding:15px;margin-bottom:20px} #stat{position:fixed;top:5px;right:5px;background:red;padding:5px;border-radius:5px;display:none}</style>
+      </head><body onclick="actAudio()"><div id="stat">⚠️ CLIC AQUÍ PARA SONIDO</div>
+      <h2>LOGIS V20 - ALARMA ACTIVA</h2>
+      <form action="/add" method="POST" class="form">
+        <select name="oficina">${opts.oficina.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>
+        <select name="pto">${opts.puertos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>
+        <input name="do_bl" placeholder="DO/BL">
+        <select name="cli">${opts.clientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>
+        <input name="cont" placeholder="CONTENEDOR" oninput="this.value=this.value.toUpperCase()">
+        <input name="vence" type="date">
+        <button type="submit" style="background:#2563eb;color:#fff">REGISTRAR</button>
+      </form>
+      <table><thead><tr><th>ID</th><th>OFI</th><th>PTO</th><th>DO/BL</th><th>CLI</th><th>CONT</th><th>VENCE</th><th>PLACA</th><th>ESTADO</th><th>REAL</th><th>ACTU</th><th>OBS</th><th>FIN</th><th>DEL</th></tr></thead><tbody>${rows}</tbody></table>
+      <script>
+        let ctx; 
+        function actAudio(){ if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)(); if(ctx.state==='suspended')ctx.resume(); document.getElementById('stat').style.display='none'; play(); }
+        function silenciar(e){ e.dataset.s="1"; e.classList.remove('v-rojo'); }
+        function updState(id,v){ fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:v})}).then(()=>location.reload()); }
+        function play(){
+          let r = Array.from(document.querySelectorAll('.v-rojo')).filter(e=>!e.dataset.s);
+          if(r.length>0){
+            if(!ctx||ctx.state==='suspended'){document.getElementById('stat').style.display='block';return;}
+            let o=ctx.createOscillator(),g=ctx.createGain();o.type='square';o.frequency.setValueAtTime(600,ctx.currentTime);
+            g.gain.setValueAtTime(0.1,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ctx.currentTime+0.5);
+            o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+0.5);
+            setTimeout(play,2000);
+          } else { setTimeout(play,5000); }
+        }
+        window.onload=()=>setTimeout(play,1000);
+      </script></body></html>`);
+  } catch (e) { res.send(e.message); }
+});
+
+app.post('/add', async(req,res)=>{ req.body.f_act=getNow(); await C.create(req.body); res.redirect('/'); });
+app.get('/d/:id', async(req,res)=>{ await C.destroy({where:{id:req.params.id}}); res.redirect('/'); });
+app.post('/u/:id', async(req,res)=>{ await C.update({placa:req.body.placa.toUpperCase(),est_real:'DESPACHADO',f_act:getNow()},{where:{id:req.params.id}}); res.redirect('/'); });
+app.post('/state/:id', async(req,res)=>{ await C.update({obs_e:req.body.obs_e,f_act:getNow()},{where:{id:req.params.id}}); res.sendStatus(200); });
+app.get('/finish/:id', async(req,res)=>{ const n=getNow(); await C.update({f_fin:n,obs_e:'FINALIZADO',est_real:'FINALIZADO',f_act:n},{where:{id:req.params.id}}); res.redirect('/'); });
+
+db.sync({alter:true}).then(()=>app.listen(process.env.PORT||3000));
