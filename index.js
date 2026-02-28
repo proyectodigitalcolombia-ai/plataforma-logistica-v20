@@ -17,22 +17,22 @@ const opts={
 
 app.get('/',async(req,res)=>{
   const d=await C.findAll({order:[['id','DESC']]});
-  const rows=d.map(c=>`<tr><td>${c.id}</td><td>${new Date(c.createdAt).toLocaleString()}</td><td>${c.oficina||''}</td><td>${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td><form action="/u/${c.id}" method="POST" style="display:flex;gap:2px"><input name="placa" value="${c.placa||''}" style="width:60px"><button>OK</button></form></td><td>${c.obs_e||''}</td><td><a href="/d/${c.id}" onclick="return confirm('¿Borrar?')">X</a></td></tr>`).join('');
+  const rows=d.map(c=>`<tr><td>${c.id}</td><td>${new Date(c.createdAt).toLocaleString()}</td><td>${c.oficina||''}</td><td>${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td><form action="/u/${c.id}" method="POST" style="display:flex;gap:2px"><input name="placa" value="${c.placa||''}" style="width:60px" oninput="this.value=this.value.toUpperCase()"><button>OK</button></form></td><td>${c.obs_e||''}</td><td><a href="/d/${c.id}" onclick="return confirm('¿Borrar?')">X</a></td></tr>`).join('');
   res.send(`<html><head><meta charset="UTF-8"><style>body{background:#0f172a;color:#fff;font-family:sans-serif;font-size:12px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #334155;padding:8px}th{background:#1e40af}.form{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;background:#1e293b;padding:15px;border-radius:8px}input,select{padding:5px;border-radius:4px;width:100%}.btn{grid-column:span 4;background:#2563eb;color:#fff;padding:10px;border:none;cursor:pointer}</style></head><body>
     <h2>LOGÍSTICA V20</h2>
     <form action="/add" method="POST" class="form">
       <label>Oficina<select name="oficina">${opts.ofi.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></label>
-      <label>Generadora<select name="emp_gen"><option>YEGO ECO-T SAS</option></select></label>
+      <label>EMPRESA GENERADORA DE CARGA<select name="emp_gen"><option>YEGO ECO-T SAS</option></select></label>
       <label>Comercial<select name="comercial">${opts.com.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></label>
-      <label>Pto<select name="pto">${opts.ptos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></label>
-      <label>Refleja<select name="refleja">${opts.ref.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></label>
+      <label>Pto Cargue<select name="pto">${opts.ptos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></label>
+      <label>REFLEJA EN PUERTO Y / O PATIO DE RETIRO<select name="refleja">${opts.ref.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></label>
       <label>Cliente<select name="cli">${opts.clis.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></label>
       <label>Subcliente<select name="subc">${opts.subs.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></label>
       <label>Estado<select name="obs_e">${opts.ests.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></label>
-      <label>DO/BL<input name="do_bl"></label><label>Peso<input name="peso"></label><label>Placa<input name="placa"></label><label>MUC<input name="muc"></label>
-      <button class="btn">💾 REGISTRAR</button>
+      <label>DO/BL<input name="do_bl"></label><label>Peso Kg<input name="peso"></label><label>Placa<input name="placa" oninput="this.value=this.value.toUpperCase()"></label><label>MUC<input name="muc"></label>
+      <button class="btn">💾 REGISTRAR NUEVA CARGA</button>
     </form>
-    <table><thead><tr><th>ID</th><th>REGISTRO</th><th>OFICINA</th><th>GEN</th><th>COM</th><th>PTO</th><th>REFL</th><th>F.DOC</th><th>DO/BL</th><th>CLI</th><th>SUBC</th><th>MOD</th><th>PLACA</th><th>ESTADO</th><th>X</th></tr></thead><tbody>${rows}</tbody></table>
+    <table><thead><tr><th>ITEM</th><th>FECHA Y HORA DE REGISTRO</th><th>OFICINA</th><th>GENERADORA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFL</th><th>F.DOC</th><th>DO/BL</th><th>CLI</th><th>SUBC</th><th>MOD</th><th>PLACA</th><th>ESTADO</th><th>X</th></tr></thead><tbody>${rows}</tbody></table>
   </body></html>`);
 });
 
