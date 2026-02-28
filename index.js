@@ -62,7 +62,22 @@ const opts = {
   despachadores: ['ABNNER MARTINEZ', 'CAMILO TRIANA', 'FREDY CARRILLO', 'RAUL LOPEZ', 'EDDIER RIVAS']
 };
 
-const getNow = () => new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', hour12: false });
+/**
+ * AJUSTE DE HORA COLOMBIA
+ * Forzamos el uso de America/Bogota para corregir el desfase del servidor
+ */
+const getNow = () => {
+  return new Date().toLocaleString('es-CO', { 
+    timeZone: 'America/Bogota', 
+    year: 'numeric', 
+    month: '2-digit', 
+    day: '2-digit', 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    second: '2-digit', 
+    hour12: false 
+  }).replace(/\//g, '-');
+};
 
 const css = `<style>
   body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}
@@ -136,10 +151,13 @@ app.get('/', async (req, res) => {
       let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
       const idUnico = c.id.toString().padStart(4, '0');
 
+      // AJUSTE EN LA COLUMNA DE REGISTRO PARA MOSTRAR HORA COLOMBIA SIEMPRE
+      const fechaLocal = new Date(c.createdAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' });
+
       rows += `<tr class="fila-datos">
         <td class="col-num">${index++}</td>
         <td class="col-id">${idUnico}</td>
-        <td class="col-reg">${new Date(c.createdAt).toLocaleDateString()} ${new Date(c.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+        <td class="col-reg">${fechaLocal}</td>
         <td>${c.oficina||''}</td>
         <td class="col-emp" title="${c.emp_gen||''}">${c.emp_gen||''}</td>
         <td>${c.comercial||''}</td>
@@ -153,7 +171,7 @@ app.get('/', async (req, res) => {
         <td>${c.mod||''}</td>
         <td>${c.lcl||''}</td>
         <td>${c.cont||''}</td>
-        <td>${c.peso||''}</td>
+        <td>${c.float||''}</td>
         <td>${c.unid||''}</td>
         <td>${c.prod||''}</td>
         <td>${c.esq||''}</td>
@@ -375,19 +393,23 @@ app.get('/stats', async (req, res) => {
   try {
     const cargas = await C.findAll();
     const hoyDate = new Date();
-    const hoyStr = hoyDate.toLocaleDateString('en-CA');
+    // Ajustar hoyStr para comparación en Colombia
+    const hoyStr = hoyDate.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
     const mesActualStr = hoyStr.substring(0, 7);
     
     const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
     const perdidosTotal = cargas.filter(c => cancelTags.includes(c.obs_e));
     const perdidaConteo = perdidosTotal.length;
     const perdidaPorcentaje = cargas.length > 0 ? ((perdidaConteo / cargas.length) * 100).toFixed(1) : 0;
-    const perdidaMesActual = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA').startsWith(mesActualStr)).length;
+    const perdidaMesActual = perdidosTotal.filter(c => {
+       const f = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+       return f.startsWith(mesActualStr);
+    }).length;
 
     const despLog = {};
     cargas.forEach(c => {
       const d = c.desp || 'SIN ASIGNAR';
-      const fCrea = new Date(c.createdAt).toLocaleDateString('en-CA');
+      const fCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
       const mCrea = fCrea.substring(0, 7);
       if(!despLog[d]) despLog[d] = { hoy:0, mes:0 };
       if(fCrea === hoyStr) despLog[d].hoy++;
