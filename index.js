@@ -61,26 +61,11 @@ const css = `<style>
   .fg{display:flex;flex-direction:column;gap:4px}
   label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}
   input,select,textarea{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000;text-align:center}
-  
-  /* ESTILO SERIO PARA BOTÓN REGISTRAR */
   .btn-submit-serious{
-    grid-column:1/-1;
-    background:#1e40af; /* Azul más oscuro e institucional */
-    color:#fff;
-    padding:12px;
-    cursor:pointer;
-    border:none;
-    font-weight:700;
-    border-radius:6px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:10px; /* Espacio entre icono y texto */
-    transition: background 0.2s;
+    grid-column:1/-1; background:#1e40af; color:#fff; padding:12px; cursor:pointer; border:none; font-weight:700; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:10px; transition: background 0.2s;
   }
   .btn-submit-serious:hover{ background:#1d4ed8; }
   .icon-serious{ width:20px; height:20px; fill:#fff; }
-
   .btn-xls{background:#556b2f;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;height:38px;box-sizing:border-box;}
   .btn-stats{background:#4c1d95;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;text-decoration:none;font-size:13px;height:38px;box-sizing:border-box;display:flex;align-items:center;}
   .container-check-all{background:#2563eb;padding:5px 10px;border-radius:6px;display:flex;align-items:center;gap:5px;height:38px;box-sizing:border-box;}
@@ -207,7 +192,6 @@ app.get('/', async (req, res) => {
         <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg" style="grid-column: span 2"><label>Obs</label><textarea name="obs" rows="1"></textarea></div>
         <div class="fg" style="grid-column: span 2"><label>Cond</label><textarea name="cond" rows="1"></textarea></div>
-        
         <button class="btn-submit-serious">
           <svg class="icon-serious" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
           REGISTRAR SERVICIO
@@ -231,7 +215,6 @@ app.get('/', async (req, res) => {
       const t=document.getElementById('st'),m=document.getElementById('sm');
       t.onscroll=()=>m.scrollLeft=t.scrollLeft;
       m.onscroll=()=>t.scrollLeft=m.scrollLeft;
-
       function selectAll(source){ 
         const checkboxes = document.getElementsByClassName('row-check'); 
         for(let i=0; i<checkboxes.length; i++){
@@ -239,14 +222,12 @@ app.get('/', async (req, res) => {
         }
         toggleDelBtn(); 
       }
-
       function toggleDelBtn(){ 
         const checked = document.querySelectorAll('.row-check:checked');
         const btn = document.getElementById('btnDelMult');
         document.getElementById('count').innerText = checked.length;
         btn.style.display = checked.length > 0 ? 'inline-block' : 'none'; 
       }
-
       function eliminarConClave(id){
         const pw = prompt("Ingrese contraseña para borrar despacho:");
         if(pw === CLAVE_ADMIN){
@@ -257,7 +238,6 @@ app.get('/', async (req, res) => {
            alert("Contraseña incorrecta");
         }
       }
-
       function eliminarSeleccionados(){ 
         const pw = prompt("Ingrese contraseña para borrar selección:");
         if(pw !== CLAVE_ADMIN) return alert("Acceso denegado");
@@ -266,9 +246,7 @@ app.get('/', async (req, res) => {
         if(!confirm('¿Eliminar ' + ids.length + ' registros?')) return; 
         fetch('/delete-multiple',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}).then(()=>location.reload()); 
       }
-
       function updState(id,v){fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:v})}).then(()=>location.reload());}
-      
       function buscar(){
         let f = document.getElementById("busq").value.toUpperCase();
         let filas = document.querySelectorAll(".fila-datos");
@@ -280,12 +258,9 @@ app.get('/', async (req, res) => {
           let contenidoTotal = textoCeldas + " " + inputs + " " + selects;
           let mostrar = contenidoTotal.includes(f);
           fila.style.display = mostrar ? "" : "none";
-          if(mostrar) { 
-            fila.querySelector('.col-num').innerText = visibleCount++; 
-          }
+          if(mostrar) { fila.querySelector('.col-num').innerText = visibleCount++; }
         });
       }
-
       function exportExcel(){
         let csv="sep=;\\n";
         document.querySelectorAll("#tabla tr").forEach(row=>{
@@ -300,7 +275,6 @@ app.get('/', async (req, res) => {
         const b=new Blob(["\\ufeff"+csv],{type:"text/csv;charset=utf-8;"}),u=URL.createObjectURL(b),a=document.createElement("a");
         a.href=u;a.download="Reporte.csv";a.click();
       }
-
       let audioContext; function activarAudio(){ if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); playAlert(); }
       function silenciar(el){ el.dataset.silenced = "true"; el.style.animation = "none"; el.style.background = "#450a0a"; }
       function playAlert(){ 
@@ -326,15 +300,29 @@ app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.
 app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
 app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
 
+// --- RUTA DE INDICADORES MEJORADA ---
 app.get('/stats', async (req, res) => {
   try {
     const cargas = await C.findAll();
-    const hoyStr = new Date().toLocaleDateString('en-CA');
-    const mesStr = hoyStr.substring(0, 7);
+    const hoyDate = new Date();
+    const hoyStr = hoyDate.toLocaleDateString('en-CA');
+    const mesActualStr = hoyStr.substring(0, 7);
+    
+    // Calcular mes anterior para comparación
+    const mesAnteriorDate = new Date();
+    mesAnteriorDate.setMonth(hoyDate.getMonth() - 1);
+    const mesAnteriorStr = mesAnteriorDate.toISOString().substring(0, 7);
 
+    // --- LOGICA DE PERDIDA EMERGENTE ---
     const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
-    const perdida = cargas.filter(c => cancelTags.includes(c.obs_e)).length;
+    const perdidosTotal = cargas.filter(c => cancelTags.includes(c.obs_e));
+    const perdidaConteo = perdidosTotal.length;
+    const perdidaPorcentaje = cargas.length > 0 ? ((perdidaConteo / cargas.length) * 100).toFixed(1) : 0;
+    
+    const perdidaMesActual = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA').startsWith(mesActualStr)).length;
+    const perdidaMesAnterior = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA').startsWith(mesAnteriorStr)).length;
 
+    // --- LOGICA POR DESPACHADOR ---
     const despLog = {};
     cargas.forEach(c => {
       const d = c.desp || 'SIN ASIGNAR';
@@ -342,7 +330,7 @@ app.get('/stats', async (req, res) => {
       const mCrea = fCrea.substring(0, 7);
       if(!despLog[d]) despLog[d] = { hoy:0, mes:0 };
       if(fCrea === hoyStr) despLog[d].hoy++;
-      if(mCrea === mesStr) despLog[d].mes++;
+      if(mCrea === mesActualStr) despLog[d].mes++;
     });
 
     const total = cargas.length;
@@ -354,56 +342,74 @@ app.get('/stats', async (req, res) => {
     <style>
       body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:25px;}
       .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid #1e40af;padding-bottom:15px;}
-      .title-group{display:flex;align-items:center;gap:15px;}
-      .logo-icon{width:45px;height:45px;fill:#3b82f6;}
       .btn-back{background:#2563eb;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:bold;}
-      .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:25px;}
+      .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;margin-bottom:25px;}
       .card{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;}
       .card h3{margin:0;font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;}
       .card p{margin:10px 0 0;font-size:32px;font-weight:bold;color:#3b82f6;}
-      .lost{border-color:#ef4444; background:rgba(239, 68, 68, 0.1);}
-      .lost p{color:#f87171;}
+      .lost-card{border-left: 5px solid #ef4444; background: rgba(239, 68, 68, 0.05);}
+      .lost-card p{color:#f87171;}
       .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:20px;margin-bottom:25px;}
       .chart-box{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;}
       table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:10px;overflow:hidden;}
-      th{background:#1e40af;padding:12px;font-size:11px;}
-      td{padding:12px;border-bottom:1px solid #334155;font-size:12px;text-align:center;}
-      .badge{padding:4px 8px;border-radius:4px;font-weight:bold;font-size:11px;}
+      th{background:#1e40af;padding:12px;font-size:11px;text-align:center;}
+      td{padding:12px;border-bottom:1px solid #334155;font-size:13px;text-align:center;}
+      .badge{padding:4px 10px;border-radius:15px;font-weight:bold;font-size:12px;color:#fff;}
+      .prog-wrapper{display:flex;align-items:center;justify-content:center;gap:10px;}
+      .prog-bg{width:150px;background:#334155;height:12px;border-radius:6px;overflow:hidden;}
+      .prog-fill{background:#10b981;height:100%;border-radius:6px;}
     </style></head>
     <body>
       <div class="header">
-        <div class="title-group">
-          <svg class="logo-icon" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.47 4.14-3.13 7.85-7 9.01v-9.01H5V6.3l7-3.11v8.8z"/></svg>
-          <h2 style="margin:0;">TABLERO DE INDICADORES GERENCIALES</h2>
-        </div>
+        <h2 style="margin:0;">TABLERO DE INDICADORES GERENCIALES</h2>
         <a href="/" class="btn-back">VOLVER AL TABLERO</a>
       </div>
       <div class="kpi-grid">
         <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
         <div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
         <div class="card"><h3>En Ruta</h3><p style="color:#fbbf24">${desp}</p></div>
-        <div class="card lost"><h3>Pérdida Emergente</h3><p>${perdida}</p></div>
+        <div class="card lost-card">
+            <h3>Pérdida Emergente</h3>
+            <p>${perdidaConteo} (${perdidaPorcentaje}%)</p>
+            <div style="font-size:11px; margin-top:5px; color:#94a3b8;">
+                Mes Actual: <b>${perdidaMesActual}</b> | Mes Ant: <b>${perdidaMesAnterior}</b>
+            </div>
+        </div>
       </div>
       <div class="charts">
         <div class="chart-box"><h4>ESTADO OPERACIÓN</h4><canvas id="c1"></canvas></div>
         <div class="chart-box"><h4>CARGA POR OFICINA</h4><canvas id="c2"></canvas></div>
       </div>
-      <h3 style="color:#3b82f6; border-left: 4px solid #2563eb; padding-left: 10px;">RENDIMIENTO POR DESPACHADOR</h3>
+      <h3 style="color:#3b82f6; border-left: 4px solid #2563eb; padding-left: 10px; margin-bottom:15px;">RENDIMIENTO POR DESPACHADOR</h3>
       <table>
-        <thead><tr><th>DESPACHADOR</th><th>DESPACHOS HOY</th><th>DESPACHOS MES</th><th>PRODUCTIVIDAD</th></tr></thead>
+        <thead>
+            <tr>
+                <th>DESPACHADOR</th>
+                <th>DESPACHOS HOY</th>
+                <th>DESPACHOS MES</th>
+                <th>PRODUCTIVIDAD (%)</th>
+            </tr>
+        </thead>
         <tbody>
-          ${Object.entries(despLog).map(([name, s]) => `
+          ${Object.entries(despLog).map(([name, s]) => {
+            const prodPerc = total > 0 ? ((s.mes/total)*100).toFixed(1) : 0;
+            return `
             <tr>
               <td><b>${name}</b></td>
               <td><span class="badge" style="background:#3b82f6">${s.hoy}</span></td>
               <td><span class="badge" style="background:#8b5cf6">${s.mes}</span></td>
-              <td><div style="width:100px;background:#334155;height:8px;border-radius:4px;display:inline-block;margin-right:10px;"><div style="width:${Math.min((s.mes/total)*100,100)}%;background:#10b981;height:100%"></div></div></td>
-            </tr>
-          `).join('')}
+              <td>
+                <div class="prog-wrapper">
+                    <div class="prog-bg"><div style="width:${prodPerc}%" class="prog-fill"></div></div>
+                    <b style="color:#10b981">${prodPerc}%</b>
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
         </tbody>
       </table>
       <script>
-        new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:['Fin','Ruta','Cancel','Otros'],datasets:[{data:[${fin},${desp},${perdida},${total-fin-desp-perdida}],backgroundColor:['#10b981','#fbbf24','#ef4444','#475569'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
+        new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:['Fin','Ruta','Perdida','Otros'],datasets:[{data:[${fin},${desp},${perdidaConteo},${total-fin-desp-perdidaConteo}],backgroundColor:['#10b981','#fbbf24','#ef4444','#475569'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
         new Chart(document.getElementById('c2'),{type:'bar',data:{labels:${JSON.stringify(Object.keys(ofis))},datasets:[{label:'Servicios',data:${JSON.stringify(Object.values(ofis))},backgroundColor:'#3b82f6'}]},options:{scales:{y:{beginAtZero:true,ticks:{color:'#fff'}},x:{ticks:{color:'#fff'}}},plugins:{legend:{display:false}}}});
       </script>
     </body></html>`);
