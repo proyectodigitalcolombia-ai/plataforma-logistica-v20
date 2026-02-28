@@ -62,19 +62,11 @@ const opts = {
   despachadores: ['ABNNER MARTINEZ', 'CAMILO TRIANA', 'FREDY CARRILLO', 'RAUL LOPEZ', 'EDDIER RIVAS']
 };
 
-/**
- * AJUSTE DE HORA COLOMBIA
- * Forzamos el uso de America/Bogota para corregir el desfase del servidor
- */
 const getNow = () => {
   return new Date().toLocaleString('es-CO', { 
     timeZone: 'America/Bogota', 
-    year: 'numeric', 
-    month: '2-digit', 
-    day: '2-digit', 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    second: '2-digit', 
+    year: 'numeric', month: '2-digit', day: '2-digit', 
+    hour: '2-digit', minute: '2-digit', second: '2-digit', 
     hour12: false 
   }).replace(/\//g, '-');
 };
@@ -151,7 +143,6 @@ app.get('/', async (req, res) => {
       let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
       const idUnico = c.id.toString().padStart(4, '0');
 
-      // AJUSTE EN LA COLUMNA DE REGISTRO PARA MOSTRAR HORA COLOMBIA SIEMPRE
       const fechaLocal = new Date(c.createdAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' });
 
       rows += `<tr class="fila-datos">
@@ -388,15 +379,24 @@ app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.
 app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
 app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
 
-// --- INDICADORES REQUERIDOS ---
+// --- INDICADORES ACTUALIZADOS ---
 app.get('/stats', async (req, res) => {
   try {
     const cargas = await C.findAll();
     const hoyDate = new Date();
-    // Ajustar hoyStr para comparación en Colombia
     const hoyStr = hoyDate.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
     const mesActualStr = hoyStr.substring(0, 7);
     
+    // 1. Lógica de Vehículos Faltantes por Origen (Cargas sin placa y sin finalizar)
+    const sinPlaca = cargas.filter(c => (!c.placa || c.placa.trim() === '') && !c.f_fin);
+    const reqPorCiudad = {};
+    sinPlaca.forEach(c => {
+        const ciudad = (c.orig || 'SIN ORIGEN').toUpperCase();
+        const tipo = (c.t_v || 'NO ESPECIFICADO').toUpperCase();
+        if(!reqPorCiudad[ciudad]) reqPorCiudad[ciudad] = {};
+        reqPorCiudad[ciudad][tipo] = (reqPorCiudad[ciudad][tipo] || 0) + 1;
+    });
+
     const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
     const perdidosTotal = cargas.filter(c => cancelTags.includes(c.obs_e));
     const perdidaConteo = perdidosTotal.length;
@@ -434,10 +434,11 @@ app.get('/stats', async (req, res) => {
       .lost-card p{color:#f87171;}
       .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:20px;margin-bottom:25px;}
       .chart-box{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;}
-      table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:10px;overflow:hidden;}
+      table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:10px;overflow:hidden;margin-bottom:30px;}
       th{background:#1e40af;padding:12px;font-size:11px;text-align:center;}
       td{padding:12px;border-bottom:1px solid #334155;font-size:13px;text-align:center;}
-      .badge{padding:4px 10px;border-radius:15px;font-weight:bold;font-size:12px;color:#fff;}
+      .badge{padding:4px 10px;border-radius:15px;font-weight:bold;font-size:12px;color:#fff;margin:2px;display:inline-block;}
+      .req-badge{background:#ef4444; font-size:10px;}
       .prog-wrapper{display:flex;align-items:center;justify-content:center;gap:10px;}
       .prog-bg{width:150px;background:#334155;height:12px;border-radius:6px;overflow:hidden;}
       .prog-fill{background:#10b981;height:100%;border-radius:6px;}
@@ -454,15 +455,37 @@ app.get('/stats', async (req, res) => {
         <div class="card lost-card">
             <h3>Pérdida Emergente</h3>
             <p>${perdidaConteo} (${perdidaPorcentaje}%)</p>
-            <div style="font-size:11px; margin-top:5px; color:#94a3b8;">
-                Mes Actual: <b>${perdidaMesActual}</b>
-            </div>
         </div>
       </div>
+
+      <h3 style="color:#ef4444; border-left: 4px solid #ef4444; padding-left: 10px; margin-bottom:15px;">REQUERIMIENTOS PENDIENTES (SIN PLACA)</h3>
+      <table>
+        <thead>
+            <tr>
+                <th>CIUDAD DE ORIGEN</th>
+                <th>VEHÍCULOS FALTANTES POR TIPO</th>
+                <th>TOTAL CIUDAD</th>
+            </tr>
+        </thead>
+        <tbody>
+          ${Object.entries(reqPorCiudad).map(([city, types]) => {
+            const totalCiudad = Object.values(types).reduce((a, b) => a + b, 0);
+            return `
+            <tr>
+              <td><b>${city}</b></td>
+              <td>${Object.entries(types).map(([t, q]) => `<span class="badge req-badge">${q}</span> ${t}`).join(' | ')}</td>
+              <td><b style="color:#ef4444">${totalCiudad}</b></td>
+            </tr>`;
+          }).join('')}
+          ${sinPlaca.length === 0 ? '<tr><td colspan="3">No hay requerimientos pendientes</td></tr>' : ''}
+        </tbody>
+      </table>
+
       <div class="charts">
         <div class="chart-box"><h4>OPERACIÓN</h4><canvas id="c1"></canvas></div>
         <div class="chart-box"><h4>OFICINAS</h4><canvas id="c2"></canvas></div>
       </div>
+
       <h3 style="color:#3b82f6; border-left: 4px solid #2563eb; padding-left: 10px; margin-bottom:15px;">PRODUCTIVIDAD POR DESPACHADOR</h3>
       <table>
         <thead>
