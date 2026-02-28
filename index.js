@@ -47,8 +47,7 @@ app.get('/', async (req, res) => {
       return `<tr><td><b>${c.id}</b></td><td>${new Date(c.createdAt).toLocaleString()}</td><td>${c.oficina||''}</td><td>${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td><td>${c.vence||''}</td><td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td><td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;justify-content:center;gap:3px"><input name="placa" value="${c.placa||''}" ${isLocked} class="placa-input" style="width:70px;text-align:center" oninput="this.value=this.value.toUpperCase()"><button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:4px;border-radius:3px">OK</button></form></td><td>${c.f_p||''}</td><td>${c.f_f||''}</td><td>${selectEstado}</td><td>${c.f_act||''}</td><td><span class="st-real ${stClass}">${c.est_real}</span></td><td>${c.obs||''}</td><td>${c.cond||''}</td><td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td><td>${accionFin}</td><td><b style="color:#3b82f6">${c.f_fin||'--:--'}</b></td><td><a href="/d/${c.id}" style="color:#f87171;text-decoration:none" onclick="return confirm('¿Borrar?')">X</a></td></tr>`;
     }).join('');
 
-    res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body>
-      <h2 style="color:#3b82f6">SISTEMA LOGÍSTICO V20</h2>
+    const formHtml = `
       <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px">
         <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Buscar Placa, Contenedor, Cliente...">
         <button class="btn-xls" onclick="exportExcel()">📥 DESCARGAR EXCEL</button>
@@ -66,4 +65,22 @@ app.get('/', async (req, res) => {
         <div class="fg"><label>Cliente</label><select name="cli">${opts.clientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Subcliente</label><select name="subc">${opts.subclientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Modalidad</label><select name="mod">${opts.modalidades.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>LCL / FCL</label><select name="lcl">${opts.lcl_
+        <div class="fg"><label>LCL / FCL</label><select name="lcl">${opts.lcl_fcl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>N.CONTENEDOR</label><input name="cont" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="fg"><label>PESO KG</label><input name="peso"></div>
+        <div class="fg"><label>Unidades</label><input name="unid"></div>
+        <div class="fg"><label>Producto</label><input name="prod"></div>
+        <div class="fg"><label>ESQ.SEGURIDAD</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>VENCE PTO</label><input name="vence" type="date"></div>
+        <div class="fg"><label>Origen</label><input name="orig" list="list_ciud"></div>
+        <div class="fg"><label>Destino</label><input name="dest" list="list_ciud"></div>
+        <div class="fg"><label>TIPO VEHÍCULO</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>Pedido</label><input name="ped"></div>
+        <div class="fg"><label>F.CARGUE</label><input name="f_c" type="date"></div>
+        <div class="fg"><label>H.CARGUE</label><input name="h_c" type="time"></div>
+        <div class="fg"><label>F.DESCARGUE</label><input name="f_d" type="date"></div>
+        <div class="fg"><label>H.DESCARGUE</label><input name="h_d" type="time"></div>
+        <div class="fg"><label>Flete Pagar</label><input name="f_p"></div>
+        <div class="fg"><label>Flete Facturar</label><input name="f_f"></div>
+        <div class="fg"><label>OBSERVACIÓN / ESTADO</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>Horario</label><input name
