@@ -41,6 +41,4 @@ app.get('/', async (req, res) => {
       const isLocked = c.f_fin ? 'disabled' : '';
       const displayReal = (c.est_real === 'FINALIZADO' || c.est_real === 'DESPACHADO') ? 'DESPACHADO' : 'PENDIENTE';
       const stClass = displayReal === 'DESPACHADO' ? 'st-desp' : 'st-pend';
-      const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
-      let accionFin = c.f_fin ? `<span style="color:#10b981">✓ FINALIZADO</span>` : (c.placa ? `<a href="/finish/${c.id}" class="btn-fin" onclick="return confirm('¿Finalizar?')">🏁 FINALIZAR</a>` : `<span style="font-size:8px;color:#94a3b8">PENDIENTE PLACA</span>`);
-      return `<tr><td><b>${c.id}</b></td><td>${new Date(c.createdAt).toLocaleString()}
+      const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs
