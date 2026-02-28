@@ -80,7 +80,7 @@ app.get('/', async (req, res) => {
 
     for (let c of d) {
       const isLocked = c.f_fin ? 'disabled' : '';
-      const tienePlaca = (c.placa && c.placa.trim().length > 0);
+      const tienePlaca = (c.placa && c.placa.trim().length >= 5);
       const displayReal = (c.est_real === 'FINALIZADO' || c.est_real === 'DESPACHADO') ? 'DESPACHADO' : 'PENDIENTE';
       const stClass = displayReal === 'DESPACHADO' ? 'background:#065f46;color:#34d399' : 'background:#475569;color:#cbd5e1';
       
@@ -94,7 +94,7 @@ app.get('/', async (req, res) => {
 
       const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
       
-      // RESTRICCIÓN DE SALIDA (FIN): Solo si tiene placa
+      // BLOQUEO DE FIN: Estricto
       let accionFin = c.f_fin 
         ? `<div style="display:flex;flex-direction:column;gap:2px">
              <span style="color:#10b981">✓</span>
@@ -102,7 +102,7 @@ app.get('/', async (req, res) => {
            </div>` 
         : (tienePlaca 
             ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` 
-            : `<span style="color:#64748b;font-size:8px italic">FALTA PLACA</span>`);
+            : `<span style="color:#64748b;font-size:8.5px;font-style:italic">⛔ PLACA</span>`);
       
       const idUnico = c.id.toString().padStart(4, '0');
 
@@ -133,7 +133,7 @@ app.get('/', async (req, res) => {
         <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
         <td class="col-acc">
           <div class="acc-cell">
-            ${tienePlaca ? '<span title="Protegido">🔒</span>' : `<a href="/d/${c.id}" style="color:#f87171;text-decoration:none;font-size:10px" onclick="return confirm('¿Borrar?')">🗑️</a>`}
+            ${tienePlaca ? '<span title="Protegido por placa">🔒</span>' : `<a href="/d/${c.id}" style="color:#f87171;text-decoration:none;font-size:10px" onclick="return confirm('¿Borrar?')">🗑️</a>`}
             ${tienePlaca ? '' : `<input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()">`}
           </div>
         </td>
@@ -204,10 +204,9 @@ app.get('/', async (req, res) => {
       </div>
 
       <script>
-      // VALIDACIÓN DE PLACA ANTES DE GUARDAR
       function valPlaca(f){
         const p = f.placa.value.trim();
-        if(p.length < 5){ alert("Debe ingresar la PLACA para dar salida."); return false; }
+        if(p.length < 5){ alert("DEBE ASIGNAR UNA PLACA VÁLIDA PARA DAR SALIDA."); return false; }
         return true;
       }
 
@@ -290,15 +289,31 @@ app.get('/', async (req, res) => {
 app.post('/add', async (req, res) => { req.body.f_act = getNow(); await C.create(req.body); res.redirect('/'); });
 app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
 app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id: { [Op.in]: req.body.ids } } }); res.sendStatus(200); });
+
 app.post('/u/:id', async (req, res) => { 
-  if(!req.body.placa || req.body.placa.trim() === ""){ return res.redirect('/'); }
-  await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); 
+  const placaNueva = req.body.placa ? req.body.placa.trim().toUpperCase() : "";
+  // Si envían una placa vacía, se limpia el campo y permite borrar de nuevo
+  await C.update({ 
+    placa: placaNueva === "" ? null : placaNueva, 
+    est_real: placaNueva === "" ? 'PENDIENTE' : 'DESPACHADO', 
+    f_act: getNow() 
+  }, { where: { id: req.params.id } }); 
   res.redirect('/'); 
 });
-app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
-app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
 
-// RUTA PARA REVERSAR
+app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
+
+app.get('/finish/:id', async (req, res) => { 
+  const serv = await C.findByPk(req.params.id);
+  // Validación de seguridad en el servidor
+  if(!serv.placa || serv.placa.trim().length < 5) {
+    return res.send("<script>alert('Error: No puede finalizar sin placa.'); window.location='/';</script>");
+  }
+  const ahora = getNow(); 
+  await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); 
+  res.redirect('/'); 
+});
+
 app.get('/reversar/:id', async (req, res) => {
   await C.update({ f_fin: null, est_real: 'DESPACHADO', obs_e: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } });
   res.redirect('/');
