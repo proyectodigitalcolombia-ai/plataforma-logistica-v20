@@ -93,7 +93,6 @@ app.get('/', async (req, res) => {
 
       const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
       let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
-      
       const idUnico = c.id.toString().padStart(4, '0');
 
       rows += `<tr class="fila-datos">
@@ -194,7 +193,7 @@ app.get('/', async (req, res) => {
       </div>
 
       <script>
-      const CLAVE_ADMIN = "ADMIN123"; // CAMBIA TU CONTRASEÑA AQUÍ
+      const CLAVE_ADMIN = "ADMIN123"; // CAMBIA LA CONTRASEÑA AQUÍ
 
       const t=document.getElementById('st'),m=document.getElementById('sm');
       t.onscroll=()=>m.scrollLeft=t.scrollLeft;
@@ -216,7 +215,7 @@ app.get('/', async (req, res) => {
       }
 
       function eliminarConClave(id){
-        const pw = prompt("Ingrese contraseña para borrar:");
+        const pw = prompt("Ingrese contraseña para borrar despacho:");
         if(pw === CLAVE_ADMIN){
            if(confirm("¿Seguro que desea eliminar el registro?")) {
               window.location.href = "/d/" + id;
