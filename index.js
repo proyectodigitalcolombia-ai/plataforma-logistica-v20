@@ -45,7 +45,6 @@ const css = `<style>
   table{border-collapse:collapse;min-width:8600px;font-size:10px;table-layout: fixed;}
   th{background:#1e40af;padding:10px 5px;text-align:center;position:sticky;top:0;border-right:1px solid #3b82f6; word-wrap: break-word; white-space: normal; vertical-align: middle;}
   td{padding:6px;border:1px solid #334155;white-space:nowrap;text-align:center; overflow: hidden; text-overflow: ellipsis;}
-  
   .col-num { width: 30px; }
   .col-id { width: 40px; font-weight: bold; }
   .col-reg { width: 110px; font-size: 9px; }
@@ -58,7 +57,6 @@ const css = `<style>
   .col-hfin { width: 115px; font-size: 9px; }
   .col-acc { width: 70px; }
   .acc-cell { display: flex; align-items: center; justify-content: center; gap: 8px; height: 35px; }
-
   .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}
   .fg{display:flex;flex-direction:column;gap:4px}
   label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}
@@ -125,7 +123,7 @@ app.get('/', async (req, res) => {
         <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
         <td class="col-acc">
           <div class="acc-cell">
-            <a href="/d/${c.id}" style="color:#f87171;text-decoration:none;font-size:10px" onclick="return confirm('¿Borrar?')">🗑️</a>
+            <a href="#" style="color:#f87171;text-decoration:none;font-size:10px" onclick="eliminarConClave(${c.id})">🗑️</a>
             <input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()">
           </div>
         </td>
@@ -165,129 +163,4 @@ app.get('/', async (req, res) => {
         <div class="fg"><label>Esq</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Vence</label><input name="vence" type="date"></div>
         <div class="fg"><label>Origen</label><input name="orig" list="list_ciud"></div>
-        <div class="fg"><label>Destino</label><input name="dest" list="list_ciud"></div>
-        <div class="fg"><label>Vehículo</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>Pedido</label><input name="ped"></div>
-        <div class="fg"><label>F.C</label><input name="f_c" type="date"></div>
-        <div class="fg"><label>H.C</label><input name="h_c" type="time"></div>
-        <div class="fg"><label>F.D</label><input name="f_d" type="date"></div>
-        <div class="fg"><label>H.D</label><input name="h_d" type="time"></div>
-        <div class="fg"><label>F. Pagar</label><input name="f_p"></div>
-        <div class="fg"><label>F. Fact</label><input name="f_f"></div>
-        <div class="fg"><label>Estado</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>Horario</label><input name="h_t"></div>
-        <div class="fg"><label>MUC</label><input name="muc"></div>
-        <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg" style="grid-column: span 2"><label>Obs</label><textarea name="obs" rows="1"></textarea></div>
-        <div class="fg" style="grid-column: span 2"><label>Cond</label><textarea name="cond" rows="1"></textarea></div>
-        <button class="btn" style="padding: 10px;">💾 REGISTRAR</button>
-      </form>
-
-      <div class="sc fs" id="st"><div class="fc"></div></div>
-      <div class="sc" id="sm">
-        <table id="tabla">
-          <thead>
-            <tr>
-              <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL/FCL</th><th>CONTENEDOR</th><th>PESO</th><th>UNID</th><th>PRODUCTO</th><th>ESQUEMA</th><th>VENCE</th><th>ORIGEN</th><th>DESTINO</th><th>VEHICULO</th><th>PEDIDO</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th class="col-placa">PLACA</th><th>PAGAR</th><th>FACTURA</th><th class="col-est">ESTADO</th><th>ACTUALIZACIÓN</th><th>REAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORA</th><th>MUC</th><th class="col-desp">DESPACHADOR</th><th>FIN</th><th class="col-hfin">H.FIN</th><th class="col-acc">ACCIONES</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-
-      <script>
-      const t=document.getElementById('st'),m=document.getElementById('sm');
-      t.onscroll=()=>m.scrollLeft=t.scrollLeft;
-      m.onscroll=()=>t.scrollLeft=m.scrollLeft;
-
-      function selectAll(source){ 
-        const checkboxes = document.getElementsByClassName('row-check'); 
-        for(let i=0; i<checkboxes.length; i++){
-          if(checkboxes[i].closest('tr').style.display !== 'none') checkboxes[i].checked = source.checked;
-        }
-        toggleDelBtn(); 
-      }
-
-      function toggleDelBtn(){ 
-        const checked = document.querySelectorAll('.row-check:checked');
-        const btn = document.getElementById('btnDelMult');
-        document.getElementById('count').innerText = checked.length;
-        btn.style.display = checked.length > 0 ? 'inline-block' : 'none'; 
-      }
-
-      function eliminarSeleccionados(){ 
-        const checked = document.querySelectorAll('.row-check:checked');
-        const ids = Array.from(checked).map(cb => cb.value);
-        if(!confirm('¿Eliminar ' + ids.length + ' registros?')) return; 
-        fetch('/delete-multiple',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}).then(()=>location.reload()); 
-      }
-
-      function updState(id,v){fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:v})}).then(()=>location.reload());}
-      
-      // NUEVA FUNCIÓN DE BÚSQUEDA QUE INCLUYE INPUTS (PLACA)
-      function buscar(){
-        let f = document.getElementById("busq").value.toUpperCase();
-        let filas = document.querySelectorAll(".fila-datos");
-        let visibleCount = 1;
-
-        filas.forEach(fila => {
-          // Obtener texto de las celdas normales
-          let textoCeldas = fila.innerText.toUpperCase();
-          
-          // Obtener valores de los inputs dentro de la fila (como la PLACA)
-          let inputs = Array.from(fila.querySelectorAll("input")).map(i => i.value.toUpperCase()).join(" ");
-          
-          // Obtener valores de los selects (como el ESTADO)
-          let selects = Array.from(fila.querySelectorAll("select")).map(s => s.value.toUpperCase()).join(" ");
-
-          let contenidoTotal = textoCeldas + " " + inputs + " " + selects;
-          let mostrar = contenidoTotal.includes(f);
-
-          fila.style.display = mostrar ? "" : "none";
-          if(mostrar) { 
-            fila.querySelector('.col-num').innerText = visibleCount++; 
-          }
-        });
-      }
-
-      function exportExcel(){
-        let csv="sep=;\\n";
-        document.querySelectorAll("#tabla tr").forEach(row=>{
-          if(row.style.display!=="none"){
-            let cols=Array.from(row.querySelectorAll("td, th")).map(c=>{
-              let inp=c.querySelector("input,select,textarea");
-              return '"'+(inp?inp.value:c.innerText.split('\\n')[0]).replace(/;/g,",").trim()+'"';
-            });
-            csv+=cols.slice(0,-1).join(";")+"\\n";
-          }
-        });
-        const b=new Blob(["\\ufeff"+csv],{type:"text/csv;charset=utf-8;"}),u=URL.createObjectURL(b),a=document.createElement("a");
-        a.href=u;a.download="Reporte.csv";a.click();
-      }
-
-      let audioContext; function activarAudio(){ if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); playAlert(); }
-      function silenciar(el){ el.dataset.silenced = "true"; el.style.animation = "none"; el.style.background = "#450a0a"; }
-      function playAlert(){ 
-        let reds = Array.from(document.querySelectorAll('.vence-rojo')).filter(el => el.dataset.silenced !== "true");
-        if(reds.length > 0 && audioContext){ 
-          let osc=audioContext.createOscillator(),gain=audioContext.createGain(); 
-          osc.type='square'; osc.frequency.setValueAtTime(440, audioContext.currentTime); 
-          gain.gain.setValueAtTime(0.1, audioContext.currentTime); 
-          osc.connect(gain); gain.connect(audioContext.destination); 
-          osc.start(); osc.stop(audioContext.currentTime+0.5); 
-          setTimeout(playAlert, 2000); 
-        }
-      } 
-      window.onload=()=>setTimeout(playAlert,1000);
-      </script></body></html>`);
-  } catch (e) { res.send(e.message); }
-});
-
-app.post('/add', async (req, res) => { req.body.f_act = getNow(); await C.create(req.body); res.redirect('/'); });
-app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
-app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id: { [Op.in]: req.body.ids } } }); res.sendStatus(200); });
-app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); res.redirect('/'); });
-app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
-app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
-
-db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
+        <div class
