@@ -39,11 +39,9 @@ app.get('/', async (req, res) => {
     const d = await C.findAll({ order: [['id', 'DESC']] });
     let rows = '';
     const hoy = new Date(); hoy.setHours(0,0,0,0);
-
     for (let c of d) {
       const isLocked = c.f_fin ? 'disabled' : '';
       const displayReal = (c.est_real === 'FINALIZADO' || c.est_real === 'DESPACHADO') ? 'DESPACHADO' : 'PENDIENTE';
-      const stClass = displayReal === 'DESPACHADO' ? 'st-desp' : 'st-pend';
       let venceStyle = '';
       if (c.vence && !c.f_fin) {
         const fVence = new Date(c.vence);
@@ -53,7 +51,6 @@ app.get('/', async (req, res) => {
       }
       let stOptions = '';
       opts.estados.forEach(st => { stOptions += `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`; });
-      const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)" style="background:#334155;color:#fff;border:none;padding:4px;font-size:9px;width:160px">${stOptions}</select>`;
-      let accionFin = c.f_fin ? `<span style="color:#10b981">✓ FINALIZADO</span>` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:5px 8px;border-radius:4px;font-weight:bold;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">🏁 FINALIZAR</a>` : `<span style="font-size:8px;color:#94a3b8">PENDIENTE PLACA</span>`);
-      
-      rows += `<tr><td><b>${c.id}</b></td><td>${new Date(c.createdAt).toLocaleString()}</td><td>${c.oficina||''}</td><td>${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td><td class="${venceStyle}" onclick="silenciar(this)">${c.vence||''}</td><td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td><td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:2px"><input name="placa" value="${c.placa||''}" ${isLocked} style="width:60px" oninput="this.value=this.value.toUpperCase()"><button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:3px;border-radius:2px">OK</button></form></td><td>${c.f_p||''}</td><td>${c.f_f||''}</td><td>${selectEstado}</td><td style="color:#fbbf24;font-weight:bold">${c.f_act||''}</td><td><span style="padding:4px 8px;border-radius:12px;font-weight:bold;font-size:9px;background:${displayReal==='DESPACHADO'?'#065f46':'#475569'}">${displayReal}</span></td><td style="white-space:normal;min-width:200px;text-align:left">${c.obs||''}</td><td style="white-space:normal;min-width:200px;text-align:left">${c.cond||''}</td><td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td><td>${accionFin}</td><td><b style="color:#3b82f6">${c.f_fin||'--:--'}</b></td><td><a href="/d/${c.id}" style="color:#f87
+      const selectEstado = `<select onchange="updState(${c.id}, this.value)" style="background:#334155;color:#fff;border:none;padding:4px;font-size:9px;width:160px" ${isLocked}>${stOptions}</select>`;
+      let accionFin = c.f_fin ? `<span style="color:#10b981">✓ FINALIZADO</span>` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:5px 8px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">🏁 FINALIZAR</a>` : `<span style="font-size:8px;color:#94a3b8">PENDIENTE PLACA</span>`);
+      rows += `<tr><td>
