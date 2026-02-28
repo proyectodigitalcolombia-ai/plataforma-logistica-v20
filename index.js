@@ -448,6 +448,7 @@ app.get('/stats', async (req, res) => {
  .prog-wrapper{display:flex;align-items:center;justify-content:center;gap:10px;}
  .prog-bg{width:150px;background:#334155;height:12px;border-radius:6px;overflow:hidden;}
  .prog-fill{background:#10b981;height:100%;border-radius:6px;}
+ .semaforo-dot{height:12px;width:12px;border-radius:50%;display:inline-block;margin-right:5px;}
  </style></head>
  <body>
  <div class="header">
@@ -505,21 +506,27 @@ app.get('/stats', async (req, res) => {
  <th>DESPACHADOR</th>
  <th>HOY</th>
  <th>MES</th>
+ <th>RENDIMIENTO</th>
  <th>PRODUCTIVIDAD (%)</th>
  </tr>
  </thead>
  <tbody>
  ${Object.entries(despLog).map(([name, s]) => {
  const prodPerc = total > 0 ? ((s.mes/total)*100).toFixed(1) : 0;
+ let semColor = '#ef4444'; let semText = 'BAJO';
+ if(prodPerc >= 25) { semColor = '#10b981'; semText = 'ÓPTIMO'; }
+ else if(prodPerc >= 10) { semColor = '#fbbf24'; semText = 'MEDIO'; }
+ 
  return `
  <tr>
  <td><b>${name}</b></td>
  <td><span class="badge" style="background:#3b82f6">${s.hoy}</span></td>
  <td><span class="badge" style="background:#8b5cf6">${s.mes}</span></td>
+ <td><span class="semaforo-dot" style="background:${semColor}"></span><span style="color:${semColor};font-weight:bold;font-size:11px;">${semText}</span></td>
  <td>
  <div class="prog-wrapper">
- <div class="prog-bg"><div style="width:${prodPerc}%" class="prog-fill"></div></div>
- <b style="color:#10b981">${prodPerc}%</b>
+ <div class="prog-bg"><div style="width:${prodPerc}%;background:${semColor}" class="prog-fill"></div></div>
+ <b style="color:${semColor}">${prodPerc}%</b>
  </div>
  </td>
  </tr>`;
