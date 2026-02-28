@@ -331,6 +331,8 @@ app.get('/stats', async (req, res) => {
     <style>
       body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:25px;}
       .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid #1e40af;padding-bottom:15px;}
+      .title-group{display:flex;align-items:center;gap:15px;}
+      .logo-icon{width:45px;height:45px;fill:#3b82f6;}
       .btn-back{background:#2563eb;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:bold;}
       .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-bottom:25px;}
       .card{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;}
@@ -346,7 +348,14 @@ app.get('/stats', async (req, res) => {
       .badge{padding:4px 8px;border-radius:4px;font-weight:bold;font-size:11px;}
     </style></head>
     <body>
-      <div class="header"><h2>📊 TABLERO ESTRATÉGICO V20</h2><a href="/" class="btn-back">VOLVER AL TABLERO</a></div>
+      <div class="header">
+        <div class="title-group">
+          <svg class="logo-icon" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.47 4.14-3.13 7.85-7 9.01v-9.01H5V6.3l7-3.11v8.8z"/></svg>
+          <h2 style="margin:0;">TABLERO DE INDICADORES GERENCIALES</h2>
+        </div>
+        <a href="/" class="btn-back">VOLVER AL TABLERO</a>
+      </div>
+      
       <div class="kpi-grid">
         <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
         <div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
@@ -357,7 +366,7 @@ app.get('/stats', async (req, res) => {
         <div class="chart-box"><h4>ESTADO OPERACIÓN</h4><canvas id="c1"></canvas></div>
         <div class="chart-box"><h4>CARGA POR OFICINA</h4><canvas id="c2"></canvas></div>
       </div>
-      <h3>RENDIMIENTO POR DESPACHADOR</h3>
+      <h3 style="color:#3b82f6; border-left: 4px solid #2563eb; padding-left: 10px;">RENDIMIENTO POR DESPACHADOR</h3>
       <table>
         <thead><tr><th>DESPACHADOR</th><th>DESPACHOS HOY</th><th>DESPACHOS MES</th><th>PRODUCTIVIDAD</th></tr></thead>
         <tbody>
