@@ -62,6 +62,8 @@ const css = `<style>
   label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}
   input,select,textarea{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000;text-align:center}
   .btn-submit-serious{ grid-column:1/-1; background:#1e40af; color:#fff; padding:12px; cursor:pointer; border:none; font-weight:700; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:10px; transition: background 0.2s;}
+  .btn-submit-serious:hover{ background:#1d4ed8; }
+  .icon-serious{ width:20px; height:20px; fill:#fff; }
   .btn-xls{background:#556b2f;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;height:38px;box-sizing:border-box;}
   .btn-stats{background:#4c1d95;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;text-decoration:none;font-size:13px;height:38px;box-sizing:border-box;display:flex;align-items:center;}
   .container-check-all{background:#2563eb;padding:5px 10px;border-radius:6px;display:flex;align-items:center;gap:5px;height:38px;box-sizing:border-box;}
@@ -70,21 +72,23 @@ const css = `<style>
   .vence-rojo{background:#dc2626 !important;color:#fff !important;font-weight:bold;animation: blink 2s infinite;cursor:pointer}
   .vence-amarillo{background:#fbbf24 !important;color:#000 !important;font-weight:bold}
   @keyframes blink { 0% {opacity:1} 50% {opacity:0.6} 100% {opacity:1} }
+  tr:hover td { background: #334155; }
 </style>`;
 
-// --- RUTAS ---
-
+// --- RUTA PRINCIPAL ---
 app.get('/', async (req, res) => {
   try {
     const d = await C.findAll({ order: [['id', 'DESC']] });
     let rows = '';
     const hoy = new Date(); hoy.setHours(0,0,0,0);
     let index = 1;
+
     for (let c of d) {
       const isLocked = c.f_fin ? 'disabled' : '';
       let displayReal = 'PENDIENTE', stClass = 'background:#475569;color:#cbd5e1'; 
       if (c.f_fin) { displayReal = 'FINALIZADO'; stClass = 'background:#1e40af;color:#bfdbfe'; }
       else if (c.placa) { displayReal = 'DESPACHADO'; stClass = 'background:#065f46;color:#34d399'; }
+      
       let venceStyle = '';
       if (c.vence && !c.f_fin) {
         const fVence = new Date(c.vence);
@@ -92,19 +96,22 @@ app.get('/', async (req, res) => {
         if (diffDays <= 2) venceStyle = 'vence-rojo';
         else if (diffDays <= 6) venceStyle = 'vence-amarillo';
       }
+
       const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
       let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
+
       rows += `<tr class="fila-datos">
         <td class="col-num">${index++}</td>
         <td class="col-id">${c.id.toString().padStart(4, '0')}</td>
         <td class="col-reg">${new Date(c.createdAt).toLocaleDateString()} ${new Date(c.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
-        <td>${c.oficina||''}</td><td class="col-emp">${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td>
+        <td>${c.oficina||''}</td><td class="col-emp" title="${c.emp_gen||''}">${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td>
         <td class="${venceStyle}" onclick="silenciar(this)">${c.vence||''}</td>
         <td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td>
         <td class="col-placa"><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:4px;justify-content:center;align-items:center"><input name="placa" class="in-placa" value="${c.placa||''}" ${isLocked} placeholder="PLACA" oninput="this.value=this.value.toUpperCase()"><button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:5px;border-radius:3px;cursor:pointer;font-weight:bold">OK</button></form></td>
         <td>${c.f_p||''}</td><td>${c.f_f||''}</td><td class="col-est">${selectEstado}</td><td style="width:115px;color:#fbbf24">${c.f_act||''}</td><td style="width:100px"><span style="padding:2px 6px;border-radius:10px;font-weight:bold;font-size:8px;${stClass}">${displayReal}</span></td><td style="white-space:normal;min-width:250px;text-align:left">${c.obs||''}</td><td style="white-space:normal;min-width:250px;text-align:left">${c.cond||''}</td><td>${c.h_t||''}</td><td>${c.muc||''}</td><td class="col-desp">${c.desp||''}</td><td>${accionFin}</td><td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td><td class="col-acc"><div class="acc-cell"><a href="#" style="color:#f87171;text-decoration:none;font-size:10px" onclick="eliminarConClave(${c.id})">🗑️</a><input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()"></div></td>
       </tr>`;
     }
+
     res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
       <h2 style="color:#3b82f6; margin: 0 0 10px 0;">SISTEMA LOGISTICO DE YEGO ECO T S.A.S</h2>
       <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">
@@ -173,59 +180,93 @@ app.get('/', async (req, res) => {
   } catch (e) { res.send(e.message); }
 });
 
-// --- RUTA INDICADORES (SOLO LÓGICA DE CONTEO AGENCIA/PÉRDIDA) ---
+// --- RUTA INDICADORES (CON FILTRO DE FECHA DIARIO/MENSUAL) ---
 app.get('/stats', async (req, res) => {
   try {
     const cargas = await C.findAll();
-    const hoy = new Date();
-    const hoyS = hoy.toISOString().split('T')[0];
-    const mesS = hoyS.substring(0, 7);
-    const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
-    const agencias = ['CARTAGENA', 'BOGOTÁ', 'BUENAVENTURA', 'MEDELLÍN'];
+    const hoy = new Date().toISOString().split('T')[0];
+    const mesActual = hoy.substring(0, 7);
     
-    const agData = {};
-    agencias.forEach(a => agData[a] = { hoy: 0, mes: 0 });
-    let perdHoy = 0, perdMes = 0, tHoy = 0, tMes = 0;
+    const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
+    
+    // Contadores Generales
+    let total = cargas.length;
+    let fin = cargas.filter(c => c.f_fin).length;
+    let enRuta = cargas.filter(c => c.placa && !c.f_fin).length;
+    let perdTotal = cargas.filter(c => cancelTags.includes(c.obs_e)).length;
 
+    // Métricas por Despachador (Hoy vs Mes)
+    const despLog = {};
     cargas.forEach(c => {
-      const fC = new Date(c.createdAt).toISOString().split('T')[0];
-      const mC = fC.substring(0, 7);
-      const isC = cancelTags.includes(c.obs_e);
-
-      if(agData[c.oficina]) {
-        if(fC === hoyS) agData[c.oficina].hoy++;
-        if(mC === mesS) agData[c.oficina].mes++;
-      }
-      if(fC === hoyS) { tHoy++; if(isC) perdHoy++; }
-      if(mC === mesS) { tMes++; if(isC) perdMes++; }
+      const d = c.desp || 'SIN ASIGNAR';
+      const fCrea = new Date(c.createdAt).toISOString().split('T')[0];
+      const mCrea = fCrea.substring(0, 7);
+      
+      if(!despLog[d]) despLog[d] = { hoy: 0, mes: 0 };
+      if(fCrea === hoy) despLog[d].hoy++;
+      if(mCrea === mesActual) despLog[d].mes++;
     });
 
-    res.send(`<html><head><meta charset="UTF-8"><title>KPI LOGISV20</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><style>
-      body{background:#0f172a;color:#fff;font-family:sans-serif;padding:25px}
-      .card{background:#1e293b;padding:20px;border-radius:10px;text-align:center;border:1px solid #334155}
-      .lost{border-left:5px solid #ef4444}
-      table{width:100%;border-collapse:collapse;margin-top:20px}
-      th{background:#1e40af;padding:12px}td{padding:12px;border-bottom:1px solid #334155;text-align:center}
-    </style></head><body>
-      <div style="display:flex;justify-content:space-between;margin-bottom:20px"><h2>INDICADORES</h2><a href="/" style="background:#2563eb;color:#fff;padding:10px;text-decoration:none;border-radius:5px">VOLVER</a></div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px">
-        <div class="card lost"><h3>Pérdida Hoy</h3><p style="font-size:24px;color:#f87171">${perdHoy}</p></div>
-        <div class="card lost"><h3>Pérdida Mes</h3><p style="font-size:24px;color:#f87171">${perdMes}</p></div>
-        <div class="card"><h3>Total Servicios Mes</h3><p style="font-size:24px;color:#3b82f6">${tMes}</p></div>
-        <div class="card"><h3>Efectividad Mes</h3><p style="font-size:24px;color:#10b981">${tMes>0?(((tMes-perdMes)/tMes)*100).toFixed(1):0}%</p></div>
+    // Carga por Oficina
+    const ofis = {}; 
+    cargas.forEach(c => { if(c.oficina) ofis[c.oficina] = (ofis[c.oficina] || 0) + 1; });
+
+    res.send(`<html><head><meta charset="UTF-8"><title>KPI - LOGISV20</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:25px;}
+      .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid #1e40af;padding-bottom:15px;}
+      .btn-back{background:#2563eb;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:bold;}
+      .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:25px;}
+      .card{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;}
+      .card h3{margin:0;font-size:10px;color:#94a3b8;text-transform:uppercase;}
+      .card p{margin:10px 0 0;font-size:32px;font-weight:bold;color:#3b82f6;}
+      .lost{border-color:#ef4444; background:rgba(239, 68, 68, 0.1);}
+      .lost p{color:#f87171;}
+      .charts{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:25px;}
+      .chart-box{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;}
+      table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:10px;overflow:hidden;}
+      th{background:#1e40af;padding:12px;font-size:11px;}
+      td{padding:12px;border-bottom:1px solid #334155;font-size:12px;text-align:center;}
+      .badge{padding:4px 8px;border-radius:4px;font-weight:bold;font-size:11px;}
+    </style></head>
+    <body>
+      <div class="header">
+        <h2>TABLERO DE INDICADORES GERENCIALES</h2>
+        <a href="/" class="btn-back">VOLVER</a>
       </div>
-      <h3 style="margin-top:30px">DESPACHOS POR AGENCIA (DIARIO vs MENSUAL)</h3>
-      <table><thead><tr><th>AGENCIA</th><th>HOY (DIARIO)</th><th>MES ACTUAL</th><th>% MES</th></tr></thead><tbody>
-        ${Object.entries(agData).map(([n, v]) => `<tr><td><b>${n}</b></td><td><span style="background:#3b82f6;padding:4px 8px;border-radius:4px">${v.hoy}</span></td><td><span style="background:#8b5cf6;padding:4px 8px;border-radius:4px">${v.mes}</span></td><td>${tMes>0?((v.mes/tMes)*100).toFixed(1):0}%</td></tr>`).join('')}
-      </tbody></table>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px"><div class="card"><canvas id="c1"></canvas></div><div class="card"><canvas id="c2"></canvas></div></div>
+      <div class="kpi-grid">
+        <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
+        <div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
+        <div class="card"><h3>En Ruta</h3><p style="color:#fbbf24">${enRuta}</p></div>
+        <div class="card lost"><h3>Pérdida (Cancelados)</h3><p>${perdTotal}</p></div>
+      </div>
+      <div class="charts">
+        <div class="chart-box"><h4>ESTADO OPERACIÓN</h4><canvas id="c1"></canvas></div>
+        <div class="chart-box"><h4>CARGA POR OFICINA</h4><canvas id="c2"></canvas></div>
+      </div>
+      <h3 style="color:#3b82f6; border-left: 4px solid #2563eb; padding-left: 10px;">RENDIMIENTO POR DESPACHADOR</h3>
+      <table>
+        <thead><tr><th>DESPACHADOR</th><th>DESPACHOS HOY</th><th>DESPACHOS MES</th><th>PROGRESO MES</th></tr></thead>
+        <tbody>
+          ${Object.entries(despLog).map(([name, s]) => `
+            <tr>
+              <td><b>${name}</b></td>
+              <td><span class="badge" style="background:#3b82f6">${s.hoy}</span></td>
+              <td><span class="badge" style="background:#8b5cf6">${s.mes}</span></td>
+              <td><div style="width:100px;background:#334155;height:8px;border-radius:4px;display:inline-block;"><div style="width:${total>0?Math.min((s.mes/total)*100,100):0}%;background:#10b981;height:100%;border-radius:4px;"></div></div></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
       <script>
-        new Chart(document.getElementById('c1'),{type:'bar',data:{labels:${JSON.stringify(Object.keys(agData))},datasets:[{label:'Mes',data:${JSON.stringify(Object.values(agData).map(v=>v.mes))},backgroundColor:'#3b82f6'}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{color:'#fff'}},x:{ticks:{color:'#fff'}}}}});
-        new Chart(document.getElementById('c2'),{type:'pie',data:{labels:['Efectivos','Pérdida'],datasets:[{data:[${tMes-perdMes},${perdMes}],backgroundColor:['#10b981','#ef4444']}]},options:{plugins:{legend:{labels:{color:'#fff'}}}}});
-      </script></body></html>`);
+        new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:['Fin','Ruta','Cancel','Otros'],datasets:[{data:[${fin},${enRuta},${perdTotal},${total-(fin+enRuta+perdTotal)}],backgroundColor:['#10b981','#fbbf24','#ef4444','#475569'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
+        new Chart(document.getElementById('c2'),{type:'bar',data:{labels:${JSON.stringify(Object.keys(ofis))},datasets:[{label:'Servicios',data:${JSON.stringify(Object.values(ofis))},backgroundColor:'#3b82f6'}]},options:{scales:{y:{beginAtZero:true,ticks:{color:'#fff'}},x:{ticks:{color:'#fff'}}},plugins:{legend:{display:false}}}});
+      </script>
+    </body></html>`);
   } catch (e) { res.send(e.message); }
 });
 
+// --- RUTAS DE OPERACIÓN ---
 app.post('/add', async (req, res) => { req.body.f_act = getNow(); await C.create(req.body); res.redirect('/'); });
 app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
 app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id: { [Op.in]: req.body.ids } } }); res.sendStatus(200); });
