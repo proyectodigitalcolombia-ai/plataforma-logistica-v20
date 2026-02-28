@@ -34,7 +34,7 @@ const opts = {
   despachadores: ['ABNNER MARTINEZ', 'CAMILO TRIANA', 'FREDY CARRILLO', 'RAUL LOPEZ', 'EDDIER RIVAS']
 };
 
-const css = `<style>body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}.sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}.fs{height:12px;margin-bottom:5px}.fc{width:8500px;height:1px}table{border-collapse:collapse;min-width:8500px;font-size:10px}th{background:#1e40af;padding:12px;text-align:center;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6}td{padding:10px;border:1px solid #334155;white-space:nowrap;text-align:center}.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}.fg{display:flex;flex-direction:column;gap:4px}label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}input,select{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000;text-align:center}.btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}.btn-fin{background:#10b981;color:white;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;font-weight:bold;text-decoration:none;font-size:10px}.sel-est{background:#334155;color:#fff;border:1px solid #475569;padding:6px;border-radius:4px;cursor:pointer;font-size:10px;text-align:center;width:100%}.sel-est:disabled{background:#1e293b;color:#94a3b8;cursor:not-allowed;border:1px solid #334155}.st-real{padding:5px 10px;border-radius:20px;font-weight:bold;font-size:9px;text-transform:uppercase}.st-desp{background:#065f46;color:#34d399}.st-fin{background:#1e40af;color:#93c5fd}.st-pend{background:#475569;color:#cbd5e1}.warn-placa{color:#f87171;font-weight:bold;font-size:9px;background:rgba(248,113,113,0.1);padding:5px;border-radius:4px}</style>`;
+const css = `<style>body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}.sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}.fs{height:12px;margin-bottom:5px}.fc{width:max-content;height:1px}table{border-collapse:collapse;width:max-content;font-size:10px}th{background:#1e40af;padding:12px;text-align:center;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6;z-index:20}td{padding:10px;border:1px solid #334155;white-space:nowrap;text-align:center}.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}.fg{display:flex;flex-direction:column;gap:4px}label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}input,select{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000;text-align:center}.btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}.btn-fin{background:#10b981;color:white;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;font-weight:bold;text-decoration:none;font-size:10px}.sel-est{background:#334155;color:#fff;border:1px solid #475569;padding:6px;border-radius:4px;cursor:pointer;font-size:10px;text-align:center;width:100%}.st-real{padding:5px 10px;border-radius:20px;font-weight:bold;font-size:9px;text-transform:uppercase}.st-desp{background:#065f46;color:#34d399}.st-fin{background:#1e40af;color:#93c5fd}.st-pend{background:#475569;color:#cbd5e1}.btn-xl{background:#10b981;color:white;padding:12px 20px;border-radius:6px;cursor:pointer;border:none;font-weight:bold;margin-bottom:10px}#search{padding:12px;width:300px;border-radius:6px;border:none;margin-right:10px}</style>`;
 
 app.get('/', async (req, res) => {
   try {
@@ -46,53 +46,21 @@ app.get('/', async (req, res) => {
         ${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}
       </select>`;
 
-      let accionFin = '';
-      if (c.f_fin) {
-        accionFin = `<span style="color:#10b981;font-weight:bold">✓ FINALIZADO</span>`;
-      } else if (c.placa && c.placa.trim() !== "") {
-        accionFin = `<a href="/finish/${c.id}" class="btn-fin" onclick="return confirm('¿Finalizar despacho?')">🏁 FINALIZAR</a>`;
-      } else {
-        accionFin = `<span class="warn-placa">⚠️ REQUIERE PLACA</span>`;
-      }
+      let accionFin = c.f_fin ? `<span style="color:#10b981;font-weight:bold">✓ FINALIZADO</span>` : (c.placa ? `<a href="/finish/${c.id}" class="btn-fin" onclick="return confirm('¿Finalizar?')">🏁 FINALIZAR</a>` : `<span style="color:#f87171;font-size:9px">⚠️ REQUIERE PLACA</span>`);
 
-      return `<tr><td><b>${c.id}</b></td><td>${new Date(c.createdAt).toLocaleString()}</td><td>${c.oficina||''}</td><td>${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td><td>${c.vence||''}</td><td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td><td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;justify-content:center;gap:3px"><input name="placa" value="${c.placa||''}" ${isLocked} style="width:70px;text-align:center" oninput="this.value=this.value.toUpperCase()"><button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:4px;border-radius:3px">OK</button></form></td><td>${c.f_p||''}</td><td>${c.f_f||''}</td><td>${selectEstado}</td><td>${c.f_act||''}</td><td><span class="st-real ${stClass}">${c.est_real}</span></td><td>${c.obs||''}</td><td>${c.cond||''}</td><td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td><td>${accionFin}</td><td><b style="color:#3b82f6">${c.f_fin||'--:--'}</b></td><td><a href="/d/${c.id}" style="color:#f87171;text-decoration:none" onclick="return confirm('¿Borrar?')">X</a></td></tr>`;
+      return `<tr><td><b>${c.id}</b></td><td>${new Date(c.createdAt).toLocaleString()}</td><td>${c.oficina||''}</td><td>${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td><td>${c.vence||''}</td><td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td><td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:3px"><input name="placa" value="${c.placa||''}" ${isLocked} style="width:70px" oninput="this.value=this.value.toUpperCase()"><button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:4px;border-radius:3px">OK</button></form></td><td>${c.f_p||''}</td><td>${c.f_f||''}</td><td>${selectEstado}</td><td>${c.f_act||''}</td><td><span class="st-real ${stClass}">${c.est_real}</span></td><td>${c.obs||''}</td><td>${c.cond||''}</td><td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td><td>${accionFin}</td><td><b style="color:#3b82f6">${c.f_fin||'--:--'}</b></td><td><a href="/d/${c.id}" style="color:#f87171;text-decoration:none" onclick="return confirm('¿Borrar?')">X</a></td></tr>`;
     }).join('');
 
-    res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body><h2 style="color:#3b82f6">SISTEMA LOGÍSTICO V20</h2><form action="/add" method="POST" class="form"><datalist id="list_ciud">${opts.ciudades.map(c=>`<option value="${c}">`).join('')}</datalist><div class="fg"><label>Oficina</label><select name="oficina">${opts.oficina.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>EMPRESA GENERADORA DE CARGA</label><select name="emp_gen"><option value="YEGO ECO-T SAS">YEGO ECO-T SAS</option></select></div><div class="fg"><label>Comercial</label><select name="comercial"><option value="RAÚL LÓPEZ">RAÚL LÓPEZ</option></select></div><div class="fg"><label>PUERTO CARGUE</label><select name="pto">${opts.puertos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>REFLEJA EN PUERTO Y / O PATIO DE RETIRO</label><select name="refleja"><option value="SI">SI</option><option value="NO">NO</option></select></div><div class="fg"><label>F.Doc</label><input name="f_doc" type="date"></div><div class="fg"><label>H.Doc</label><input name="h_doc" type="time"></div><div class="fg"><label>DO/BL/OC</label><input name="do_bl"></div><div class="fg"><label>Cliente</label><select name="cli">${opts.clientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Subcliente</label><select name="subc">${opts.subclientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Modalidad</label><select name="mod">${opts.modalidades.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>LCL / FCL</label><select name="lcl">${opts.lcl_fcl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>N.CONTENEDOR</label><input name="cont" oninput="this.value=this.value.toUpperCase()"></div><div class="fg"><label>PESO KG</label><input name="peso"></div><div class="fg"><label>Unidades</label><input name="unid"></div><div class="fg"><label>Producto</label><input name="prod"></div><div class="fg"><label>ESQ.SEGURIDAD</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>VENCE PTO</label><input name="vence" type="date"></div><div class="fg"><label>Origen</label><input name="orig" list="list_ciud"></div><div class="fg"><label>Destino</label><input name="dest" list="list_ciud"></div><div class="fg"><label>TIPO VEHÍCULO</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Pedido</label><input name="ped"></div><div class="fg"><label>F.CARGUE</label><input name="f_c" type="date"></div><div class="fg"><label>H.CARGUE</label><input name="h_c" type="time"></div><div class="fg"><label>F.DESCARGUE</label><input name="f_d" type="date"></div><div class="fg"><label>H.DESCARGUE</label><input name="h_d" type="time"></div><div class="fg"><label>Flete Pagar</label><input name="f_p"></div><div class="fg"><label>Flete Facturar</label><input name="f_f"></div><div class="fg"><label>OBSERVACIÓN / ESTADO</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Horario</label><input name="h_t"></div><div class="fg"><label>MUC</label><input name="muc"></div><div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><button class="btn">💾 REGISTRAR NUEVA CARGA</button></form><div class="sc fs" id="st"><div class="fc"></div></div><div class="sc" id="sm"><table><thead><tr><th>ITEM</th><th>FECHA Y HORA DE REGISTRO</th><th>OFICINA</th><th>EMPRESA GENERADORA DE CARGA</th><th>COMERCIAL</th><th>PUERTO CARGUE</th><th>REFLEJA EN PUERTO Y / O PATIO DE RETIRO</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL/OC</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL / FCL</th><th>N.CONTENEDOR</th><th>PESO KG</th><th>UNIDADES</th><th>PRODUCTO</th><th>ESQ.SEGURIDAD</th><th>VENCE PTO</th><th>ORIGEN</th><th>DESTINO</th><th>TIPO VEHÍCULO</th><th>PEDIDO</th><th>F.CARGUE</th><th>H.CARGUE</th><th>F.DESCARGUE</th><th>H.DESCARGUE</th><th>PLACA</th><th>FLETE PAGAR</th><th>FLETE FACTURAR</th><th>OBSERVACIÓN / ESTADO</th><th>ACTUALIZACIÓN ESTADO</th><th>ESTADO REAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORARIO</th><th>MUC</th><th>DESPACHADOR</th><th>FECHA DE FINALIZACIÓN DEL DESPACHO</th><th>HORA FINALIZACIÓN</th><th>ACCIONES</th></tr></thead><tbody>${rows}</tbody></table></div><script>const t=document.getElementById('st'),m=document.getElementById('sm');t.onscroll=()=>m.scrollLeft=t.scrollLeft;m.onscroll=()=>t.scrollLeft=m.scrollLeft;function updState(id,val){fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:val})}).then(r=>{if(r.ok)location.reload();});}</script></body></html>`);
-  } catch (e) { res.send(e.message); }
-});
-
-app.post('/add', async (req, res) => { await C.create(req.body); res.redirect('/'); });
-app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
-
-app.post('/u/:id', async (req, res) => { 
-  await C.update({ 
-    placa: req.body.placa.toUpperCase(), 
-    est_real: 'DESPACHADO' 
-  }, { where: { id: req.params.id } }); 
-  res.redirect('/'); 
-});
-
-app.post('/state/:id', async (req, res) => { 
-  const ahora = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' });
-  await C.update({ obs_e: req.body.obs_e, f_act: ahora }, { where: { id: req.params.id } });
-  res.sendStatus(200);
-});
-
-app.get('/finish/:id', async (req, res) => {
-  const carga = await C.findByPk(req.params.id);
-  if (!carga.placa || carga.placa.trim() === "") {
-    return res.send("Error: No se puede finalizar un despacho sin placa.");
-  }
-  const ahora = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' });
-  await C.update({ 
-    f_fin: ahora, 
-    obs_e: 'FINALIZADO SIN NOVEDAD',
-    est_real: 'FINALIZADO'
-  }, { where: { id: req.params.id } });
-  res.redirect('/');
-});
-
-db.sync({ alter: true }).then(() => {
-  app.listen(process.env.PORT || 3000, () => console.log('Server OK'));
-});
+    res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body>
+      <h2 style="color:#3b82f6">SISTEMA LOGÍSTICO V20</h2>
+      <form action="/add" method="POST" class="form">
+        <datalist id="list_ciud">${opts.ciudades.map(c=>`<option value="${c}">`).join('')}</datalist>
+        <div class="fg"><label>Oficina</label><select name="oficina">${opts.oficina.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>EMPRESA</label><select name="emp_gen"><option>YEGO ECO-T SAS</option></select></div>
+        <div class="fg"><label>Comercial</label><select name="comercial"><option>RAÚL LÓPEZ</option></select></div>
+        <div class="fg"><label>Puerto</label><select name="pto">${opts.puertos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>Refleja</label><select name="refleja"><option>SI</option><option>NO</option></select></div>
+        <div class="fg"><label>F.Doc</label><input name="f_doc" type="date"></div>
+        <div class="fg"><label>H.Doc</label><input name="h_doc" type="time"></div>
+        <div class="fg"><label>DO/BL/OC</label><input name="do_bl"></div>
+        <div class="fg"><label>Cliente</label><select name="cli">${opts.clientes.map(o=>`
