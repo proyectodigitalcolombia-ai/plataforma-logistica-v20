@@ -8,16 +8,43 @@ const db = new Sequelize(process.env.DATABASE_URL, {
 });
 
 const C = db.define('Carga', {
-  oficina: DataTypes.STRING, emp_gen: DataTypes.STRING, comercial: DataTypes.STRING, pto: DataTypes.STRING,
-  refleja: DataTypes.STRING, f_doc: DataTypes.STRING, h_doc: DataTypes.STRING, do_bl: DataTypes.STRING,
-  cli: DataTypes.STRING, subc: DataTypes.STRING, mod: DataTypes.STRING, lcl: DataTypes.STRING,
-  cont: DataTypes.STRING, peso: DataTypes.STRING, unid: DataTypes.STRING, prod: DataTypes.STRING,
-  esq: DataTypes.STRING, vence: DataTypes.STRING, orig: DataTypes.STRING, dest: DataTypes.STRING,
-  t_v: DataTypes.STRING, ped: DataTypes.STRING, f_c: DataTypes.STRING, h_c: DataTypes.STRING,
-  f_d: DataTypes.STRING, h_d: DataTypes.STRING, placa: DataTypes.STRING, f_p: DataTypes.STRING,
-  f_f: DataTypes.STRING, obs_e: { type: DataTypes.STRING, defaultValue: 'PENDIENTE INSTRUCCIONES' },
-  f_act: DataTypes.STRING, obs: DataTypes.TEXT, cond: DataTypes.TEXT, h_t: DataTypes.STRING,
-  muc: DataTypes.STRING, desp: DataTypes.STRING, f_fin: DataTypes.STRING,
+  oficina: DataTypes.STRING,
+  emp_gen: DataTypes.STRING,
+  comercial: DataTypes.STRING,
+  pto: DataTypes.STRING,
+  refleja: DataTypes.STRING,
+  f_doc: DataTypes.STRING,
+  h_doc: DataTypes.STRING,
+  do_bl: DataTypes.STRING,
+  cli: DataTypes.STRING,
+  subc: DataTypes.STRING,
+  mod: DataTypes.STRING,
+  lcl: DataTypes.STRING,
+  cont: DataTypes.STRING,
+  peso: DataTypes.STRING,
+  unid: DataTypes.STRING,
+  prod: DataTypes.STRING,
+  esq: DataTypes.STRING,
+  vence: DataTypes.STRING,
+  orig: DataTypes.STRING,
+  dest: DataTypes.STRING,
+  t_v: DataTypes.STRING,
+  ped: DataTypes.STRING,
+  f_c: DataTypes.STRING,
+  h_c: DataTypes.STRING,
+  f_d: DataTypes.STRING,
+  h_d: DataTypes.STRING,
+  placa: DataTypes.STRING,
+  f_p: DataTypes.STRING,
+  f_f: DataTypes.STRING,
+  obs_e: { type: DataTypes.STRING, defaultValue: 'PENDIENTE INSTRUCCIONES' },
+  f_act: DataTypes.STRING,
+  obs: DataTypes.TEXT,
+  cond: DataTypes.TEXT,
+  h_t: DataTypes.STRING,
+  muc: DataTypes.STRING,
+  desp: DataTypes.STRING,
+  f_fin: DataTypes.STRING,
   est_real: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' }
 }, { timestamps: true });
 
@@ -116,22 +143,45 @@ app.get('/', async (req, res) => {
         <td>${c.oficina||''}</td>
         <td class="col-emp" title="${c.emp_gen||''}">${c.emp_gen||''}</td>
         <td>${c.comercial||''}</td>
-        <td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td>
+        <td>${c.pto||''}</td>
+        <td>${c.refleja||''}</td>
+        <td>${c.f_doc||''}</td>
+        <td>${c.h_doc||''}</td>
+        <td>${c.do_bl||''}</td>
+        <td>${c.cli||''}</td>
+        <td>${c.subc||''}</td>
+        <td>${c.mod||''}</td>
+        <td>${c.lcl||''}</td>
+        <td>${c.cont||''}</td>
+        <td>${c.peso||''}</td>
+        <td>${c.unid||''}</td>
+        <td>${c.prod||''}</td>
+        <td>${c.esq||''}</td>
         <td class="${venceStyle}" onclick="silenciar(this)">${c.vence||''}</td>
-        <td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td>
+        <td>${c.orig||''}</td>
+        <td>${c.dest||''}</td>
+        <td>${c.t_v||''}</td>
+        <td>${c.ped||''}</td>
+        <td>${c.f_c||''}</td>
+        <td>${c.h_c||''}</td>
+        <td>${c.f_d||''}</td>
+        <td>${c.h_d||''}</td>
         <td class="col-placa">
           <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:4px;justify-content:center;align-items:center">
             <input name="placa" class="in-placa" value="${c.placa||''}" ${isLocked} placeholder="PLACA" oninput="this.value=this.value.toUpperCase()">
             <button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:5px;border-radius:3px;cursor:pointer;font-weight:bold">OK</button>
           </form>
         </td>
-        <td>${c.f_p||''}</td><td>${c.f_f||''}</td>
+        <td>${c.f_p||''}</td>
+        <td>${c.f_f||''}</td>
         <td class="col-est">${selectEstado}</td>
         <td style="width:115px;color:#fbbf24">${c.f_act||''}</td>
         <td style="width:100px"><span style="padding:2px 6px;border-radius:10px;font-weight:bold;font-size:8px;${stClass}">${displayReal}</span></td>
         <td style="white-space:normal;min-width:250px;text-align:left">${c.obs||''}</td>
         <td style="white-space:normal;min-width:250px;text-align:left">${c.cond||''}</td>
-        <td>${c.h_t||''}</td><td>${c.muc||''}</td><td class="col-desp">${c.desp||''}</td>
+        <td>${c.h_t||''}</td>
+        <td>${c.muc||''}</td>
+        <td class="col-desp">${c.desp||''}</td>
         <td>${accionFin}</td>
         <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
         <td class="col-acc">
@@ -215,6 +265,7 @@ app.get('/', async (req, res) => {
       const t=document.getElementById('st'),m=document.getElementById('sm');
       t.onscroll=()=>m.scrollLeft=t.scrollLeft;
       m.onscroll=()=>t.scrollLeft=m.scrollLeft;
+      
       function selectAll(source){ 
         const checkboxes = document.getElementsByClassName('row-check'); 
         for(let i=0; i<checkboxes.length; i++){
@@ -222,12 +273,14 @@ app.get('/', async (req, res) => {
         }
         toggleDelBtn(); 
       }
+      
       function toggleDelBtn(){ 
         const checked = document.querySelectorAll('.row-check:checked');
         const btn = document.getElementById('btnDelMult');
         document.getElementById('count').innerText = checked.length;
         btn.style.display = checked.length > 0 ? 'inline-block' : 'none'; 
       }
+      
       function eliminarConClave(id){
         const pw = prompt("Ingrese contraseña para borrar despacho:");
         if(pw === CLAVE_ADMIN){
@@ -238,6 +291,7 @@ app.get('/', async (req, res) => {
            alert("Contraseña incorrecta");
         }
       }
+      
       function eliminarSeleccionados(){ 
         const pw = prompt("Ingrese contraseña para borrar selección:");
         if(pw !== CLAVE_ADMIN) return alert("Acceso denegado");
@@ -246,7 +300,11 @@ app.get('/', async (req, res) => {
         if(!confirm('¿Eliminar ' + ids.length + ' registros?')) return; 
         fetch('/delete-multiple',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}).then(()=>location.reload()); 
       }
-      function updState(id,v){fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:v})}).then(()=>location.reload());}
+      
+      function updState(id,v){
+        fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:v})}).then(()=>location.reload());
+      }
+      
       function buscar(){
         let f = document.getElementById("busq").value.toUpperCase();
         let filas = document.querySelectorAll(".fila-datos");
@@ -261,6 +319,7 @@ app.get('/', async (req, res) => {
           if(mostrar) { fila.querySelector('.col-num').innerText = visibleCount++; }
         });
       }
+      
       function exportExcel(){
         let csv="sep=;\\n";
         document.querySelectorAll("#tabla tr").forEach(row=>{
@@ -275,8 +334,19 @@ app.get('/', async (req, res) => {
         const b=new Blob(["\\ufeff"+csv],{type:"text/csv;charset=utf-8;"}),u=URL.createObjectURL(b),a=document.createElement("a");
         a.href=u;a.download="Reporte.csv";a.click();
       }
-      let audioContext; function activarAudio(){ if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); playAlert(); }
-      function silenciar(el){ el.dataset.silenced = "true"; el.style.animation = "none"; el.style.background = "#450a0a"; }
+      
+      let audioContext; 
+      function activarAudio(){ 
+        if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); 
+        playAlert(); 
+      }
+      
+      function silenciar(el){ 
+        el.dataset.silenced = "true"; 
+        el.style.animation = "none"; 
+        el.style.background = "#450a0a"; 
+      }
+      
       function playAlert(){ 
         let reds = Array.from(document.querySelectorAll('.vence-rojo')).filter(el => el.dataset.silenced !== "true");
         if(reds.length > 0 && audioContext){ 
@@ -300,7 +370,7 @@ app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.
 app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
 app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
 
-// --- RUTA DE INDICADORES MEJORADA ---
+// --- INDICADORES REQUERIDOS ---
 app.get('/stats', async (req, res) => {
   try {
     const cargas = await C.findAll();
@@ -308,21 +378,12 @@ app.get('/stats', async (req, res) => {
     const hoyStr = hoyDate.toLocaleDateString('en-CA');
     const mesActualStr = hoyStr.substring(0, 7);
     
-    // Calcular mes anterior para comparación
-    const mesAnteriorDate = new Date();
-    mesAnteriorDate.setMonth(hoyDate.getMonth() - 1);
-    const mesAnteriorStr = mesAnteriorDate.toISOString().substring(0, 7);
-
-    // --- LOGICA DE PERDIDA EMERGENTE ---
     const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
     const perdidosTotal = cargas.filter(c => cancelTags.includes(c.obs_e));
     const perdidaConteo = perdidosTotal.length;
     const perdidaPorcentaje = cargas.length > 0 ? ((perdidaConteo / cargas.length) * 100).toFixed(1) : 0;
-    
     const perdidaMesActual = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA').startsWith(mesActualStr)).length;
-    const perdidaMesAnterior = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA').startsWith(mesAnteriorStr)).length;
 
-    // --- LOGICA POR DESPACHADOR ---
     const despLog = {};
     cargas.forEach(c => {
       const d = c.desp || 'SIN ASIGNAR';
@@ -361,8 +422,8 @@ app.get('/stats', async (req, res) => {
     </style></head>
     <body>
       <div class="header">
-        <h2 style="margin:0;">TABLERO DE INDICADORES GERENCIALES</h2>
-        <a href="/" class="btn-back">VOLVER AL TABLERO</a>
+        <h2 style="margin:0;">TABLERO DE INDICADORES</h2>
+        <a href="/" class="btn-back">VOLVER</a>
       </div>
       <div class="kpi-grid">
         <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
@@ -372,21 +433,21 @@ app.get('/stats', async (req, res) => {
             <h3>Pérdida Emergente</h3>
             <p>${perdidaConteo} (${perdidaPorcentaje}%)</p>
             <div style="font-size:11px; margin-top:5px; color:#94a3b8;">
-                Mes Actual: <b>${perdidaMesActual}</b> | Mes Ant: <b>${perdidaMesAnterior}</b>
+                Mes Actual: <b>${perdidaMesActual}</b>
             </div>
         </div>
       </div>
       <div class="charts">
-        <div class="chart-box"><h4>ESTADO OPERACIÓN</h4><canvas id="c1"></canvas></div>
-        <div class="chart-box"><h4>CARGA POR OFICINA</h4><canvas id="c2"></canvas></div>
+        <div class="chart-box"><h4>OPERACIÓN</h4><canvas id="c1"></canvas></div>
+        <div class="chart-box"><h4>OFICINAS</h4><canvas id="c2"></canvas></div>
       </div>
-      <h3 style="color:#3b82f6; border-left: 4px solid #2563eb; padding-left: 10px; margin-bottom:15px;">RENDIMIENTO POR DESPACHADOR</h3>
+      <h3 style="color:#3b82f6; border-left: 4px solid #2563eb; padding-left: 10px; margin-bottom:15px;">PRODUCTIVIDAD POR DESPACHADOR</h3>
       <table>
         <thead>
             <tr>
                 <th>DESPACHADOR</th>
-                <th>DESPACHOS HOY</th>
-                <th>DESPACHOS MES</th>
+                <th>HOY</th>
+                <th>MES</th>
                 <th>PRODUCTIVIDAD (%)</th>
             </tr>
         </thead>
