@@ -64,6 +64,7 @@ const css = `<style>
   .btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}
   .btn-xls{background:#10b981;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer}
   .btn-del-mult{background:#ef4444;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;display:none}
+  .btn-stats{background:#8b5cf6;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;text-decoration:none;font-size:13px}
   #busq{padding:10px;width:250px;border-radius:6px;border:1px solid #3b82f6;background:#1e293b;color:white;font-weight:bold}
   .vence-rojo{background:#dc2626 !important;color:#fff !important;font-weight:bold;animation: blink 2s infinite;cursor:pointer}
   .vence-amarillo{background:#fbbf24 !important;color:#000 !important;font-weight:bold}
@@ -80,17 +81,15 @@ app.get('/', async (req, res) => {
 
     for (let c of d) {
       const isLocked = c.f_fin ? 'disabled' : '';
-      
-      // LOGICA ESTADO FINAL: SI TIENE F_FIN ES "FINALIZADO", SI TIENE PLACA ES "DESPACHADO", SI NO ES "PENDIENTE"
       let displayReal = 'PENDIENTE';
-      let stClass = 'background:#475569;color:#cbd5e1'; // Gris para Pendiente
+      let stClass = 'background:#475569;color:#cbd5e1'; 
 
       if (c.f_fin) {
           displayReal = 'FINALIZADO';
-          stClass = 'background:#1e40af;color:#bfdbfe'; // Azul para Finalizado
+          stClass = 'background:#1e40af;color:#bfdbfe'; 
       } else if (c.placa) {
           displayReal = 'DESPACHADO';
-          stClass = 'background:#065f46;color:#34d399'; // Verde para Despachado
+          stClass = 'background:#065f46;color:#34d399'; 
       }
       
       let venceStyle = '';
@@ -144,6 +143,7 @@ app.get('/', async (req, res) => {
       <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">
           <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Filtrar por Placa, Cliente, ID...">
           <button class="btn-xls" onclick="exportExcel()">Excel</button>
+          <a href="/stats" class="btn-stats">📈 Indicadores</a>
           <button id="btnDelMult" class="btn-del-mult" onclick="eliminarSeleccionados()">Borrar (<span id="count">0</span>)</button>
           <div style="background:#2563eb;padding:5px 10px;border-radius:6px;display:flex;align-items:center;gap:5px;">
             <label style="font-size:10px;color:#fff;">Todos</label>
@@ -204,7 +204,6 @@ app.get('/', async (req, res) => {
 
       <script>
       const CLAVE_ADMIN = "ADMIN123";
-
       const t=document.getElementById('st'),m=document.getElementById('sm');
       t.onscroll=()=>m.scrollLeft=t.scrollLeft;
       m.onscroll=()=>t.scrollLeft=m.scrollLeft;
@@ -238,7 +237,6 @@ app.get('/', async (req, res) => {
       function eliminarSeleccionados(){ 
         const pw = prompt("Ingrese contraseña para borrar selección:");
         if(pw !== CLAVE_ADMIN) return alert("Acceso denegado");
-
         const checked = document.querySelectorAll('.row-check:checked');
         const ids = Array.from(checked).map(cb => cb.value);
         if(!confirm('¿Eliminar ' + ids.length + ' registros?')) return; 
@@ -303,5 +301,33 @@ app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id
 app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); res.redirect('/'); });
 app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
 app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
+
+// --- RUTA DE ESTADÍSTICAS ---
+app.get('/stats', async (req, res) => {
+  try {
+    const cargas = await C.findAll();
+    const total = cargas.length;
+    const fin = cargas.filter(c => c.f_fin).length;
+    const desp = cargas.filter(c => c.placa && !c.f_fin).length;
+    const pend = total - fin - desp;
+
+    const ofis = {}; cargas.forEach(c => { if(c.oficina) ofis[c.oficina] = (ofis[c.oficina] || 0) + 1; });
+    const clis = {}; cargas.forEach(c => { if(c.cli) clis[c.cli] = (clis[c.cli] || 0) + 1; });
+    const topClis = Object.entries(clis).sort((a,b) => b[1]-a[1]).slice(0, 5);
+
+    res.send(`<html><head><meta charset="UTF-8"><title>KPI - LOGISV20</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:25px;}.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;border-bottom:1px solid #1e40af;padding-bottom:15px;}.btn-back{background:#2563eb;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:bold;font-size:13px;}.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-bottom:30px;}.card{background:#1e293b;padding:20px;border-radius:12px;border:1px solid #334155;text-align:center;}.card h3{margin:0;font-size:11px;color:#94a3b8;text-transform:uppercase;}.card p{margin:10px 0 0;font-size:36px;font-weight:bold;color:#3b82f6;}.charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:25px;}.chart-box{background:#1e293b;padding:20px;border-radius:12px;border:1px solid #334155;display:flex;flex-direction:column;align-items:center;}</style></head>
+    <body><div class="header"><h2>MÉTRICAS OPERATIVAS V20</h2><a href="/" class="btn-back">⬅ VOLVER AL TABLERO</a></div>
+    <div class="kpi-grid"><div class="card"><h3>Total</h3><p>${total}</p></div><div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div><div class="card"><h3>En Ruta</h3><p style="color:#fbbf24">${desp}</p></div><div class="card"><h3>Pendientes</h3><p style="color:#94a3b8">${pend}</p></div></div>
+    <div class="charts-grid"><div class="chart-box"><h4>ESTADO OPERACIÓN</h4><canvas id="chart1"></canvas></div><div class="chart-box"><h4>POR OFICINA</h4><canvas id="chart2"></canvas></div><div class="chart-box"><h4>TOP 5 CLIENTES</h4><canvas id="chart3"></canvas></div></div>
+    <script>
+      new Chart(document.getElementById('chart1'), {type:'doughnut',data:{labels:['Finalizados','En Ruta','Pendientes'],datasets:[{data:[${fin},${desp},${pend}],backgroundColor:['#10b981','#fbbf24','#475569'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
+      new Chart(document.getElementById('chart2'), {type:'bar',data:{labels:${JSON.stringify(Object.keys(ofis))},datasets:[{label:'Servicios',data:${JSON.stringify(Object.values(ofis))},backgroundColor:'#3b82f6'}]},options:{scales:{y:{beginAtZero:true,ticks:{color:'#fff'}},x:{ticks:{color:'#fff'}}},plugins:{legend:{display:false}}}});
+      new Chart(document.getElementById('chart3'), {type:'pie',data:{labels:${JSON.stringify(topClis.map(x=>x[0]))},datasets:[{data:${JSON.stringify(topClis.map(x=>x[1]))},backgroundColor:['#ef4444','#f97316','#8b5cf6','#ec4899','#06b6d4'],borderWidth:0}]},options:{plugins:{legend:{position:'right',labels:{color:'#fff',font:{size:10}}}}}});
+    </script></body></html>`);
+  } catch (e) { res.send(e.message); }
+});
+
+
 
 db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
