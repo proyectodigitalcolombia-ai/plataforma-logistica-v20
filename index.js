@@ -66,3 +66,75 @@ app.get('/', async (req, res) => {
         <td style="padding:0;width:1px">${selectEstado}</td>
         <td style="width:135px;color:#fbbf24;font-weight:bold">${c.f_act||''}</td>
         <td><span style="padding:4px 8px;border-radius:12px;font-weight:bold;font-size:9px;text-transform:uppercase;${stClass}">${displayReal}</span></td>
+        <td style="white-space:normal;min-width:300px;text-align:left">${c.obs||''}</td>
+        <td style="white-space:normal;min-width:300px;text-align:left">${c.cond||''}</td>
+        <td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td>
+        <td>${accionFin}</td>
+        <td><b style="color:#3b82f6">${c.f_fin||'--:--'}</b></td>
+        <td><a href="/d/${c.id}" style="color:#f87171;text-decoration:none;font-weight:bold" onclick="return confirm('¿Eliminar despacho?')">ELIMINAR DESPACHO</a></td>
+      </tr>`;
+    }
+
+    res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
+      <h2 style="color:#3b82f6">SISTEMA DE CONTROL LOGÍSTICO V20</h2>
+      <div style="display:flex;gap:15px;margin-bottom:15px;align-items:center;flex-wrap:wrap">
+        <div style="background:#1e293b;padding:8px 12px;border-radius:6px;border:1px solid #2563eb;display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="checkAll" onclick="selectAll(this)"> <label style="font-size:10px;font-weight:bold;color:#fff;cursor:pointer">SELECCIONAR TODO</label>
+        </div>
+        <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Filtrar por Placa, Contenedor...">
+        <button class="btn-xls" onclick="exportExcel()">📥 EXPORTAR A EXCEL</button>
+        <button id="btnDelMult" class="btn-del-mult" onclick="eliminarSeleccionados()">🗑️ ELIMINAR SELECCIONADOS (<span id="count">0</span>)</button>
+      </div>
+      <form action="/add" method="POST" class="form"><datalist id="list_ciud">${opts.ciudades.map(c=>`<option value="${c}">`).join('')}</datalist><div class="fg"><label>Oficina</label><select name="oficina">${opts.oficina.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Empresa Generadora</label><select name="emp_gen"><option value="YEGO ECO-T SAS">YEGO ECO-T SAS</option></select></div><div class="fg"><label>Comercial</label><select name="comercial"><option value="RAÚL LÓPEZ">RAÚL LÓPEZ</option></select></div><div class="fg"><label>Puerto</label><select name="pto">${opts.puertos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Refleja</label><select name="refleja"><option value="SI">SI</option><option value="NO">NO</option></select></div><div class="fg"><label>Fecha Documento</label><input name="f_doc" type="date"></div><div class="fg"><label>Hora Documento</label><input name="h_doc" type="time"></div><div class="fg"><label>DO / BL / OC</label><input name="do_bl"></div><div class="fg"><label>Cliente</label><select name="cli">${opts.clientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Subcliente</label><select name="subc">${opts.subclientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Modalidad</label><select name="mod">${opts.modalidades.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>LCL / FCL</label><select name="lcl">${opts.lcl_fcl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Número Contenedor</label><input name="cont" oninput="this.value=this.value.toUpperCase()"></div><div class="fg"><label>Peso Kilogramos</label><input name="peso"></div><div class="fg"><label>Unidades</label><input name="unid"></div><div class="fg"><label>Producto</label><input name="prod"></div><div class="fg"><label>Esquema Seguridad</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Vence Puerto</label><input name="vence" type="date"></div><div class="fg"><label>Origen</label><input name="orig" list="list_ciud"></div><div class="fg"><label>Destino</label><input name="dest" list="list_ciud"></div><div class="fg"><label>Tipo Vehículo</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Pedido</label><input name="ped"></div><div class="fg"><label>Fecha Cargue</label><input name="f_c" type="date"></div><div class="fg"><label>Hora Cargue</label><input name="h_c" type="time"></div><div class="fg"><label>Fecha Descargue</label><input name="f_d" type="date"></div><div class="fg"><label>Hora Descargue</label><input name="h_d" type="time"></div><div class="fg"><label>Flete Pagar</label><input name="f_p"></div><div class="fg"><label>Flete Facturar</label><input name="f_f"></div><div class="fg"><label>Estado Inicial</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Horario</label><input name="h_t"></div><div class="fg"><label>MUC</label><input name="muc"></div><div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg" style="grid-column: span 2"><label>Observaciones del Servicio</label><textarea name="obs" rows="1"></textarea></div><div class="fg" style="grid-column: span 2"><label>Condiciones Especiales</label><textarea name="cond" rows="1"></textarea></div><button class="btn">💾 REGISTRAR NUEVA CARGA</button></form>
+      <div class="sc fs" id="st"><div class="fc"></div></div>
+      <div class="sc" id="sm"><table id="tabla"><thead><tr><th>X</th><th>ID</th><th>REGISTRO</th><th>OFICINA</th><th>EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLI</th><th>SUB</th><th>MOD</th><th>LCL</th><th>CONT</th><th>PESO</th><th>UNID</th><th>PROD</th><th>ESQ</th><th>VENCE</th><th>ORIGEN</th><th>DEST</th><th>VEHICULO</th><th>PED</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th>PLACA</th><th>PAGAR</th><th>FACT</th><th>ESTADO</th><th>ACTU</th><th>REAL</th><th>OBS</th><th>COND</th><th>HORA</th><th>MUC</th><th>DESP</th><th>FIN</th><th>H.FIN</th><th>ACCIONES</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <script>
+      const t=document.getElementById('st'),m=document.getElementById('sm');t.onscroll=()=>m.scrollLeft=t.scrollLeft;m.onscroll=()=>t.scrollLeft=m.scrollLeft;
+      function selectAll(source){ 
+        const checkboxes = document.getElementsByClassName('row-check'); 
+        for(let i=0; i<checkboxes.length; i++) checkboxes[i].checked = source.checked; 
+        toggleDelBtn(); 
+      }
+      function toggleDelBtn(){ 
+        const checked = document.querySelectorAll('.row-check:checked');
+        const btn = document.getElementById('btnDelMult');
+        const countSpan = document.getElementById('count');
+        countSpan.innerText = checked.length;
+        btn.style.display = checked.length > 0 ? 'inline-block' : 'none'; 
+      }
+      function eliminarSeleccionados(){ 
+        const checked = document.querySelectorAll('.row-check:checked');
+        if(!confirm('¿Eliminar definitivamente ' + checked.length + ' despachos seleccionados?')) return; 
+        const ids = Array.from(checked).map(cb => cb.value); 
+        fetch('/delete-multiple',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}).then(()=>location.reload()); 
+      }
+      function updState(id,v){fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:v})}).then(()=>location.reload());}
+      function buscar(){let f=document.getElementById("busq").value.toUpperCase(),filas=document.getElementById("tabla").getElementsByTagName("tr");for(let i=1;i<filas.length;i++){filas[i].style.display=filas[i].innerText.toUpperCase().includes(f)?"":"none";}}
+      function exportExcel(){let csv="sep=;\\n";document.querySelectorAll("#tabla tr").forEach(row=>{if(row.style.display!=="none"){let cols=Array.from(row.querySelectorAll("td, th")).map(c=>{let inp=c.querySelector("input,select,textarea");return '"'+(inp?inp.value:c.innerText.split('\\n')[0]).replace(/;/g,",").trim()+'"';});csv+=cols.slice(1,-1).join(";")+"\\n";}});const b=new Blob(["\\ufeff"+csv],{type:"text/csv;charset=utf-8;"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="Reporte.csv";a.click();}
+      let audioContext; function activarAudio(){ if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); playAlert(); }
+      function silenciar(el){ el.dataset.silenced = "true"; el.style.animation = "none"; el.style.background = "#450a0a"; }
+      function playAlert(){ 
+        let reds = Array.from(document.querySelectorAll('.vence-rojo')).filter(el => el.dataset.silenced !== "true");
+        if(reds.length > 0 && audioContext){ 
+          let osc=audioContext.createOscillator(),gain=audioContext.createGain(); 
+          osc.type='square'; osc.frequency.setValueAtTime(440, audioContext.currentTime); 
+          osc.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime+0.1); 
+          gain.gain.setValueAtTime(0.1, audioContext.currentTime); 
+          gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime+0.5); 
+          osc.connect(gain); gain.connect(audioContext.destination); 
+          osc.start(); osc.stop(audioContext.currentTime+0.5); 
+          setTimeout(playAlert, 2000); 
+        }
+      } window.onload=()=>setTimeout(playAlert,1000);
+      </script></body></html>`);
+  } catch (e) { res.send(e.message); }
+});
+
+app.post('/add', async (req, res) => { req.body.f_act = getNow(); await C.create(req.body); res.redirect('/'); });
+app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
+app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id: req.body.ids } }); res.sendStatus(200); });
+app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); res.redirect('/'); });
+app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
+app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
+
+db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
