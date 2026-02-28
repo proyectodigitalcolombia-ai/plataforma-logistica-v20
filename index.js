@@ -62,12 +62,9 @@ const css = `<style>
   label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}
   input,select,textarea{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000;text-align:center}
   .btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}
-  
-  /* AJUSTES SOLICITADOS */
   .btn-xls{background:#556b2f;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;height:38px;box-sizing:border-box;}
   .btn-stats{background:#4c1d95;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;text-decoration:none;font-size:13px;height:38px;box-sizing:border-box;display:flex;align-items:center;}
   .container-check-all{background:#2563eb;padding:5px 10px;border-radius:6px;display:flex;align-items:center;gap:5px;height:38px;box-sizing:border-box;}
-  
   .btn-del-mult{background:#ef4444;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;display:none;height:38px;box-sizing:border-box;}
   #busq{padding:10px;width:250px;border-radius:6px;border:1px solid #3b82f6;background:#1e293b;color:white;font-weight:bold;height:38px;box-sizing:border-box;}
   .vence-rojo{background:#dc2626 !important;color:#fff !important;font-weight:bold;animation: blink 2s infinite;cursor:pointer}
@@ -119,7 +116,7 @@ app.get('/', async (req, res) => {
         <td class="${venceStyle}" onclick="silenciar(this)">${c.vence||''}</td>
         <td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td>
         <td class="col-placa">
-          <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:4px;justify(center;align-items:center">
+          <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:4px;justify-content:center;align-items:center">
             <input name="placa" class="in-placa" value="${c.placa||''}" ${isLocked} placeholder="PLACA" oninput="this.value=this.value.toUpperCase()">
             <button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:5px;border-radius:3px;cursor:pointer;font-weight:bold">OK</button>
           </form>
@@ -143,7 +140,7 @@ app.get('/', async (req, res) => {
     }
 
     res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
-      <h2 style="color:#3b82f6; margin: 0 0 10px 0;">SISTEMA LOGÍSTICO V20</h2>
+      <h2 style="color:#3b82f6; margin: 0 0 10px 0;">SISTEMA LOGISTICO DE YEGO ECO T S.A.S</h2>
       <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">
           <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Filtrar por Placa, Cliente, ID...">
           <button class="btn-xls" onclick="exportExcel()">Excel</button>
