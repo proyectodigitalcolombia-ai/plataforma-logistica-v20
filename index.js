@@ -62,10 +62,14 @@ const css = `<style>
   label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}
   input,select,textarea{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000;text-align:center}
   .btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}
-  .btn-xls{background:#10b981;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer}
-  .btn-del-mult{background:#ef4444;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;display:none}
-  .btn-stats{background:#8b5cf6;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;text-decoration:none;font-size:13px}
-  #busq{padding:10px;width:250px;border-radius:6px;border:1px solid #3b82f6;background:#1e293b;color:white;font-weight:bold}
+  
+  /* AJUSTES SOLICITADOS */
+  .btn-xls{background:#556b2f;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;height:38px;box-sizing:border-box;}
+  .btn-stats{background:#4c1d95;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;text-decoration:none;font-size:13px;height:38px;box-sizing:border-box;display:flex;align-items:center;}
+  .container-check-all{background:#2563eb;padding:5px 10px;border-radius:6px;display:flex;align-items:center;gap:5px;height:38px;box-sizing:border-box;}
+  
+  .btn-del-mult{background:#ef4444;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;display:none;height:38px;box-sizing:border-box;}
+  #busq{padding:10px;width:250px;border-radius:6px;border:1px solid #3b82f6;background:#1e293b;color:white;font-weight:bold;height:38px;box-sizing:border-box;}
   .vence-rojo{background:#dc2626 !important;color:#fff !important;font-weight:bold;animation: blink 2s infinite;cursor:pointer}
   .vence-amarillo{background:#fbbf24 !important;color:#000 !important;font-weight:bold}
   @keyframes blink { 0% {opacity:1} 50% {opacity:0.6} 100% {opacity:1} }
@@ -115,7 +119,7 @@ app.get('/', async (req, res) => {
         <td class="${venceStyle}" onclick="silenciar(this)">${c.vence||''}</td>
         <td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td>
         <td class="col-placa">
-          <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:4px;justify-content:center;align-items:center">
+          <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:4px;justify(center;align-items:center">
             <input name="placa" class="in-placa" value="${c.placa||''}" ${isLocked} placeholder="PLACA" oninput="this.value=this.value.toUpperCase()">
             <button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:5px;border-radius:3px;cursor:pointer;font-weight:bold">OK</button>
           </form>
@@ -145,7 +149,7 @@ app.get('/', async (req, res) => {
           <button class="btn-xls" onclick="exportExcel()">Excel</button>
           <a href="/stats" class="btn-stats">📈 Indicadores</a>
           <button id="btnDelMult" class="btn-del-mult" onclick="eliminarSeleccionados()">Borrar (<span id="count">0</span>)</button>
-          <div style="background:#2563eb;padding:5px 10px;border-radius:6px;display:flex;align-items:center;gap:5px;">
+          <div class="container-check-all">
             <label style="font-size:10px;color:#fff;">Todos</label>
             <input type="checkbox" id="checkAll" onclick="selectAll(this)">
           </div>
@@ -302,20 +306,15 @@ app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.
 app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
 app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
 
-// ==========================================
-// RUTA DE ESTADÍSTICAS (KPIs)
-// ==========================================
 app.get('/stats', async (req, res) => {
   try {
     const cargas = await C.findAll();
     const hoyStr = new Date().toLocaleDateString('en-CA');
     const mesStr = hoyStr.substring(0, 7);
 
-    // 1. Cálculos de Pérdida Emergente
     const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
     const perdida = cargas.filter(c => cancelTags.includes(c.obs_e)).length;
 
-    // 2. Cálculos por Despachador (Día vs Mes)
     const despLog = {};
     cargas.forEach(c => {
       const d = c.desp || 'SIN ASIGNAR';
@@ -361,8 +360,7 @@ app.get('/stats', async (req, res) => {
         <div class="chart-box"><h4>ESTADO OPERACIÓN</h4><canvas id="c1"></canvas></div>
         <div class="chart-box"><h4>CARGA POR OFICINA</h4><canvas id="c2"></canvas></div>
       </div>
-      
-      <h3 style="color:#3b82f6">RENDIMIENTO POR DESPACHADOR</h3>
+      <h3>RENDIMIENTO POR DESPACHADOR</h3>
       <table>
         <thead><tr><th>DESPACHADOR</th><th>DESPACHOS HOY</th><th>DESPACHOS MES</th><th>PRODUCTIVIDAD</th></tr></thead>
         <tbody>
