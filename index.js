@@ -142,7 +142,6 @@ app.get('/', async (req, res) => {
       const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
       let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
       const idUnico = c.id.toString().padStart(4, '0');
-
       const fechaLocal = new Date(c.createdAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' });
 
       rows += `<tr class="fila-datos">
@@ -379,7 +378,7 @@ app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.
 app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
 app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
 
-// --- INDICADORES ACTUALIZADOS ---
+// --- INDICADORES ---
 app.get('/stats', async (req, res) => {
   try {
     const cargas = await C.findAll();
@@ -387,7 +386,7 @@ app.get('/stats', async (req, res) => {
     const hoyStr = hoyDate.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
     const mesActualStr = hoyStr.substring(0, 7);
     
-    // 1. Lógica de Vehículos Faltantes por Origen (Cargas sin placa y sin finalizar)
+    // Vehículos Faltantes por Origen
     const sinPlaca = cargas.filter(c => (!c.placa || c.placa.trim() === '') && !c.f_fin);
     const reqPorCiudad = {};
     sinPlaca.forEach(c => {
@@ -399,12 +398,19 @@ app.get('/stats', async (req, res) => {
 
     const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
     const perdidosTotal = cargas.filter(c => cancelTags.includes(c.obs_e));
+    
+    // Pérdida diaria (servicios creados hoy que están cancelados)
+    const perdidaDiaria = perdidosTotal.filter(c => {
+       return new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) === hoyStr;
+    }).length;
+
+    // Pérdida mes actual (servicios creados este mes que están cancelados)
+    const perdidaMesActual = perdidosTotal.filter(c => {
+       return new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).startsWith(mesActualStr);
+    }).length;
+
     const perdidaConteo = perdidosTotal.length;
     const perdidaPorcentaje = cargas.length > 0 ? ((perdidaConteo / cargas.length) * 100).toFixed(1) : 0;
-    const perdidaMesActual = perdidosTotal.filter(c => {
-       const f = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
-       return f.startsWith(mesActualStr);
-    }).length;
 
     const despLog = {};
     cargas.forEach(c => {
@@ -426,8 +432,8 @@ app.get('/stats', async (req, res) => {
       body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:25px;}
       .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid #1e40af;padding-bottom:15px;}
       .btn-back{background:#2563eb;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:bold;}
-      .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;margin-bottom:25px;}
-      .card{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;}
+      .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:25px;}
+      .card{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;display:flex;flex-direction:column;justify-content:center;}
       .card h3{margin:0;font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;}
       .card p{margin:10px 0 0;font-size:32px;font-weight:bold;color:#3b82f6;}
       .lost-card{border-left: 5px solid #ef4444; background: rgba(239, 68, 68, 0.05);}
@@ -453,18 +459,24 @@ app.get('/stats', async (req, res) => {
         <div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
         <div class="card"><h3>En Ruta</h3><p style="color:#fbbf24">${desp}</p></div>
         <div class="card lost-card">
-            <h3>Pérdida Emergente</h3>
-            <p>${perdidaConteo} (${perdidaPorcentaje}%)</p>
+            <h3>Pérdida Emergente (DIARIO)</h3>
+            <p>${perdidaDiaria}</p>
+            <span style="font-size:11px;color:#94a3b8">Total acumulado: ${perdidaConteo}</span>
+        </div>
+        <div class="card lost-card" style="border-left-color: #f87171;">
+            <h3>Pérdida Emergente (MENSUAL)</h3>
+            <p>${perdidaMesActual}</p>
+            <span style="font-size:11px;color:#94a3b8">Mes: ${mesActualStr}</span>
         </div>
       </div>
 
-      <h3 style="color:#ef4444; border-left: 4px solid #ef4444; padding-left: 10px; margin-bottom:15px;">REQUERIMIENTOS PENDIENTES (SIN PLACA)</h3>
+      <h3 style="color:#ef4444; border-left: 4px solid #ef4444; padding-left: 10px; margin-bottom:15px;">VEHÍCULOS FALTANTES DESDE ORIGEN</h3>
       <table>
         <thead>
             <tr>
                 <th>CIUDAD DE ORIGEN</th>
-                <th>VEHÍCULOS FALTANTES POR TIPO</th>
-                <th>TOTAL CIUDAD</th>
+                <th>TIPO DE VEHÍCULO REQUERIDO</th>
+                <th>CANTIDAD FALTANTE</th>
             </tr>
         </thead>
         <tbody>
@@ -477,13 +489,13 @@ app.get('/stats', async (req, res) => {
               <td><b style="color:#ef4444">${totalCiudad}</b></td>
             </tr>`;
           }).join('')}
-          ${sinPlaca.length === 0 ? '<tr><td colspan="3">No hay requerimientos pendientes</td></tr>' : ''}
+          ${sinPlaca.length === 0 ? '<tr><td colspan="3">No hay vehículos pendientes por asignar</td></tr>' : ''}
         </tbody>
       </table>
 
       <div class="charts">
-        <div class="chart-box"><h4>OPERACIÓN</h4><canvas id="c1"></canvas></div>
-        <div class="chart-box"><h4>OFICINAS</h4><canvas id="c2"></canvas></div>
+        <div class="chart-box"><h4>ESTADO DE OPERACIÓN</h4><canvas id="c1"></canvas></div>
+        <div class="chart-box"><h4>SERVICIOS POR OFICINA</h4><canvas id="c2"></canvas></div>
       </div>
 
       <h3 style="color:#3b82f6; border-left: 4px solid #2563eb; padding-left: 10px; margin-bottom:15px;">PRODUCTIVIDAD POR DESPACHADOR</h3>
