@@ -61,7 +61,26 @@ const css = `<style>
   .fg{display:flex;flex-direction:column;gap:4px}
   label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}
   input,select,textarea{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000;text-align:center}
-  .btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}
+  
+  /* ESTILO SERIO PARA BOTÓN REGISTRAR */
+  .btn-submit-serious{
+    grid-column:1/-1;
+    background:#1e40af; /* Azul más oscuro e institucional */
+    color:#fff;
+    padding:12px;
+    cursor:pointer;
+    border:none;
+    font-weight:700;
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px; /* Espacio entre icono y texto */
+    transition: background 0.2s;
+  }
+  .btn-submit-serious:hover{ background:#1d4ed8; }
+  .icon-serious{ width:20px; height:20px; fill:#fff; }
+
   .btn-xls{background:#556b2f;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;height:38px;box-sizing:border-box;}
   .btn-stats{background:#4c1d95;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;text-decoration:none;font-size:13px;height:38px;box-sizing:border-box;display:flex;align-items:center;}
   .container-check-all{background:#2563eb;padding:5px 10px;border-radius:6px;display:flex;align-items:center;gap:5px;height:38px;box-sizing:border-box;}
@@ -188,7 +207,11 @@ app.get('/', async (req, res) => {
         <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg" style="grid-column: span 2"><label>Obs</label><textarea name="obs" rows="1"></textarea></div>
         <div class="fg" style="grid-column: span 2"><label>Cond</label><textarea name="cond" rows="1"></textarea></div>
-        <button class="btn" style="padding: 10px;">💾 REGISTRAR</button>
+        
+        <button class="btn-submit-serious">
+          <svg class="icon-serious" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+          REGISTRAR SERVICIO
+        </button>
       </form>
 
       <div class="sc fs" id="st"><div class="fc"></div></div>
@@ -355,7 +378,6 @@ app.get('/stats', async (req, res) => {
         </div>
         <a href="/" class="btn-back">VOLVER AL TABLERO</a>
       </div>
-      
       <div class="kpi-grid">
         <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
         <div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
