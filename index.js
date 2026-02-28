@@ -39,22 +39,22 @@ const opts = {
 
 const getNow = () => new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota', hour12: false });
 
-// 3. CSS Actualizado con anchos optimizados
 const css = `<style>
   body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}
   .sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}
   .fs{height:12px;margin-bottom:5px}
-  .fc{width:8600px;height:1px}
-  table{border-collapse:collapse;min-width:8600px;font-size:10px}
-  th{background:#1e40af;padding:12px;text-align:center;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6}
-  td{padding:8px;border:1px solid #334155;white-space:nowrap;text-align:center}
+  .fc{width:8200px;height:1px}
+  table{border-collapse:collapse;min-width:8200px;font-size:10px;table-layout: fixed;}
+  th{background:#1e40af;padding:8px;text-align:center;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6; overflow: hidden;}
+  td{padding:6px;border:1px solid #334155;white-space:nowrap;text-align:center; overflow: hidden; text-overflow: ellipsis;}
   
-  /* AJUSTES SOLICITADOS */
-  .col-num { min-width: 35px; width: 35px; }
-  .col-id { min-width: 55px; width: 55px; font-weight: bold; }
-  .col-reg { min-width: 140px; }
-  .col-emp { min-width: 220px; text-align: left; padding-left: 10px; }
-  .col-placa { min-width: 110px; }
+  .col-num { width: 30px; }
+  .col-id { width: 45px; font-weight: bold; }
+  
+  /* ANCHOS REDUCIDOS AL MÍNIMO */
+  .col-reg { width: 110px; font-size: 9px; }
+  .col-emp { width: 140px; text-align: left !important; }
+  .col-placa { width: 95px; }
 
   .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}
   .fg{display:flex;flex-direction:column;gap:4px}
@@ -67,6 +67,7 @@ const css = `<style>
   .vence-rojo{background:#dc2626 !important;color:#fff !important;font-weight:bold;animation: blink 2s infinite;cursor:pointer}
   .vence-amarillo{background:#fbbf24 !important;color:#000 !important;font-weight:bold}
   @keyframes blink { 0% {opacity:1} 50% {opacity:0.6} 100% {opacity:1} }
+  tr:hover td { background: #334155; }
 </style>`;
 
 app.get('/', async (req, res) => {
@@ -89,94 +90,92 @@ app.get('/', async (req, res) => {
         else if (diffDays <= 6) venceStyle = 'vence-amarillo';
       }
 
-      const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)" style="background:#334155;color:#fff;border:none;padding:8px 4px;font-size:9px;width:100%;min-width:165px;cursor:pointer;text-align:center">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
-      let accionFin = c.f_fin ? `<span style="color:#10b981">✓ FINALIZADO</span>` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:5px 8px;border-radius:4px;font-weight:bold;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">🏁 FINALIZAR</a>` : `<span style="font-size:8px;color:#94a3b8">PENDIENTE PLACA</span>`);
+      const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)" style="background:#334155;color:#fff;border:none;padding:4px;font-size:9px;width:100%;cursor:pointer">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
+      let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
       
       const idUnico = c.id.toString().padStart(4, '0');
 
       rows += `<tr class="fila-datos">
         <td class="col-num">${index++}</td>
         <td class="col-id">${idUnico}</td>
-        <td class="col-reg">${new Date(c.createdAt).toLocaleString()}</td>
+        <td class="col-reg">${new Date(c.createdAt).toLocaleDateString()} ${new Date(c.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
         <td>${c.oficina||''}</td>
-        <td class="col-emp">${c.emp_gen||''}</td>
+        <td class="col-emp" title="${c.emp_gen||''}">${c.emp_gen||''}</td>
         <td>${c.comercial||''}</td>
         <td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td>
         <td class="${venceStyle}" onclick="silenciar(this)">${c.vence||''}</td>
         <td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td>
         <td class="col-placa">
           <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:2px;justify-content:center">
-            <input name="placa" value="${c.placa||''}" ${isLocked} style="width:55px" oninput="this.value=this.value.toUpperCase()">
-            <button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:3px;border-radius:2px;cursor:pointer">OK</button>
+            <input name="placa" value="${c.placa||''}" ${isLocked} style="width:45px; font-size:9px" oninput="this.value=this.value.toUpperCase()">
+            <button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:2px;border-radius:2px;cursor:pointer">OK</button>
           </form>
         </td>
         <td>${c.f_p||''}</td><td>${c.f_f||''}</td>
-        <td style="padding:0;width:1px">${selectEstado}</td>
-        <td style="width:135px;color:#fbbf24;font-weight:bold">${c.f_act||''}</td>
-        <td><span style="padding:4px 8px;border-radius:12px;font-weight:bold;font-size:9px;text-transform:uppercase;${stClass}">${displayReal}</span></td>
-        <td style="white-space:normal;min-width:300px;text-align:left">${c.obs||''}</td>
-        <td style="white-space:normal;min-width:300px;text-align:left">${c.cond||''}</td>
+        <td style="padding:0;width:120px">${selectEstado}</td>
+        <td style="width:110px;color:#fbbf24">${c.f_act||''}</td>
+        <td><span style="padding:2px 6px;border-radius:10px;font-weight:bold;font-size:8px;${stClass}">${displayReal}</span></td>
+        <td style="white-space:normal;min-width:200px;text-align:left">${c.obs||''}</td>
+        <td style="white-space:normal;min-width:200px;text-align:left">${c.cond||''}</td>
         <td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td>
         <td>${accionFin}</td>
-        <td><b style="color:#3b82f6">${c.f_fin||'--:--'}</b></td>
-        <td style="display:flex;align-items:center;justify-content:center;gap:10px;height:45px">
-          <a href="/d/${c.id}" style="color:#f87171;text-decoration:none;font-weight:bold" onclick="return confirm('¿Eliminar registro?')">BORRAR</a>
-          <input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()" style="width:18px;height:18px;cursor:pointer">
+        <td><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
+        <td style="display:flex;align-items:center;justify-content:center;gap:5px;height:35px">
+          <a href="/d/${c.id}" style="color:#f87171;text-decoration:none;font-size:9px" onclick="return confirm('¿Borrar?')">DEL</a>
+          <input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()">
         </td>
       </tr>`;
     }
 
     res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
-      <h2 style="color:#3b82f6">SISTEMA DE CONTROL LOGÍSTICO V20</h2>
-      <div style="display:flex;gap:15px;margin-bottom:15px;align-items:center;justify-content:space-between">
-        <div style="display:flex;gap:10px">
+      <h2 style="color:#3b82f6; margin: 0 0 10px 0;">SISTEMA LOGÍSTICO V20</h2>
+      <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">
           <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Filtrar...">
-          <button class="btn-xls" onclick="exportExcel()">📥 EXCEL</button>
-          <button id="btnDelMult" class="btn-del-mult" onclick="eliminarSeleccionados()">🗑️ ELIMINAR SELECCIONADOS (<span id="count">0</span>)</button>
-        </div>
-        <div style="background:#2563eb;padding:8px 15px;border-radius:6px;display:flex;align-items:center;gap:10px;box-shadow: 0 2px 4px rgba(0,0,0,0.3)">
-          <label style="font-size:11px;font-weight:bold;color:#fff;cursor:pointer">SELECCIONAR TODOS</label>
-          <input type="checkbox" id="checkAll" onclick="selectAll(this)" style="cursor:pointer;width:16px;height:16px">
-        </div>
+          <button class="btn-xls" onclick="exportExcel()">Excel</button>
+          <button id="btnDelMult" class="btn-del-mult" onclick="eliminarSeleccionados()">Borrar (<span id="count">0</span>)</button>
+          <div style="background:#2563eb;padding:5px 10px;border-radius:6px;display:flex;align-items:center;gap:5px;">
+            <label style="font-size:10px;color:#fff;">Todos</label>
+            <input type="checkbox" id="checkAll" onclick="selectAll(this)">
+          </div>
       </div>
       
-      <form action="/add" method="POST" class="form">
+      <form action="/add" method="POST" class="form" style="padding:10px; gap:8px;">
         <datalist id="list_ciud">${opts.ciudades.map(c=>`<option value="${c}">`).join('')}</datalist>
         <div class="fg"><label>Oficina</label><select name="oficina">${opts.oficina.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>Empresa Generadora</label><select name="emp_gen"><option value="YEGO ECO-T SAS">YEGO ECO-T SAS</option></select></div>
+        <div class="fg"><label>Empresa</label><select name="emp_gen"><option value="YEGO ECO-T SAS">YEGO ECO-T SAS</option></select></div>
         <div class="fg"><label>Comercial</label><select name="comercial"><option value="RAÚL LÓPEZ">RAÚL LÓPEZ</option></select></div>
         <div class="fg"><label>Puerto</label><select name="pto">${opts.puertos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Refleja</label><select name="refleja"><option value="SI">SI</option><option value="NO">NO</option></select></div>
-        <div class="fg"><label>Fecha Documento</label><input name="f_doc" type="date"></div>
-        <div class="fg"><label>Hora Documento</label><input name="h_doc" type="time"></div>
-        <div class="fg"><label>DO / BL / OC</label><input name="do_bl"></div>
+        <div class="fg"><label>F. Doc</label><input name="f_doc" type="date"></div>
+        <div class="fg"><label>H. Doc</label><input name="h_doc" type="time"></div>
+        <div class="fg"><label>DO/BL</label><input name="do_bl"></div>
         <div class="fg"><label>Cliente</label><select name="cli">${opts.clientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Subcliente</label><select name="subc">${opts.subclientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Modalidad</label><select name="mod">${opts.modalidades.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>LCL / FCL</label><select name="lcl">${opts.lcl_fcl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>Número Contenedor</label><input name="cont" oninput="this.value=this.value.toUpperCase()"></div>
-        <div class="fg"><label>Peso Kilogramos</label><input name="peso"></div>
-        <div class="fg"><label>Unidades</label><input name="unid"></div>
-        <div class="fg"><label>Producto</label><input name="prod"></div>
-        <div class="fg"><label>Esquema Seguridad</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>Vence Puerto</label><input name="vence" type="date"></div>
+        <div class="fg"><label>LCL/FCL</label><select name="lcl">${opts.lcl_fcl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>Contenedor</label><input name="cont" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="fg"><label>Peso</label><input name="peso"></div>
+        <div class="fg"><label>Unid</label><input name="unid"></div>
+        <div class="fg"><label>Prod</label><input name="prod"></div>
+        <div class="fg"><label>Esq</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>Vence</label><input name="vence" type="date"></div>
         <div class="fg"><label>Origen</label><input name="orig" list="list_ciud"></div>
         <div class="fg"><label>Destino</label><input name="dest" list="list_ciud"></div>
-        <div class="fg"><label>Tipo Vehículo</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>Vehículo</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Pedido</label><input name="ped"></div>
-        <div class="fg"><label>Fecha Cargue</label><input name="f_c" type="date"></div>
-        <div class="fg"><label>Hora Cargue</label><input name="h_c" type="time"></div>
-        <div class="fg"><label>Fecha Descargue</label><input name="f_d" type="date"></div>
-        <div class="fg"><label>Hora Descargue</label><input name="h_d" type="time"></div>
-        <div class="fg"><label>Flete Pagar</label><input name="f_p"></div>
-        <div class="fg"><label>Flete Facturar</label><input name="f_f"></div>
-        <div class="fg"><label>Estado Inicial</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>F.C</label><input name="f_c" type="date"></div>
+        <div class="fg"><label>H.C</label><input name="h_c" type="time"></div>
+        <div class="fg"><label>F.D</label><input name="f_d" type="date"></div>
+        <div class="fg"><label>H.D</label><input name="h_d" type="time"></div>
+        <div class="fg"><label>F. Pagar</label><input name="f_p"></div>
+        <div class="fg"><label>F. Fact</label><input name="f_f"></div>
+        <div class="fg"><label>Estado</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Horario</label><input name="h_t"></div>
         <div class="fg"><label>MUC</label><input name="muc"></div>
         <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg" style="grid-column: span 2"><label>Observaciones del Servicio</label><textarea name="obs" rows="1"></textarea></div>
-        <div class="fg" style="grid-column: span 2"><label>Condiciones Especiales</label><textarea name="cond" rows="1"></textarea></div>
-        <button class="btn">💾 REGISTRAR NUEVA CARGA</button>
+        <div class="fg" style="grid-column: span 2"><label>Obs</label><textarea name="obs" rows="1"></textarea></div>
+        <div class="fg" style="grid-column: span 2"><label>Cond</label><textarea name="cond" rows="1"></textarea></div>
+        <button class="btn" style="padding: 10px;">💾 REGISTRAR</button>
       </form>
 
       <div class="sc fs" id="st"><div class="fc"></div></div>
