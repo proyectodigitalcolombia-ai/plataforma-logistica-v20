@@ -80,8 +80,8 @@ app.get('/', async (req, res) => {
 
     for (let c of d) {
       const isLocked = c.f_fin ? 'disabled' : '';
-      const displayReal = (c.est_real === 'FINALIZADO' || c.est_real === 'DESPACHADO') ? 'DESPACHADO' : 'PENDIENTE';
-      const stClass = displayReal === 'DESPACHADO' ? 'background:#065f46;color:#34d399' : 'background:#475569;color:#cbd5e1';
+      const displayReal = c.est_real || 'PENDIENTE';
+      const stClass = displayReal === 'FINALIZADO' ? 'background:#1e3a8a;color:#93c5fd' : (displayReal === 'DESPACHADO' ? 'background:#065f46;color:#34d399' : 'background:#475569;color:#cbd5e1');
       
       let venceStyle = '';
       if (c.vence && !c.f_fin) {
@@ -92,7 +92,7 @@ app.get('/', async (req, res) => {
       }
 
       const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
-      let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
+      let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar despacho?')">FIN</a>` : `...`);
       
       const idUnico = c.id.toString().padStart(4, '0');
 
@@ -100,9 +100,7 @@ app.get('/', async (req, res) => {
         <td class="col-num">${index++}</td>
         <td class="col-id">${idUnico}</td>
         <td class="col-reg">${new Date(c.createdAt).toLocaleDateString()} ${new Date(c.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
-        <td>${c.oficina||''}</td>
-        <td class="col-emp" title="${c.emp_gen||''}">${c.emp_gen||''}</td>
-        <td>${c.comercial||''}</td>
+        <td>${c.oficina||''}</td><td class="col-emp" title="${c.emp_gen||''}">${c.emp_gen||''}</td><td>${c.comercial||''}</td>
         <td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td>
         <td class="${venceStyle}" onclick="silenciar(this)">${c.vence||''}</td>
         <td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td>
@@ -194,8 +192,7 @@ app.get('/', async (req, res) => {
       </div>
 
       <script>
-      const CLAVE_ADMIN = "ADMIN123"; // CAMBIA TU CONTRASEÑA AQUÍ
-
+      const CLAVE_ADMIN = "ADMIN123";
       const t=document.getElementById('st'),m=document.getElementById('sm');
       t.onscroll=()=>m.scrollLeft=t.scrollLeft;
       m.onscroll=()=>t.scrollLeft=m.scrollLeft;
@@ -218,18 +215,13 @@ app.get('/', async (req, res) => {
       function eliminarConClave(id){
         const pw = prompt("Ingrese contraseña para borrar:");
         if(pw === CLAVE_ADMIN){
-           if(confirm("¿Seguro que desea eliminar el registro?")) {
-              window.location.href = "/d/" + id;
-           }
-        } else if(pw !== null) {
-           alert("Contraseña incorrecta");
-        }
+           if(confirm("¿Borrar registro?")) window.location.href = "/d/" + id;
+        } else if(pw !== null) alert("Contraseña incorrecta");
       }
 
       function eliminarSeleccionados(){ 
-        const pw = prompt("Ingrese contraseña para borrar selección:");
+        const pw = prompt("Contraseña para borrado múltiple:");
         if(pw !== CLAVE_ADMIN) return alert("Acceso denegado");
-
         const checked = document.querySelectorAll('.row-check:checked');
         const ids = Array.from(checked).map(cb => cb.value);
         if(!confirm('¿Eliminar ' + ids.length + ' registros?')) return; 
@@ -243,15 +235,10 @@ app.get('/', async (req, res) => {
         let filas = document.querySelectorAll(".fila-datos");
         let visibleCount = 1;
         filas.forEach(fila => {
-          let textoCeldas = fila.innerText.toUpperCase();
-          let inputs = Array.from(fila.querySelectorAll("input")).map(i => i.value.toUpperCase()).join(" ");
-          let selects = Array.from(fila.querySelectorAll("select")).map(s => s.value.toUpperCase()).join(" ");
-          let contenidoTotal = textoCeldas + " " + inputs + " " + selects;
-          let mostrar = contenidoTotal.includes(f);
+          let texto = fila.innerText.toUpperCase() + " " + Array.from(fila.querySelectorAll("input")).map(i => i.value.toUpperCase()).join(" ");
+          let mostrar = texto.includes(f);
           fila.style.display = mostrar ? "" : "none";
-          if(mostrar) { 
-            fila.querySelector('.col-num').innerText = visibleCount++; 
-          }
+          if(mostrar) fila.querySelector('.col-num').innerText = visibleCount++; 
         });
       }
 
@@ -293,6 +280,17 @@ app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.param
 app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id: { [Op.in]: req.body.ids } } }); res.sendStatus(200); });
 app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); res.redirect('/'); });
 app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
-app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
+
+// --- AQUÍ ESTÁ EL CAMBIO SOLICITADO ---
+app.get('/finish/:id', async (req, res) => { 
+  const ahora = getNow(); 
+  await C.update({ 
+    f_fin: ahora, 
+    obs_e: 'FINALIZADO SIN NOVEDAD', // Cambio de estado automático
+    est_real: 'FINALIZADO',          // Cambio visual a FINALIZADO
+    f_act: ahora 
+  }, { where: { id: req.params.id } }); 
+  res.redirect('/'); 
+});
 
 db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
