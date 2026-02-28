@@ -48,13 +48,13 @@ app.get('/', async (req, res) => {
         ${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}
       </select>`;
       let accionFin = c.f_fin ? `<span style="color:#10b981;font-weight:bold">✓ FINALIZADO</span>` : (c.placa && c.placa.trim() !== "" ? `<a href="/finish/${c.id}" class="btn-fin" onclick="return confirm('¿Finalizar despacho?')">🏁 FINALIZAR</a>` : `<span class="warn-placa">⚠️ REQUIERE PLACA</span>`);
-      return `<tr><td><b>${c.id}</b></td><td>${new Date(c.createdAt).toLocaleString()}</td><td>${c.oficina||''}</td><td>${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td><td>${c.vence||''}</td><td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td><td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;justify-content:center;gap:3px"><input name="placa" value="${c.placa||''}" ${isLocked} style="width:70px;text-align:center" oninput="this.value=this.value.toUpperCase()"><button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:4px;border-radius:3px">OK</button></form></td><td>${c.f_p||''}</td><td>${c.f_f||''}</td><td>${selectEstado}</td><td>${c.f_act||''}</td><td><span class="st-real ${stClass}">${c.est_real}</span></td><td>${c.obs||''}</td><td>${c.cond||''}</td><td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td><td>${accionFin}</td><td><b style="color:#3b82f6">${c.f_fin||'--:--'}</b></td><td><a href="/d/${c.id}" style="color:#f87171;text-decoration:none" onclick="return confirm('¿Borrar?')">X</a></td></tr>`;
+      return `<tr><td><b>${c.id}</b></td><td>${new Date(c.createdAt).toLocaleString()}</td><td>${c.oficina||''}</td><td>${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td><td>${c.vence||''}</td><td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td><td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;justify-content:center;gap:3px"><input name="placa" value="${c.placa||''}" ${isLocked} class="placa-input" style="width:70px;text-align:center" oninput="this.value=this.value.toUpperCase()"><button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:4px;border-radius:3px">OK</button></form></td><td>${c.f_p||''}</td><td>${c.f_f||''}</td><td>${selectEstado}</td><td>${c.f_act||''}</td><td><span class="st-real ${stClass}">${c.est_real}</span></td><td>${c.obs||''}</td><td>${c.cond||''}</td><td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td><td>${accionFin}</td><td><b style="color:#3b82f6">${c.f_fin||'--:--'}</b></td><td><a href="/d/${c.id}" style="color:#f87171;text-decoration:none" onclick="return confirm('¿Borrar?')">X</a></td></tr>`;
     }).join('');
 
     res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body>
       <h2 style="color:#3b82f6">SISTEMA LOGÍSTICO V20</h2>
       <div style="display:flex; align-items:center; gap:10px;">
-        <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Buscar por Placa, Contenedor, Cliente...">
+        <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Buscar Placa, Contenedor, Cliente...">
         <button class="btn-xls" onclick="exportExcel()">📥 DESCARGAR EXCEL</button>
       </div>
       <form action="/add" method="POST" class="form">
@@ -102,8 +102,12 @@ app.get('/', async (req, res) => {
         function buscar() {
           let filtro = document.getElementById("busq").value.toUpperCase();
           let filas = document.getElementById("tabla").getElementsByTagName("tr");
+          
           for (let i = 1; i < filas.length; i++) {
-            let textoFila = filas[i].innerText.toUpperCase();
+            let celdaPlaca = filas[i].querySelector(".placa-input");
+            let textoPlaca = celdaPlaca ? celdaPlaca.value.toUpperCase() : "";
+            let textoFila = filas[i].innerText.toUpperCase() + " " + textoPlaca;
+            
             filas[i].style.display = textoFila.indexOf(filtro) > -1 ? "" : "none";
           }
         }
@@ -112,17 +116,18 @@ app.get('/', async (req, res) => {
           let csv = "sep=;\\n";
           const rows = document.querySelectorAll("#tabla tr");
           for (const row of rows) {
-            if(row.style.display === "none") continue; // Solo exportar lo que está filtrado
+            if(row.style.display === "none") continue;
             const cols = Array.from(row.querySelectorAll("td, th")).map(c => {
-              let text = c.innerText.split('\\n')[0].replace(/;/g, ",").trim();
-              return '"' + text + '"';
+              let input = c.querySelector("input, select");
+              let text = input ? input.value : c.innerText.split('\\n')[0];
+              return '"' + text.replace(/;/g, ",").trim() + '"';
             });
             csv += cols.slice(0, -1).join(";") + "\\n";
           }
           const blob = new Blob(["\\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
-          a.href = url; a.download = "Reporte_Filtrado.csv"; a.click();
+          a.href = url; a.download = "Reporte_Logistica.csv"; a.click();
         }
       </script>
     </body></html>`);
@@ -135,12 +140,3 @@ app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.
 app.post('/state/:id', async (req, res) => { const ahora = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' }); await C.update({ obs_e: req.body.obs_e, f_act: ahora }, { where: { id: req.params.id } }); res.sendStatus(200); });
 app.get('/finish/:id', async (req, res) => {
   const carga = await C.findByPk(req.params.id);
-  if (!carga.placa || carga.placa.trim() === "") return res.send("Error: Sin placa.");
-  const ahora = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' });
-  await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO' }, { where: { id: req.params.id } });
-  res.redirect('/');
-});
-
-db.sync({ alter: true }).then(() => {
-  app.listen(process.env.PORT || 3000, () => console.log('Server OK'));
-});
