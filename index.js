@@ -199,4 +199,87 @@ app.get('/', async (req, res) => {
 
       const t=document.getElementById('st'),m=document.getElementById('sm');
       t.onscroll=()=>m.scrollLeft=t.scrollLeft;
-      m.onscroll=()=>
+      m.onscroll=()=>t.scrollLeft=m.scrollLeft;
+
+      function buscar(){
+        let f = document.getElementById("busq").value.toUpperCase();
+        let filas = document.querySelectorAll(".fila-datos");
+        let visibleCount = 1;
+        filas.forEach(fila => {
+          let textoCeldas = fila.innerText.toUpperCase();
+          let inputs = Array.from(fila.querySelectorAll("input")).map(i => i.value.toUpperCase()).join(" ");
+          let selects = Array.from(fila.querySelectorAll("select")).map(s => s.value.toUpperCase()).join(" ");
+          let contenidoTotal = textoCeldas + " " + inputs + " " + selects;
+          let mostrar = contenidoTotal.includes(f);
+          fila.style.display = mostrar ? "" : "none";
+          if(mostrar) { fila.querySelector('.col-num').innerText = visibleCount++; }
+        });
+      }
+
+      function exportExcel(){
+        let csv="sep=;\\n";
+        document.querySelectorAll("#tabla tr").forEach(row=>{
+          if(row.style.display!=="none"){
+            let cols=Array.from(row.querySelectorAll("td, th")).map(c=>{
+              let inp=c.querySelector("input,select,textarea");
+              return '"'+(inp?inp.value:c.innerText.split('\\n')[0]).replace(/;/g,",").trim()+'"';
+            });
+            csv+=cols.slice(0,-1).join(";")+"\\n";
+          }
+        });
+        const b=new Blob(["\\ufeff"+csv],{type:"text/csv;charset=utf-8;"}),u=URL.createObjectURL(b),a=document.createElement("a");
+        a.href=u;a.download="Reporte.csv";a.click();
+      }
+
+      let audioContext; function activarAudio(){ if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); playAlert(); }
+      function silenciar(el){ el.dataset.silenced = "true"; el.style.animation = "none"; el.style.background = "#450a0a"; }
+      function playAlert(){ 
+        let reds = Array.from(document.querySelectorAll('.vence-rojo')).filter(el => el.dataset.silenced !== "true");
+        if(reds.length > 0 && audioContext){ 
+          let osc=audioContext.createOscillator(),gain=audioContext.createGain(); 
+          osc.type='square'; osc.frequency.setValueAtTime(440, audioContext.currentTime); 
+          gain.gain.setValueAtTime(0.1, audioContext.currentTime); 
+          osc.connect(gain); gain.connect(audioContext.destination); 
+          osc.start(); osc.stop(audioContext.currentTime+0.5); 
+          setTimeout(playAlert, 2000); 
+        }
+      } 
+      window.onload=()=>setTimeout(playAlert,1000);
+      </script></body></html>`);
+  } catch (e) { res.send(e.message); }
+});
+
+app.post('/add', async (req, res) => { req.body.f_act = getNow(); await C.create(req.body); res.redirect('/'); });
+
+// RUTAS DE BORRADO DESACTIVADAS POR SEGURIDAD
+// app.get('/d/:id', ...);
+// app.post('/delete-multiple', ...);
+
+app.post('/u/:id', async (req, res) => { 
+  const placaNueva = req.body.placa ? req.body.placa.trim().toUpperCase() : "";
+  await C.update({ 
+    placa: placaNueva === "" ? null : placaNueva, 
+    est_real: placaNueva === "" ? 'PENDIENTE' : 'DESPACHADO', 
+    f_act: getNow() 
+  }, { where: { id: req.params.id } }); 
+  res.redirect('/'); 
+});
+
+app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
+
+app.get('/finish/:id', async (req, res) => { 
+  const serv = await C.findByPk(req.params.id);
+  if(!serv.placa || serv.placa.trim().length < 5) {
+    return res.send("<script>alert('Error: No puede finalizar sin placa.'); window.location='/';</script>");
+  }
+  const ahora = getNow(); 
+  await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); 
+  res.redirect('/'); 
+});
+
+app.get('/reversar/:id', async (req, res) => {
+  await C.update({ f_fin: null, est_real: 'DESPACHADO', obs_e: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } });
+  res.redirect('/');
+});
+
+db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
