@@ -80,8 +80,18 @@ app.get('/', async (req, res) => {
 
     for (let c of d) {
       const isLocked = c.f_fin ? 'disabled' : '';
-      const displayReal = (c.est_real === 'FINALIZADO' || c.est_real === 'DESPACHADO') ? 'DESPACHADO' : 'PENDIENTE';
-      const stClass = displayReal === 'DESPACHADO' ? 'background:#065f46;color:#34d399' : 'background:#475569;color:#cbd5e1';
+      
+      // LOGICA DE ESTADO FINAL Y COLORES
+      let displayReal = 'PENDIENTE';
+      let stClass = 'background:#475569;color:#cbd5e1'; // Gris Pendiente
+
+      if (c.f_fin) {
+          displayReal = 'FINALIZADO';
+          stClass = 'background:#1e3a8a;color:#93c5fd;border:1px solid #3b82f6'; // Azul Eléctrico
+      } else if (c.placa) {
+          displayReal = 'DESPACHADO';
+          stClass = 'background:#064e3b;color:#6ee7b7;border:1px solid #10b981'; // Verde Esmeralda
+      }
       
       let venceStyle = '';
       if (c.vence && !c.f_fin) {
@@ -185,7 +195,7 @@ app.get('/', async (req, res) => {
         <table id="tabla">
           <thead>
             <tr>
-              <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL/FCL</th><th>CONTENEDOR</th><th>PESO</th><th>UNID</th><th>PRODUCTO</th><th>ESQUEMA</th><th>VENCE</th><th>ORIGEN</th><th>DESTINO</th><th>VEHICULO</th><th>PEDIDO</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th class="col-placa">PLACA</th><th>PAGAR</th><th>FACTURA</th><th class="col-est">ESTADO</th><th>ACTUALIZACIÓN</th><th>REAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORA</th><th>MUC</th><th class="col-desp">DESPACHADOR</th><th>FIN</th><th class="col-hfin">H.FIN</th><th class="col-acc">ACCIONES</th>
+              <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL/FCL</th><th>CONTENEDOR</th><th>PESO</th><th>UNID</th><th>PRODUCTO</th><th>ESQUEMA</th><th>VENCE</th><th>ORIGEN</th><th>DESTINO</th><th>VEHICULO</th><th>PEDIDO</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th class="col-placa">PLACA</th><th>PAGAR</th><th>FACTURA</th><th class="col-est">ESTADO</th><th>ACTUALIZACIÓN</th><th>ESTADO FINAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORA</th><th>MUC</th><th class="col-desp">DESPACHADOR</th><th>FIN</th><th class="col-hfin">H.FIN</th><th class="col-acc">ACCIONES</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -193,7 +203,7 @@ app.get('/', async (req, res) => {
       </div>
 
       <script>
-      const CLAVE_ADMIN = "ADMIN123"; // CAMBIA LA CONTRASEÑA AQUÍ
+      const CLAVE_ADMIN = "ADMIN123";
 
       const t=document.getElementById('st'),m=document.getElementById('sm');
       t.onscroll=()=>m.scrollLeft=t.scrollLeft;
