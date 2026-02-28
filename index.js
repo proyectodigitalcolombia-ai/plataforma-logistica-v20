@@ -12,7 +12,7 @@ const db = new Sequelize(process.env.DATABASE_URL, {
   dialectOptions: { ssl: { require: true, rejectUnauthorized: false } }
 });
 
-// 2. Modelo (Asegurando consistencia con tus datos existentes)
+// 2. Modelo
 const C = db.define('Carga', {
   oficina: DataTypes.STRING, emp_gen: DataTypes.STRING, comercial: DataTypes.STRING, pto: DataTypes.STRING,
   refleja: DataTypes.STRING, f_doc: DataTypes.STRING, h_doc: DataTypes.STRING, do_bl: DataTypes.STRING,
@@ -26,7 +26,7 @@ const C = db.define('Carga', {
   muc: DataTypes.STRING, desp: DataTypes.STRING, f_fin: DataTypes.STRING
 }, { timestamps: true });
 
-// 3. Listas de Selección
+// 3. Listas
 const opts = {
   despachadores: ['ABNNER MARTINEZ', 'CAMILO TRIANA', 'FREDY CARRILLO', 'RAUL LOPEZ', 'EDDIER RIVAS'],
   estados: ['ASIGNADO', 'CANCELADO', 'CONTENEDOR', 'DESPACHADO', 'EN CONSECUTIVO', 'EN PROGRAMACIÓN', 'EN SITIO de CARGUE', 'FINALIZADO', 'HOJA DE VIDA', 'MERCANCÍA', 'NOVEDAD', 'PENDIENTE', 'PRE ASIGNADO', 'RETIRADO', 'VEHÍCULO EN PLANTA']
@@ -37,13 +37,13 @@ const css = `<style>
   .sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}
   .fs{height:12px;margin-bottom:5px}
   .fc{width:5600px;height:1px}
-  table{border-collapse:collapse;min-width:5600px;font-size:10px}
-  th{background:#1e40af;padding:12px;text-align:left;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6}
-  td{padding:8px;border:1px solid #334155;white-space:nowrap}
+  table{border-collapse:collapse;min-width:5600px;font-size:10px;table-layout: fixed}
+  th{background:#1e40af;padding:12px;text-align:center;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6}
+  td{padding:10px;border:1px solid #334155;white-space:nowrap;text-align:center} /* AQUÍ CENTRAMOS TODO */
   .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}
   .fg{display:flex;flex-direction:column;gap:4px}
   label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}
-  input,select{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000}
+  input,select{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000;text-align:center}
   .btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}
   .btn-fin{background:#10b981;color:white;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;font-weight:bold;text-decoration:none;font-size:10px}
 </style>`;
@@ -51,19 +51,16 @@ const css = `<style>
 app.get('/', async (req, res) => {
   try {
     const d = await C.findAll({ order: [['id', 'DESC']] });
-    
-    const rows = d.map(c => {
-      return `<tr>
+    const rows = d.map(c => `<tr>
         <td><b>${c.id}</b></td>
         <td>${new Date(c.createdAt).toLocaleString()}</td>
         <td>${c.oficina||''}</td><td>${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td><td>${c.vence||''}</td><td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td>
-        <td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:3px"><input name="placa" value="${c.placa||''}" style="width:70px"><button style="background:#10b981;color:#fff;border:none;padding:4px;border-radius:3px;cursor:pointer">OK</button></form></td>
+        <td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;justify-content:center;gap:3px"><input name="placa" value="${c.placa||''}" style="width:70px;text-align:center" oninput="this.value=this.value.toUpperCase()"><button style="background:#10b981;color:#fff;border:none;padding:4px;border-radius:3px;cursor:pointer">OK</button></form></td>
         <td>${c.f_p||''}</td><td>${c.f_f||''}</td><td><span style="background:#475569;padding:4px;border-radius:4px">${c.obs_e||'PENDIENTE'}</span></td><td>${c.f_act||''}</td><td>${c.obs||''}</td><td>${c.cond||''}</td><td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td>
         <td>${c.f_fin ? `<span style="color:#10b981;font-weight:bold">FINALIZADO</span>` : `<a href="/finish/${c.id}" class="btn-fin" onclick="return confirm('¿Finalizar despacho?')">🏁 FINALIZAR</a>`}</td>
         <td><b style="color:#3b82f6">${c.f_fin||'--:--'}</b></td>
         <td><a href="/d/${c.id}" style="color:#f87171;text-decoration:none" onclick="return confirm('¿Borrar?')">X</a></td>
-      </tr>`;
-    }).join('');
+      </tr>`).join('');
 
     res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body>
       <h2 style="color:#3b82f6">SISTEMA LOGÍSTICO V20</h2>
@@ -107,7 +104,7 @@ app.get('/', async (req, res) => {
         <table>
           <thead>
             <tr>
-              <th>ITEM</th><th>REGISTRO</th><th>OFICINA</th><th>GEN</th><th>COM</th><th>PTO</th><th>REFL</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL/OC</th><th>CLI</th><th>SUB</th><th>MOD</th><th>LCL</th><th>CONT</th><th>PESO</th><th>UNID</th><th>PROD</th><th>SEG</th><th>VENCE</th><th>ORIG</th><th>DEST</th><th>T.VEH</th><th>PED</th><th>F.CAR</th><th>H.CAR</th><th>F.DESC</th><th>H.DESC</th><th>PLACA</th><th>F.PAG</th><th>F.FAC</th><th>EST</th><th>ACT</th><th>OBS</th><th>COND</th><th>HORA</th><th>MUC</th><th>DESP</th><th>FINALIZACIÓN DESPACHO</th><th>HORA EXACTA</th><th>DEL</th>
+              <th>ITEM</th><th>REGISTRO</th><th>OFICINA</th><th>GEN</th><th>COM</th><th>PTO</th><th>REFL</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL/OC</th><th>CLI</th><th>SUB</th><th>MOD</th><th>LCL</th><th>CONT</th><th>PESO</th><th>UNID</th><th>PROD</th><th>SEG</th><th>VENCE</th><th>ORIG</th><th>DEST</th><th>T.VEH</th><th>PED</th><th>F.CAR</th><th>H.CAR</th><th>F.DESC</th><th>H.DESC</th><th>PLACA</th><th>F.PAG</th><th>F.FAC</th><th>EST</th><th>ACT</th><th>OBS</th><th>COND</th><th>HORA</th><th>MUC</th><th>DESP</th><th>ESTADO FINAL</th><th>HORA EXACTA</th><th>DEL</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
