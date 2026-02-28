@@ -53,90 +53,11 @@ app.get('/', async (req, res) => {
 
     res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body>
       <h2 style="color:#3b82f6">SISTEMA LOGÍSTICO V20</h2>
-      <div style="display:flex; align-items:center; gap:10px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px">
         <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Buscar Placa, Contenedor, Cliente...">
         <button class="btn-xls" onclick="exportExcel()">📥 DESCARGAR EXCEL</button>
       </div>
       <form action="/add" method="POST" class="form">
         <datalist id="list_ciud">${opts.ciudades.map(c=>`<option value="${c}">`).join('')}</datalist>
         <div class="fg"><label>Oficina</label><select name="oficina">${opts.oficina.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>EMPRESA</label><select name="emp_gen"><option value="YEGO ECO-T SAS">YEGO ECO-T SAS</option></select></div>
-        <div class="fg"><label>Comercial</label><select name="comercial"><option value="RAÚL LÓPEZ">RAÚL LÓPEZ</option></select></div>
-        <div class="fg"><label>PUERTO</label><select name="pto">${opts.puertos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>REFLEJA</label><select name="refleja"><option value="SI">SI</option><option value="NO">NO</option></select></div>
-        <div class="fg"><label>F.Doc</label><input name="f_doc" type="date"></div>
-        <div class="fg"><label>H.Doc</label><input name="h_doc" type="time"></div>
-        <div class="fg"><label>DO/BL/OC</label><input name="do_bl"></div>
-        <div class="fg"><label>Cliente</label><select name="cli">${opts.clientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>Subcliente</label><select name="subc">${opts.subclientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>Modalidad</label><select name="mod">${opts.modalidades.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>LCL / FCL</label><select name="lcl">${opts.lcl_fcl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>N.CONTENEDOR</label><input name="cont" oninput="this.value=this.value.toUpperCase()"></div>
-        <div class="fg"><label>PESO KG</label><input name="peso"></div>
-        <div class="fg"><label>Unidades</label><input name="unid"></div>
-        <div class="fg"><label>Producto</label><input name="prod"></div>
-        <div class="fg"><label>ESQ.SEGURIDAD</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>VENCE PTO</label><input name="vence" type="date"></div>
-        <div class="fg"><label>Origen</label><input name="orig" list="list_ciud"></div>
-        <div class="fg"><label>Destino</label><input name="dest" list="list_ciud"></div>
-        <div class="fg"><label>TIPO VEHÍCULO</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>Pedido</label><input name="ped"></div>
-        <div class="fg"><label>F.CARGUE</label><input name="f_c" type="date"></div>
-        <div class="fg"><label>H.CARGUE</label><input name="h_c" type="time"></div>
-        <div class="fg"><label>F.DESCARGUE</label><input name="f_d" type="date"></div>
-        <div class="fg"><label>H.DESCARGUE</label><input name="h_d" type="time"></div>
-        <div class="fg"><label>Flete Pagar</label><input name="f_p"></div>
-        <div class="fg"><label>Flete Facturar</label><input name="f_f"></div>
-        <div class="fg"><label>OBSERVACIÓN / ESTADO</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <div class="fg"><label>Horario</label><input name="h_t"></div>
-        <div class="fg"><label>MUC</label><input name="muc"></div>
-        <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-        <button class="btn">💾 REGISTRAR NUEVA CARGA</button>
-      </form>
-      <div class="sc fs" id="st"><div class="fc"></div></div>
-      <div class="sc" id="sm"><table id="tabla"><thead><tr><th>ITEM</th><th>REGISTRO</th><th>OFICINA</th><th>EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL/FCL</th><th>CONTENEDOR</th><th>PESO</th><th>UNIDADES</th><th>PRODUCTO</th><th>ESQUEMA</th><th>VENCE</th><th>ORIGEN</th><th>DESTINO</th><th>VEHICULO</th><th>PEDIDO</th><th>F.CARGUE</th><th>H.CARGUE</th><th>F.DESCARGUE</th><th>H.DESCARGUE</th><th>PLACA</th><th>FLETE P</th><th>FLETE F</th><th>ESTADO</th><th>ACTUALIZACION</th><th>ESTADO REAL</th><th>OBS</th><th>CONDICIONES</th><th>HORARIO</th><th>MUC</th><th>DESPACHADOR</th><th>FECHA FIN</th><th>HORA FIN</th><th>ACCIONES</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <script>
-        const t=document.getElementById('st'),m=document.getElementById('sm');t.onscroll=()=>m.scrollLeft=t.scrollLeft;m.onscroll=()=>t.scrollLeft=m.scrollLeft;
-        function updState(id,val){fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:val})}).then(r=>{if(r.ok)location.reload();});}
-        
-        function buscar() {
-          let filtro = document.getElementById("busq").value.toUpperCase();
-          let filas = document.getElementById("tabla").getElementsByTagName("tr");
-          
-          for (let i = 1; i < filas.length; i++) {
-            let celdaPlaca = filas[i].querySelector(".placa-input");
-            let textoPlaca = celdaPlaca ? celdaPlaca.value.toUpperCase() : "";
-            let textoFila = filas[i].innerText.toUpperCase() + " " + textoPlaca;
-            
-            filas[i].style.display = textoFila.indexOf(filtro) > -1 ? "" : "none";
-          }
-        }
-
-        function exportExcel(){
-          let csv = "sep=;\\n";
-          const rows = document.querySelectorAll("#tabla tr");
-          for (const row of rows) {
-            if(row.style.display === "none") continue;
-            const cols = Array.from(row.querySelectorAll("td, th")).map(c => {
-              let input = c.querySelector("input, select");
-              let text = input ? input.value : c.innerText.split('\\n')[0];
-              return '"' + text.replace(/;/g, ",").trim() + '"';
-            });
-            csv += cols.slice(0, -1).join(";") + "\\n";
-          }
-          const blob = new Blob(["\\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url; a.download = "Reporte_Logistica.csv"; a.click();
-        }
-      </script>
-    </body></html>`);
-  } catch (e) { res.send(e.message); }
-});
-
-app.post('/add', async (req, res) => { await C.create(req.body); res.redirect('/'); });
-app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
-app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO' }, { where: { id: req.params.id } }); res.redirect('/'); });
-app.post('/state/:id', async (req, res) => { const ahora = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' }); await C.update({ obs_e: req.body.obs_e, f_act: ahora }, { where: { id: req.params.id } }); res.sendStatus(200); });
-app.get('/finish/:id', async (req, res) => {
-  const carga = await C.findByPk(req.params.id);
+        <div class="fg"><label>
