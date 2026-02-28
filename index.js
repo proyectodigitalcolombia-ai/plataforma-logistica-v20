@@ -1,90 +1,100 @@
 const express = require('express'), { Sequelize, DataTypes } = require('sequelize'), app = express();
 app.use(express.urlencoded({ extended: true })); app.use(express.json());
-const db = new Sequelize(process.env.DATABASE_URL, { dialect: 'postgres', logging: false, dialectOptions: { ssl: { require: true, rejectUnauthorized: false } } });
+
+const db = new Sequelize(process.env.DATABASE_URL, {
+  dialect: 'postgres', logging: false,
+  dialectOptions: { ssl: { require: true, rejectUnauthorized: false } }
+});
 
 const C = db.define('Carga', {
-  oficina: DataTypes.STRING, emp_gen: DataTypes.STRING, comercial: DataTypes.STRING, pto: DataTypes.STRING, refleja: DataTypes.STRING, f_doc: DataTypes.STRING, h_doc: DataTypes.STRING, do_bl: DataTypes.STRING, cli: DataTypes.STRING, subc: DataTypes.STRING, mod: DataTypes.STRING, lcl: DataTypes.STRING, cont: DataTypes.STRING, peso: DataTypes.STRING, unid: DataTypes.STRING, prod: DataTypes.STRING, esq: DataTypes.STRING, vence: DataTypes.STRING, orig: DataTypes.STRING, dest: DataTypes.STRING, t_v: DataTypes.STRING, ped: DataTypes.STRING, f_c: DataTypes.STRING, h_c: DataTypes.STRING, f_d: DataTypes.STRING, h_d: DataTypes.STRING, placa: DataTypes.STRING, f_p: DataTypes.STRING, f_f: DataTypes.STRING, obs_e: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' }, f_act: DataTypes.STRING, obs: DataTypes.TEXT, cond: DataTypes.TEXT, h_t: DataTypes.STRING, muc: DataTypes.STRING, desp: DataTypes.STRING, f_fin: DataTypes.STRING, est_real: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' }
-});
+  oficina: DataTypes.STRING, emp_gen: DataTypes.STRING, comercial: DataTypes.STRING, pto: DataTypes.STRING,
+  refleja: DataTypes.STRING, f_doc: DataTypes.STRING, h_doc: DataTypes.STRING, do_bl: DataTypes.STRING,
+  cli: DataTypes.STRING, subc: DataTypes.STRING, mod: DataTypes.STRING, lcl: DataTypes.STRING,
+  cont: DataTypes.STRING, peso: DataTypes.STRING, unid: DataTypes.STRING, prod: DataTypes.STRING,
+  esq: DataTypes.STRING, vence: DataTypes.STRING, orig: DataTypes.STRING, dest: DataTypes.STRING,
+  t_v: DataTypes.STRING, ped: DataTypes.STRING, f_c: DataTypes.STRING, h_c: DataTypes.STRING,
+  f_d: DataTypes.STRING, h_d: DataTypes.STRING, placa: DataTypes.STRING, f_p: DataTypes.STRING,
+  f_f: DataTypes.STRING, obs_e: { type: DataTypes.STRING, defaultValue: 'PENDIENTE INSTRUCCIONES' },
+  f_act: DataTypes.STRING, obs: DataTypes.TEXT, cond: DataTypes.TEXT, h_t: DataTypes.STRING,
+  muc: DataTypes.STRING, desp: DataTypes.STRING, f_fin: DataTypes.STRING,
+  est_real: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' }
+}, { timestamps: true });
 
 const opts = {
-  of: ['CARTAGENA', 'BOGOTÁ', 'BUENAVENTURA', 'MEDELLÍN'],
-  ps: ['SPIA', 'SPRB', 'TCBUEN', 'CONTECAR', 'SPRC', 'PUERTO BAHÍA', 'N/A'],
-  cl: ['GEODIS', 'MAERSK', 'SAMSUNG SDS', 'ENVAECOL', 'YARA', 'ESENTTIA', 'BRINSA', 'ACERIAS PAZ DEL RIO', 'TENARIS', 'CORONA', 'ALIMENTOS POLAR', 'FAJOBE'],
-  md: ['NACIONALIZADO', 'OTM', 'DTA', 'TRASLADO', 'ITR', 'VACÍO'],
-  lc: ['CARGA SUELTA', 'CONT 40', 'CONT 20', 'REFER 40', 'REFER 20'],
-  eq: ['1 ESCOLTA - SELLO', 'SELLO', 'NO REQUIERE', '2 ESCOLTAS'],
-  vh: ['TURBO', 'SENCILLO', 'PATINETA', 'TRACTOMULA 3S2', 'TRACTOMULA 3S3', 'CAMA BAJA']
+  oficina: ['CARTAGENA', 'BOGOTÁ', 'BUENAVENTURA', 'MEDELLÍN'],
+  puertos: ['SPIA', 'SPRB', 'TCBUEN', 'CONTECAR', 'SPRC', 'PUERTO COMPAS CCTO', 'PUERTO BAHÍA', 'SOCIEDAD PORTUARIA REGIONAL DE CARTAGENA', 'SPIA - AGUADULCE', 'PLANTA ESENTTIA KM 8 VIA MAMONAL', 'PLANTA YARA CARTAGENA MAMONAL', 'N/A'],
+  clientes: ['GEODIS COLOMBIA LTDA', 'MAERSK LOGISTICS SERVICES LTDA', 'SAMSUNG SDS COLOMBIA GLOBAL', 'ENVAECOL', 'SEA CARGO COLOMBIA LTDA', 'YARA COLOMBIA', 'ESENTTIA SA', 'BRINSA SA', 'ACERIAS PAZ DEL RIO', 'TERNIUM DEL ATLANTICO', 'PLASTICOS ESPECIALES SAS', 'INGENIO MAYAGUEZ', 'TENARIS', 'CASA LUKER', 'CORONA', 'EDITORIAL NOMOS', 'ALIMENTOS POLAR', 'PLEXA SAS ESP', 'FAJOBE'],
+  modalidades: ['NACIONALIZADO', 'OTM', 'DTA', 'TRASLADO', 'NACIONALIZADO EXP', 'ITR', 'VACÍO EN EXPRESO', 'VACÍO CONSOLIDADO', 'NACIONALIZADO IMP'],
+  lcl_fcl: ['CARGA SUELTA', 'CONTENEDOR 40', 'CONTENEDOR 20', 'REFER 40', 'REFER 20', 'FLAT RACK 20', 'FLAT RACK 40'],
+  esquemas: ['1 ESCOLTA - SELLO', '2 ESCOLTAS SELLO - SPIA', 'SELLO', '1 ESCOLTA', '2 ESCOLTA', 'NO REQUIERE', '2 ESCOLTAS SELLO', 'INSPECTORES VIALES'],
+  vehiculos: ['TURBO 2.5 TN', 'TURBO 4.5 TN', 'TURBO SENCILLO', 'SENCILLO 9 TN', 'PATINETA 2S3', 'TRACTOMULA 3S2', 'TRACTOMULA 3S3', 'CAMA BAJA', 'DOBLE TROQUE'],
+  ciudades: ['BOGOTÁ', 'MEDELLÍN', 'CALI', 'BARRANQUILLA', 'CARTAGENA', 'BUENAVENTURA', 'SANTA MARTA', 'CÚCUTA', 'IBAGUÉ', 'PEREIRA', 'MANIZALES', 'NEIVA', 'VILLAVICENCIO', 'YOPAL', 'SIBERIA', 'FUNZA', 'MOSQUERA', 'MADRID', 'FACATATIVÁ', 'TOCANCIPÁ', 'CHÍA', 'CAJICÁ'],
+  subclientes: ['HIKVISION', 'PAYLESS COLOMBIA', 'INDUSTRIAS DONSSON', 'SAMSUNG SDS', 'ÉXITO', 'ALKOSTO', 'FALABELLA', 'SODIMAC', 'ENVAECOL', 'ALPLA', 'AMCOR', 'MEXICHEM', 'KOBA D1', 'JERONIMO MARTINS', 'TERNIUM', 'BRINSA', 'TENARIS', 'CORONA', 'FAJOBE'],
+  estados: ['ASIGNADO VEHÍCULO', 'PENDIENTE CITA ASIGNADO', 'VEHÍCULO CON CITA', 'CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CONTENEDOR EN INSPECCIÓN', 'CONTENEDOR RETIRADO PARA ITR', 'DESPACHADO', 'DESPACHADO CON NOVEDAD', 'EN CONSECUCIÓN', 'EN PROGRAMACIÓN', 'EN SITIO DE CARGUE', 'FINALIZADO CON NOVEDAD', 'FINALIZADO SIN NOVEDAD', 'HOJA DE VIDA EN ESTUDIO', 'MERCANCÍA EN INSPECCIÓN', 'NOVEDAD', 'PENDIENTE BAJAR A PATIO', 'PENDIENTE INSTRUCCIONES', 'PRE ASIGNADO', 'RETIRADO DE PUERTO PENDIENTE CONSOLIDADO', 'CANCELADO POR GERENCIA', 'VEHICULO EN RUTA'],
+  despachadores: ['ABNNER MARTINEZ', 'CAMILO TRIANA', 'FREDY CARRILLO', 'RAUL LOPEZ', 'EDDIER RIVAS']
 };
 
-const css = `<style>
-  body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:15px}
-  .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:15px;background:#1e293b;padding:15px;border-radius:8px;border:1px solid #2563eb}
-  .fg{display:flex;flex-direction:column} label{font-size:8px;color:#94a3b8;font-weight:700;text-transform:uppercase}
-  input,select{padding:5px;border-radius:4px;border:none;font-size:10px}
-  .sc-container{height:60vh;overflow:auto;background:#1e293b;border:1px solid #334155;border-radius:8px;position:relative}
-  table{border-collapse:separate;border-spacing:0;min-width:7000px}
-  thead th{position:sticky;top:0;background:#1e40af !important;z-index:50;padding:12px;font-size:10px;border-bottom:2px solid #3b82f6;border-right:1px solid #334155;color:white}
-  td{padding:8px;border-bottom:1px solid #334155;border-right:1px solid #334155;text-align:center;font-size:10px;background:#1e293b}
-  .st-real{padding:3px 8px;border-radius:10px;font-weight:bold}
-  .st-desp{background:#065f46;color:#34d399} .st-fin{background:#1e40af;color:#93c5fd}
-  .btn-fin{background:#10b981;color:white;padding:4px;border-radius:4px;text-decoration:none;font-weight:bold;font-size:9px}
-  .warn{color:#f87171;font-weight:bold;font-size:9px}
-</style>`;
+const css = `<style>body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}.sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}.fs{height:12px;margin-bottom:5px}.fc{width:8500px;height:1px}table{border-collapse:collapse;min-width:8500px;font-size:10px}th{background:#1e40af;padding:12px;text-align:center;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6}td{padding:10px;border:1px solid #334155;white-space:nowrap;text-align:center}.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}.fg{display:flex;flex-direction:column;gap:4px}label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}input,select{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000;text-align:center}.btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}.btn-fin{background:#10b981;color:white;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;font-weight:bold;text-decoration:none;font-size:10px}.sel-est{background:#334155;color:#fff;border:1px solid #475569;padding:6px;border-radius:4px;cursor:pointer;font-size:10px;text-align:center;width:100%}.sel-est:disabled{background:#1e293b;color:#94a3b8;cursor:not-allowed;border:1px solid #334155}.st-real{padding:5px 10px;border-radius:20px;font-weight:bold;font-size:9px;text-transform:uppercase}.st-desp{background:#065f46;color:#34d399}.st-fin{background:#1e40af;color:#93c5fd}.st-pend{background:#475569;color:#cbd5e1}.warn-placa{color:#f87171;font-weight:bold;font-size:9px;background:rgba(248,113,113,0.1);padding:5px;border-radius:4px}</style>`;
 
 app.get('/', async (req, res) => {
-  const d = await C.findAll({ order: [['id', 'DESC']] });
-  const rows = d.map(c => {
-    const isL = c.f_fin ? 'disabled' : '';
-    const stC = c.est_real === 'DESPACHADO' ? 'st-desp' : (c.est_real === 'FINALIZADO' ? 'st-fin' : '');
-    const acc = c.f_fin ? `<b>✓</b>` : (c.placa ? `<a href="/finish/${c.id}" class="btn-fin">FINALIZAR</a>` : `<span class="warn">REQ. PLACA</span>`);
-    return `<tr><td>${c.id}</td><td>${c.oficina}</td><td>${c.emp_gen}</td><td>${c.comercial}</td><td>${c.pto}</td><td>${c.refleja}</td><td>${c.f_doc}</td><td>${c.h_doc}</td><td>${c.do_bl}</td><td>${c.cli}</td><td>${c.subc}</td><td>${c.mod}</td><td>${c.lcl}</td><td>${c.cont}</td><td>${c.peso}</td><td>${c.unid}</td><td>${c.prod}</td><td>${c.esq}</td><td>${c.vence}</td><td>${c.orig}</td><td>${c.dest}</td><td>${c.t_v}</td><td>${c.ped}</td><td>${c.f_c}</td><td>${c.h_c}</td><td>${c.f_d}</td><td>${c.h_d}</td><td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:2px"><input name="placa" value="${c.placa||''}" ${isL} style="width:60px" oninput="this.value=this.value.toUpperCase()"><button ${isL}>OK</button></form></td><td>${c.f_p}</td><td>${c.f_f}</td><td>${c.obs_e}</td><td>${c.f_act}</td><td><span class="st-real ${stC}">${c.est_real}</span></td><td>${c.obs}</td><td>${c.cond}</td><td>${c.h_t}</td><td>${c.muc}</td><td>${c.desp}</td><td>${acc}</td><td>${c.f_fin||'--'}</td><td><a href="/d/${c.id}" style="color:#f87171">X</a></td></tr>`;
-  }).join('');
+  try {
+    const d = await C.findAll({ order: [['id', 'DESC']] });
+    const rows = d.map(c => {
+      const isLocked = c.f_fin ? 'disabled' : '';
+      const stClass = c.est_real === 'DESPACHADO' ? 'st-desp' : (c.est_real === 'FINALIZADO' ? 'st-fin' : 'st-pend');
+      const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">
+        ${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}
+      </select>`;
 
-  res.send(`<html><head><meta charset="UTF-8"><title>V20</title>${css}</head><body>
-    <h3 style="color:#3b82f6;margin:0 0 10px 0">SISTEMA DE CARGAS V20</h3>
-    <form action="/add" method="POST" class="form">
-      <div class="fg"><label>Oficina</label><select name="oficina">${opts.of.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-      <div class="fg"><label>Empresa</label><input name="emp_gen" value="YEGO ECO-T SAS"></div>
-      <div class="fg"><label>Comercial</label><input name="comercial" value="RAÚL LÓPEZ"></div>
-      <div class="fg"><label>Puerto</label><select name="pto">${opts.ps.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-      <div class="fg"><label>Refleja</label><select name="refleja"><option>SI</option><option>NO</option></select></div>
-      <div class="fg"><label>F.Doc</label><input name="f_doc" type="date"></div>
-      <div class="fg"><label>H.Doc</label><input name="h_doc" type="time"></div>
-      <div class="fg"><label>DO/BL/OC</label><input name="do_bl"></div>
-      <div class="fg"><label>Cliente</label><select name="cli">${opts.cl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-      <div class="fg"><label>Subcliente</label><input name="subc"></div>
-      <div class="fg"><label>Mod</label><select name="mod">${opts.md.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-      <div class="fg"><label>LCL/FCL</label><select name="lcl">${opts.lc.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-      <div class="fg"><label>Contenedor</label><input name="cont" oninput="this.value=this.value.toUpperCase()"></div>
-      <div class="fg"><label>Peso</label><input name="peso"></div>
-      <div class="fg"><label>Unid</label><input name="unid"></div>
-      <div class="fg"><label>Prod</label><input name="prod"></div>
-      <div class="fg"><label>Esq</label><select name="esq">${opts.eq.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-      <div class="fg"><label>Vence</label><input name="vence" type="date"></div>
-      <div class="fg"><label>Orig</label><input name="orig"></div>
-      <div class="fg"><label>Dest</label><input name="dest"></div>
-      <div class="fg"><label>T.Veh</label><select name="t_v">${opts.vh.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
-      <div class="fg"><label>Ped</label><input name="ped"></div>
-      <div class="fg"><label>F.Carg</label><input name="f_c" type="date"></div>
-      <div class="fg"><label>H.Carg</label><input name="h_c" type="time"></div>
-      <div class="fg"><label>F.Desc</label><input name="f_d" type="date"></div>
-      <div class="fg"><label>H.Desc</label><input name="h_d" type="time"></div>
-      <div class="fg"><label>F.Pag</label><input name="f_p"></div>
-      <div class="fg"><label>F.Fact</label><input name="f_f"></div>
-      <div class="fg"><label>Obs Log</label><input name="obs_e"></div>
-      <div class="fg"><label>Obs Gen</label><input name="obs"></div>
-      <div class="fg"><label>Cond</label><input name="cond"></div>
-      <div class="fg"><label>Hora</label><input name="h_t"></div>
-      <div class="fg"><label>MUC</label><input name="muc"></div>
-      <div class="fg"><label>Desp</label><input name="desp"></div>
-      <button style="grid-column:1/-1;background:#2563eb;color:#fff;padding:12px;border:none;border-radius:5px;cursor:pointer;font-weight:bold">💾 REGISTRAR CARGA COMPLETA</button>
-    </form>
-    <div class="sc-container"><table><thead><tr><th>ID</th><th>OFIC</th><th>EMP</th><th>COM</th><th>PTO</th><th>REF</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLI</th><th>SUB</th><th>MOD</th><th>LCL</th><th>CONT</th><th>PESO</th><th>UNI</th><th>PROD</th><th>ESQ</th><th>VEN</th><th>ORI</th><th>DES</th><th>VEH</th><th>PED</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th>PLACA</th><th>F.PAG</th><th>F.FAC</th><th>LOGIS</th><th>ACT</th><th>EST.REAL</th><th>OBS</th><th>COND</th><th>HORA</th><th>MUC</th><th>DESP</th><th>ACC</th><th>FIN</th><th>X</th></tr></thead><tbody>${rows}</tbody></table></div>
-  </body></html>`);
+      // Lógica de validación de botón
+      let accionFin = '';
+      if (c.f_fin) {
+        accionFin = `<span style="color:#10b981;font-weight:bold">✓ FINALIZADO</span>`;
+      } else if (c.placa && c.placa.trim() !== "") {
+        accionFin = `<a href="/finish/${c.id}" class="btn-fin" onclick="return confirm('¿Finalizar despacho?')">🏁 FINALIZAR</a>`;
+      } else {
+        accionFin = `<span class="warn-placa">⚠️ REQUIERE PLACA</span>`;
+      }
+
+      return `<tr><td><b>${c.id}</b></td><td>${new Date(c.createdAt).toLocaleString()}</td><td>${c.oficina||''}</td><td>${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td><td>${c.vence||''}</td><td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td><td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;justify-content:center;gap:3px"><input name="placa" value="${c.placa||''}" ${isLocked} style="width:70px;text-align:center" oninput="this.value=this.value.toUpperCase()"><button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:4px;border-radius:3px">OK</button></form></td><td>${c.f_p||''}</td><td>${c.f_f||''}</td><td>${selectEstado}</td><td>${c.f_act||''}</td><td><span class="st-real ${stClass}">${c.est_real}</span></td><td>${c.obs||''}</td><td>${c.cond||''}</td><td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td><td>${accionFin}</td><td><b style="color:#3b82f6">${c.f_fin||'--:--'}</b></td><td><a href="/d/${c.id}" style="color:#f87171;text-decoration:none" onclick="return confirm('¿Borrar?')">X</a></td></tr>`;
+    }).join('');
+
+    res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body><h2 style="color:#3b82f6">SISTEMA LOGÍSTICO V20</h2><form action="/add" method="POST" class="form"><datalist id="list_ciud">${opts.ciudades.map(c=>`<option value="${c}">`).join('')}</datalist><div class="fg"><label>Oficina</label><select name="oficina">${opts.oficina.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>EMPRESA GENERADORA DE CARGA</label><select name="emp_gen"><option value="YEGO ECO-T SAS">YEGO ECO-T SAS</option></select></div><div class="fg"><label>Comercial</label><select name="comercial"><option value="RAÚL LÓPEZ">RAÚL LÓPEZ</option></select></div><div class="fg"><label>PUERTO CARGUE</label><select name="pto">${opts.puertos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>REFLEJA EN PUERTO Y / O PATIO DE RETIRO</label><select name="refleja"><option value="SI">SI</option><option value="NO">NO</option></select></div><div class="fg"><label>F.Doc</label><input name="f_doc" type="date"></div><div class="fg"><label>H.Doc</label><input name="h_doc" type="time"></div><div class="fg"><label>DO/BL/OC</label><input name="do_bl"></div><div class="fg"><label>Cliente</label><select name="cli">${opts.clientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Subcliente</label><select name="subc">${opts.subclientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Modalidad</label><select name="mod">${opts.modalidades.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>LCL / FCL</label><select name="lcl">${opts.lcl_fcl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>N.CONTENEDOR</label><input name="cont" oninput="this.value=this.value.toUpperCase()"></div><div class="fg"><label>PESO KG</label><input name="peso"></div><div class="fg"><label>Unidades</label><input name="unid"></div><div class="fg"><label>Producto</label><input name="prod"></div><div class="fg"><label>ESQ.SEGURIDAD</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>VENCE PTO</label><input name="vence" type="date"></div><div class="fg"><label>Origen</label><input name="orig" list="list_ciud"></div><div class="fg"><label>Destino</label><input name="dest" list="list_ciud"></div><div class="fg"><label>TIPO VEHÍCULO</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Pedido</label><input name="ped"></div><div class="fg"><label>F.CARGUE</label><input name="f_c" type="date"></div><div class="fg"><label>H.CARGUE</label><input name="h_c" type="time"></div><div class="fg"><label>F.DESCARGUE</label><input name="f_d" type="date"></div><div class="fg"><label>H.DESCARGUE</label><input name="h_d" type="time"></div><div class="fg"><label>Flete Pagar</label><input name="f_p"></div><div class="fg"><label>Flete Facturar</label><input name="f_f"></div><div class="fg"><label>OBSERVACIÓN / ESTADO</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Horario</label><input name="h_t"></div><div class="fg"><label>MUC</label><input name="muc"></div><div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><button class="btn">💾 REGISTRAR NUEVA CARGA</button></form><div class="sc fs" id="st"><div class="fc"></div></div><div class="sc" id="sm"><table><thead><tr><th>ITEM</th><th>FECHA Y HORA DE REGISTRO</th><th>OFICINA</th><th>EMPRESA GENERADORA DE CARGA</th><th>COMERCIAL</th><th>PUERTO CARGUE</th><th>REFLEJA EN PUERTO Y / O PATIO DE RETIRO</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL/OC</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL / FCL</th><th>N.CONTENEDOR</th><th>PESO KG</th><th>UNIDADES</th><th>PRODUCTO</th><th>ESQ.SEGURIDAD</th><th>VENCE PTO</th><th>ORIGEN</th><th>DESTINO</th><th>TIPO VEHÍCULO</th><th>PEDIDO</th><th>F.CARGUE</th><th>H.CARGUE</th><th>F.DESCARGUE</th><th>H.DESCARGUE</th><th>PLACA</th><th>FLETE PAGAR</th><th>FLETE FACTURAR</th><th>OBSERVACIÓN / ESTADO</th><th>ACTUALIZACIÓN ESTADO</th><th>ESTADO REAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORARIO</th><th>MUC</th><th>DESPACHADOR</th><th>FECHA DE FINALIZACIÓN DEL DESPACHO</th><th>HORA FINALIZACIÓN</th><th>ACCIONES</th></tr></thead><tbody>${rows}</tbody></table></div><script>const t=document.getElementById('st'),m=document.getElementById('sm');t.onscroll=()=>m.scrollLeft=t.scrollLeft;m.onscroll=()=>t.scrollLeft=m.scrollLeft;function updState(id,val){fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:val})}).then(r=>{if(r.ok)location.reload();});}</script></body></html>`);
+  } catch (e) { res.send(e.message); }
 });
 
-app.post('/add',async(req,res)=>{await C.create(req.body);res.redirect('/');});
-app.get('/d/:id',async(req,res)=>{await C.destroy({where:{id:req.params.id}});res.redirect('/');});
-app.post('/u/:id',async(req,res)=>{await C.update({placa:req.body.placa.toUpperCase(),est_real:'DESPACHADO'},{where:{id:req.params.id}});res.redirect('/');});
-app.get('/finish/:id',async(req,res)=>{const c=await C.findByPk(req.params.id);if(c&&c.placa)await C.update({f_fin:new Date().toLocaleString('es-CO'),est_real:'FINALIZADO'},{where:{id:req.params.id}});res.redirect('/');});
-db.sync({alter:true}).then(()=>app.listen(process.env.PORT||3000));
+app.post('/add', async (req, res) => { await C.create(req.body); res.redirect('/'); });
+app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
+
+app.post('/u/:id', async (req, res) => { 
+  await C.update({ 
+    placa: req.body.placa.toUpperCase(), 
+    est_real: 'DESPACHADO' 
+  }, { where: { id: req.params.id } }); 
+  res.redirect('/'); 
+});
+
+app.post('/state/:id', async (req, res) => { 
+  const ahora = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' });
+  await C.update({ obs_e: req.body.obs_e, f_act: ahora }, { where: { id: req.params.id } });
+  res.sendStatus(200);
+});
+
+app.get('/finish/:id', async (req, res) => {
+  const carga = await C.findByPk(req.params.id);
+  // Validación de seguridad extra en el servidor
+  if (!carga.placa || carga.placa.trim() === "") {
+    return res.send("Error: No se puede finalizar un despacho sin placa.");
+  }
+  const ahora = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' });
+  await C.update({ 
+    f_fin: ahora, 
+    obs_e: 'FINALIZADO SIN NOVEDAD',
+    est_real: 'FINALIZADO'
+  }, { where: { id: req.params.id } });
+  res.redirect('/');
+});
+
+db.sync({ alter: true }).then(() => {
+  app.listen(process.env.PORT || 3000, () => console.log('Server OK'));
+});
