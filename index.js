@@ -26,10 +26,20 @@ const C = db.define('Carga', {
   muc: DataTypes.STRING, desp: DataTypes.STRING, f_fin: DataTypes.STRING
 }, { timestamps: true });
 
-// 3. Listas
+// 3. Listas de Opciones Restauradas
 const opts = {
-  despachadores: ['ABNNER MARTINEZ', 'CAMILO TRIANA', 'FREDY CARRILLO', 'RAUL LOPEZ', 'EDDIER RIVAS'],
-  estados: ['ASIGNADO', 'CANCELADO', 'CONTENEDOR', 'DESPACHADO', 'EN CONSECUTIVO', 'EN PROGRAMACIÓN', 'EN SITIO de CARGUE', 'FINALIZADO', 'HOJA DE VIDA', 'MERCANCÍA', 'NOVEDAD', 'PENDIENTE', 'PRE ASIGNADO', 'RETIRADO', 'VEHÍCULO EN PLANTA']
+  oficina: ['CARTAGENA', 'BOGOTÁ', 'BUENAVENTURA', 'MEDELLÍN'],
+  comerciales: ['RAÚL LÓPEZ'],
+  puertos: ['SPIA', 'SPRB', 'TCBUEN', 'CONTECAR', 'SPRC', 'PUERTO COMPAS CCTO', 'PUERTO BAHÍA', 'SOCIEDAD PORTUARIA REGIONAL DE CARTAGENA', 'SPIA - AGUADULCE', 'PLANTA ESENTTIA KM 8 VIA MAMONAL', 'PLANTA YARA CARTAGENA MAMONAL', 'N/A'],
+  clientes: ['GEODIS COLOMBIA LTDA', 'MAERSK LOGISTICS SERVICES LTDA', 'SAMSUNG SDS COLOMBIA GLOBAL', 'ENVAECOL', 'SEA CARGO COLOMBIA LTDA', 'YARA COLOMBIA', 'ESENTTIA SA', 'BRINSA SA', 'ACERIAS PAZ DEL RIO', 'TERNIUM DEL ATLANTICO', 'PLASTICOS ESPECIALES SAS', 'INGENIO MAYAGUEZ', 'TENARIS', 'CASA LUKER', 'CORONA', 'EDITORIAL NOMOS', 'ALIMENTOS POLAR', 'PLEXA SAS ESP', 'FAJOBE'],
+  modalidades: ['NACIONALIZADO', 'OTM', 'DTA', 'TRASLADO', 'NACIONALIZADO EXP', 'NACIONALIZADO INTERCOMPAÑÍAS', 'ITR', 'VACÍO EN EXPRESO', 'VACÍO CONSOLIDADO', 'NACIONALIZADO IMP'],
+  lcl_fcl: ['CARGA SUELTA', 'CONTENEDOR 40', 'CONTENEDOR 20', 'REFER 40', 'REFER 20', 'FLAT RACK 20', 'FLAT RACK 40'],
+  esquemas: ['1 ESCOLTA - SELLO', '2 ESCOLTAS SELLO - SPIA', 'SELLO', '1 ESCOLTA', '2 ESCOLTA', 'NO REQUIERE', '2 ESCOLTAS SELLO', 'INSPECTORES VIALES'],
+  vehiculos: ['TURBO 2.5 TN', 'TURBO 4.5 TN', 'TURBO SENCILLO', 'SENCILLO 9 TN', 'PATINETA 2S3', 'TRACTOMULA 3S2', 'TRACTOMULA 3S3', 'CAMA BAJA', 'DOBLE TROQUE'],
+  ciudades: ['BOGOTÁ', 'MEDELLÍN', 'CALI', 'BARRANQUILLA', 'CARTAGENA', 'BUENAVENTURA', 'SANTA MARTA', 'CÚCUTA', 'IBAGUÉ', 'PEREIRA', 'MANIZALES', 'NEIVA', 'VILLAVICENCIO', 'YOPAL', 'SIBERIA', 'FUNZA', 'MOSQUERA', 'MADRID', 'FACATATIVÁ', 'TOCANCIPÁ', 'CHÍA', 'CAJICÁ'],
+  subclientes: ['HIKVISION', 'PAYLESS COLOMBIA', 'INDUSTRIAS DONSSON', 'SAMSUNG SDS', 'ÉXITO', 'ALKOSTO', 'FALABELLA', 'SODIMAC', 'ENVAECOL', 'ALPLA', 'AMCOR', 'MEXICHEM', 'KOBA D1', 'JERONIMO MARTINS', 'TERNIUM', 'BRINSA', 'TENARIS', 'CORONA', 'FAJOBE'],
+  estados: ['ASIGNADO', 'CANCELADO', 'CONTENEDOR', 'DESPACHADO', 'EN CONSECUTIVO', 'EN PROGRAMACIÓN', 'EN SITIO de CARGUE', 'FINALIZADO', 'HOJA DE VIDA', 'MERCANCÍA', 'NOVEDAD', 'PENDIENTE', 'PRE ASIGNADO', 'RETIRADO', 'VEHÍCULO EN PLANTA'],
+  despachadores: ['ABNNER MARTINEZ', 'CAMILO TRIANA', 'FREDY CARRILLO', 'RAUL LOPEZ', 'EDDIER RIVAS']
 };
 
 const css = `<style>
@@ -37,9 +47,9 @@ const css = `<style>
   .sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}
   .fs{height:12px;margin-bottom:5px}
   .fc{width:5600px;height:1px}
-  table{border-collapse:collapse;min-width:5600px;font-size:10px;table-layout: fixed}
+  table{border-collapse:collapse;min-width:5600px;font-size:10px}
   th{background:#1e40af;padding:12px;text-align:center;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6}
-  td{padding:10px;border:1px solid #334155;white-space:nowrap;text-align:center} /* AQUÍ CENTRAMOS TODO */
+  td{padding:10px;border:1px solid #334155;white-space:nowrap;text-align:center}
   .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}
   .fg{display:flex;flex-direction:column;gap:4px}
   label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}
@@ -55,7 +65,7 @@ app.get('/', async (req, res) => {
         <td><b>${c.id}</b></td>
         <td>${new Date(c.createdAt).toLocaleString()}</td>
         <td>${c.oficina||''}</td><td>${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td><td>${c.vence||''}</td><td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td>
-        <td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;justify-content:center;gap:3px"><input name="placa" value="${c.placa||''}" style="width:70px;text-align:center" oninput="this.value=this.value.toUpperCase()"><button style="background:#10b981;color:#fff;border:none;padding:4px;border-radius:3px;cursor:pointer">OK</button></form></td>
+        <td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;justify-content:center;gap:3px"><input name="placa" value="${c.placa||''}" style="width:70px;text-align:center" oninput="this.value=this.value.toUpperCase()"><button style="background:#10b981;color:#fff;border:none;padding:4px;border-radius:3px">OK</button></form></td>
         <td>${c.f_p||''}</td><td>${c.f_f||''}</td><td><span style="background:#475569;padding:4px;border-radius:4px">${c.obs_e||'PENDIENTE'}</span></td><td>${c.f_act||''}</td><td>${c.obs||''}</td><td>${c.cond||''}</td><td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td>
         <td>${c.f_fin ? `<span style="color:#10b981;font-weight:bold">FINALIZADO</span>` : `<a href="/finish/${c.id}" class="btn-fin" onclick="return confirm('¿Finalizar despacho?')">🏁 FINALIZAR</a>`}</td>
         <td><b style="color:#3b82f6">${c.f_fin||'--:--'}</b></td>
@@ -65,27 +75,28 @@ app.get('/', async (req, res) => {
     res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body>
       <h2 style="color:#3b82f6">SISTEMA LOGÍSTICO V20</h2>
       <form action="/add" method="POST" class="form">
-        <div class="fg"><label>Oficina</label><input name="oficina"></div>
-        <div class="fg"><label>Generadora</label><input name="emp_gen" value="YEGO ECO-T SAS"></div>
-        <div class="fg"><label>Comercial</label><input name="comercial"></div>
-        <div class="fg"><label>Pto Cargue</label><input name="pto"></div>
+        <datalist id="list_ciud">${opts.ciudades.map(c=>`<option value="${c}">`).join('')}</datalist>
+        <div class="fg"><label>Oficina</label><select name="oficina">${opts.oficina.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>Generadora</label><select name="emp_gen"><option value="YEGO ECO-T SAS">YEGO ECO-T SAS</option></select></div>
+        <div class="fg"><label>Comercial</label><select name="comercial">${opts.comerciales.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>Pto Cargue</label><select name="pto">${opts.puertos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Refleja</label><select name="refleja"><option value="SI">SI</option><option value="NO">NO</option></select></div>
         <div class="fg"><label>F.Doc</label><input name="f_doc" type="date"></div>
         <div class="fg"><label>H.Doc</label><input name="h_doc" type="time"></div>
         <div class="fg"><label>DO/BL/OC</label><input name="do_bl"></div>
-        <div class="fg"><label>Cliente</label><input name="cli"></div>
-        <div class="fg"><label>Subcliente</label><input name="subc"></div>
-        <div class="fg"><label>Modalidad</label><input name="mod"></div>
-        <div class="fg"><label>LCL/FCL</label><input name="lcl"></div>
-        <div class="fg"><label>Contenedor</label><input name="cont"></div>
+        <div class="fg"><label>Cliente</label><select name="cli">${opts.clientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>Subcliente</label><select name="subc">${opts.subclientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>Modalidad</label><select name="mod">${opts.modalidades.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>LCL/FCL</label><select name="lcl">${opts.lcl_fcl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+        <div class="fg"><label>Contenedor</label><input name="cont" oninput="this.value=this.value.toUpperCase()"></div>
         <div class="fg"><label>Peso</label><input name="peso"></div>
         <div class="fg"><label>Unidades</label><input name="unid"></div>
         <div class="fg"><label>Producto</label><input name="prod"></div>
-        <div class="fg"><label>Seguridad</label><input name="esq"></div>
+        <div class="fg"><label>Seguridad</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Vence</label><input name="vence" type="date"></div>
-        <div class="fg"><label>Origen</label><input name="orig"></div>
-        <div class="fg"><label>Destino</label><input name="dest"></div>
-        <div class="fg"><label>Tipo Veh</label><input name="t_v"></div>
+        <div class="fg"><label>Origen</label><input name="orig" list="list_ciud"></div>
+        <div class="fg"><label>Destino</label><input name="dest" list="list_ciud"></div>
+        <div class="fg"><label>Tipo Veh</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg"><label>Pedido</label><input name="ped"></div>
         <div class="fg"><label>F.Cargue</label><input name="f_c" type="date"></div>
         <div class="fg"><label>H.Cargue</label><input name="h_c" type="time"></div>
