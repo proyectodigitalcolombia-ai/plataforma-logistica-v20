@@ -130,4 +130,16 @@ app.get('/', async (req, res) => {
           osc.start(); osc.stop(audioContext.currentTime+0.5); 
           setTimeout(playAlert, 2000); 
         }
-      } window.onload=()=>setTimeout(playAlert,
+      } window.onload=()=>setTimeout(playAlert,1000);
+      </script></body></html>`);
+  } catch (e) { res.send(e.message); }
+});
+
+app.post('/add', async (req, res) => { req.body.f_act = getNow(); await C.create(req.body); res.redirect('/'); });
+app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
+app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id: req.body.ids } }); res.sendStatus(200); });
+app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); res.redirect('/'); });
+app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
+app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
+
+db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
