@@ -46,18 +46,20 @@ const css = `<style>
   th{background:#1e40af;padding:10px 5px;text-align:center;position:sticky;top:0;border-right:1px solid #3b82f6; word-wrap: break-word; white-space: normal; vertical-align: middle;}
   td{padding:6px;border:1px solid #334155;white-space:nowrap;text-align:center; overflow: hidden; text-overflow: ellipsis;}
   
-  .col-num { width: 35px; }
-  .col-id { width: 45px; font-weight: bold; }
+  .col-num { width: 30px; }
+  .col-id { width: 40px; font-weight: bold; }
   .col-reg { width: 110px; font-size: 9px; }
   .col-emp { width: 150px; text-align: center !important; }
   .col-placa { width: 120px; }
   .in-placa { width: 75px !important; font-size: 11px !important; font-weight: bold; height: 25px; }
   .col-est { width: 210px; padding: 0 !important; }
   .sel-est { background:#334155; color:#fff; border:none; padding:4px; font-size:9px; width:100%; height: 100%; cursor:pointer; text-align: center; }
-
-  /* AJUSTE DESPACHADOR Y H.FIN */
   .col-desp { width: 130px; }
   .col-hfin { width: 115px; font-size: 9px; }
+
+  /* COLUMNA ACCIONES AJUSTADA */
+  .col-acc { width: 70px; }
+  .acc-cell { display: flex; align-items: center; justify-content: center; gap: 8px; height: 35px; }
 
   .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}
   .fg{display:flex;flex-direction:column;gap:4px}
@@ -123,9 +125,11 @@ app.get('/', async (req, res) => {
         <td>${c.h_t||''}</td><td>${c.muc||''}</td><td class="col-desp">${c.desp||''}</td>
         <td>${accionFin}</td>
         <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
-        <td style="display:flex;align-items:center;justify-content:center;gap:5px;height:35px">
-          <a href="/d/${c.id}" style="color:#f87171;text-decoration:none;font-size:9px" onclick="return confirm('¿Borrar?')">DEL</a>
-          <input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()">
+        <td class="col-acc">
+          <div class="acc-cell">
+            <a href="/d/${c.id}" style="color:#f87171;text-decoration:none;font-size:10px" onclick="return confirm('¿Borrar?')">🗑️</a>
+            <input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()">
+          </div>
         </td>
       </tr>`;
     }
@@ -186,7 +190,7 @@ app.get('/', async (req, res) => {
         <table id="tabla">
           <thead>
             <tr>
-              <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL/FCL</th><th>CONTENEDOR</th><th>PESO</th><th>UNID</th><th>PRODUCTO</th><th>ESQUEMA</th><th>VENCE</th><th>ORIGEN</th><th>DESTINO</th><th>VEHICULO</th><th>PEDIDO</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th class="col-placa">PLACA</th><th>PAGAR</th><th>FACTURA</th><th class="col-est">ESTADO</th><th>ACTUALIZACIÓN</th><th>REAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORA</th><th>MUC</th><th class="col-desp">DESPACHADOR</th><th>FIN</th><th class="col-hfin">H.FIN</th><th>ACCIONES</th>
+              <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL/FCL</th><th>CONTENEDOR</th><th>PESO</th><th>UNID</th><th>PRODUCTO</th><th>ESQUEMA</th><th>VENCE</th><th>ORIGEN</th><th>DESTINO</th><th>VEHICULO</th><th>PEDIDO</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th class="col-placa">PLACA</th><th>PAGAR</th><th>FACTURA</th><th class="col-est">ESTADO</th><th>ACTUALIZACIÓN</th><th>REAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORA</th><th>MUC</th><th class="col-desp">DESPACHADOR</th><th>FIN</th><th class="col-hfin">H.FIN</th><th class="col-acc">ACCIONES</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
