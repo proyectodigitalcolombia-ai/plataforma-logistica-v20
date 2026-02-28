@@ -36,43 +36,10 @@ const opts = {
 
 const css = `<style>
   body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}
-  /* Contenedor principal con altura máxima para permitir scroll interno */
-  .sc-container{max-height:80vh;overflow:auto;background:#1e293b;border:1px solid #334155;border-radius:8px;position:relative}
+  .sc-container{max-height:75vh;overflow:auto;background:#1e293b;border:1px solid #334155;border-radius:8px;position:relative}
   .fs{height:12px;margin-bottom:5px;overflow-x:auto}
   .fc{width:8500px;height:1px}
   table{border-collapse:separate;border-spacing:0;min-width:8500px;font-size:10px}
-  /* CELDAS DEL ENCABEZADO FIJAS */
   th{background:#1e40af;padding:15px;text-align:center;position:sticky;top:0;z-index:10;white-space:nowrap;border-bottom:2px solid #3b82f6;border-right:1px solid #3b82f6;color:#fff}
   td{padding:10px;border-bottom:1px solid #334155;border-right:1px solid #334155;white-space:nowrap;text-align:center;background:#1e293b}
-  .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}
-  .fg{display:flex;flex-direction:column;gap:4px}
-  label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}
-  input,select{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000;text-align:center}
-  .btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}
-  .btn-fin{background:#10b981;color:white;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;font-weight:bold;text-decoration:none;font-size:10px}
-  .sel-est{background:#334155;color:#fff;border:1px solid #475569;padding:6px;border-radius:4px;cursor:pointer;font-size:10px;text-align:center;width:100%}
-  .sel-est:disabled{background:#1e293b;color:#94a3b8;cursor:not-allowed;border:1px solid #334155}
-  .st-real{padding:5px 10px;border-radius:20px;font-weight:bold;font-size:9px;text-transform:uppercase}
-  .st-desp{background:#065f46;color:#34d399}.st-fin{background:#1e40af;color:#93c5fd}.st-pend{background:#475569;color:#cbd5e1}
-  .warn-placa{color:#f87171;font-weight:bold;font-size:9px;background:rgba(248,113,113,0.1);padding:5px;border-radius:4px}
-</style>`;
-
-app.get('/', async (req, res) => {
-  try {
-    const d = await C.findAll({ order: [['id', 'DESC']] });
-    const rows = d.map(c => {
-      const isLocked = c.f_fin ? 'disabled' : '';
-      const stClass = c.est_real === 'DESPACHADO' ? 'st-desp' : (c.est_real === 'FINALIZADO' ? 'st-fin' : 'st-pend');
-      const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">
-        ${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}
-      </select>`;
-
-      let accionFin = c.f_fin ? `<span style="color:#10b981;font-weight:bold">✓ FINALIZADO</span>` : 
-                     (c.placa ? `<a href="/finish/${c.id}" class="btn-fin" onclick="return confirm('¿Finalizar?')">🏁 FINALIZAR</a>` : 
-                     `<span class="warn-placa">⚠️ REQUIERE PLACA</span>`);
-
-      return `<tr><td><b>${c.id}</b></td><td>${new Date(c.createdAt).toLocaleString()}</td><td>${c.oficina||''}</td><td>${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td><td>${c.vence||''}</td><td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td><td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;justify-content:center;gap:3px"><input name="placa" value="${c.placa||''}" ${isLocked} style="width:70px;text-align:center" oninput="this.value=this.value.toUpperCase()"><button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:4px;border-radius:3px">OK</button></form></td><td>${c.f_p||''}</td><td>${c.f_f||''}</td><td>${selectEstado}</td><td>${c.f_act||''}</td><td><span class="st-real ${stClass}">${c.est_real}</span></td><td>${c.obs||''}</td><td>${c.cond||''}</td><td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td><td>${accionFin}</td><td><b style="color:#3b82f6">${c.f_fin||'--:--'}</b></td><td><a href="/d/${c.id}" style="color:#f87171;text-decoration:none" onclick="return confirm('¿Borrar?')">X</a></td></tr>`;
-    }).join('');
-
-    res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body>
-      <h2 style="color:#3b82f6">SISTEMA LOGÍ
+  .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius
