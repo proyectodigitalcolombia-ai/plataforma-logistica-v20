@@ -1,14 +1,12 @@
 const express = require('express'), { Sequelize, DataTypes, Op } = require('sequelize'), app = express();
 app.use(express.urlencoded({ extended: true })); app.use(express.json());
 
-// 1. Conexión a DB
 const db = new Sequelize(process.env.DATABASE_URL, { 
   dialect: 'postgres', 
   logging: false, 
   dialectOptions: { ssl: { require: true, rejectUnauthorized: false } } 
 });
 
-// 2. Modelo
 const C = db.define('Carga', {
   oficina: DataTypes.STRING, emp_gen: DataTypes.STRING, comercial: DataTypes.STRING, pto: DataTypes.STRING,
   refleja: DataTypes.STRING, f_doc: DataTypes.STRING, h_doc: DataTypes.STRING, do_bl: DataTypes.STRING,
@@ -50,11 +48,14 @@ const css = `<style>
   
   .col-num { width: 30px; }
   .col-id { width: 45px; font-weight: bold; }
-  
-  /* ANCHOS REDUCIDOS AL MÍNIMO */
   .col-reg { width: 110px; font-size: 9px; }
-  .col-emp { width: 140px; text-align: left !important; }
-  .col-placa { width: 95px; }
+  
+  /* EMPRESA CENTRADA */
+  .col-emp { width: 140px; text-align: center !important; }
+  
+  /* PLACA AGRANDADA */
+  .col-placa { width: 115px; }
+  .in-placa { width: 70px !important; font-size: 11px !important; font-weight: bold; height: 25px; }
 
   .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}
   .fg{display:flex;flex-direction:column;gap:4px}
@@ -106,9 +107,9 @@ app.get('/', async (req, res) => {
         <td class="${venceStyle}" onclick="silenciar(this)">${c.vence||''}</td>
         <td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td>
         <td class="col-placa">
-          <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:2px;justify-content:center">
-            <input name="placa" value="${c.placa||''}" ${isLocked} style="width:45px; font-size:9px" oninput="this.value=this.value.toUpperCase()">
-            <button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:2px;border-radius:2px;cursor:pointer">OK</button>
+          <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:4px;justify-content:center;align-items:center">
+            <input name="placa" class="in-placa" value="${c.placa||''}" ${isLocked} placeholder="ABC123" oninput="this.value=this.value.toUpperCase()">
+            <button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:5px;border-radius:3px;cursor:pointer;font-weight:bold">OK</button>
           </form>
         </td>
         <td>${c.f_p||''}</td><td>${c.f_f||''}</td>
