@@ -62,19 +62,11 @@ const opts = {
   despachadores: ['ABNNER MARTINEZ', 'CAMILO TRIANA', 'FREDY CARRILLO', 'RAUL LOPEZ', 'EDDIER RIVAS']
 };
 
-/**
- * AJUSTE DE HORA COLOMBIA
- * Forzamos el uso de America/Bogota para corregir el desfase del servidor
- */
 const getNow = () => {
   return new Date().toLocaleString('es-CO', { 
     timeZone: 'America/Bogota', 
-    year: 'numeric', 
-    month: '2-digit', 
-    day: '2-digit', 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    second: '2-digit', 
+    year: 'numeric', month: '2-digit', day: '2-digit', 
+    hour: '2-digit', minute: '2-digit', second: '2-digit', 
     hour12: false 
   }).replace(/\//g, '-');
 };
@@ -125,20 +117,11 @@ app.get('/', async (req, res) => {
     let rows = '';
     const hoy = new Date(); hoy.setHours(0,0,0,0);
     let index = 1;
-
     for (let c of d) {
       const isLocked = c.f_fin ? 'disabled' : '';
-      let displayReal = 'PENDIENTE';
-      let stClass = 'background:#475569;color:#cbd5e1'; 
-
-      if (c.f_fin) {
-          displayReal = 'FINALIZADO';
-          stClass = 'background:#1e40af;color:#bfdbfe'; 
-      } else if (c.placa) {
-          displayReal = 'DESPACHADO';
-          stClass = 'background:#065f46;color:#34d399'; 
-      }
-      
+      let displayReal = 'PENDIENTE', stClass = 'background:#475569;color:#cbd5e1'; 
+      if (c.f_fin) { displayReal = 'FINALIZADO'; stClass = 'background:#1e40af;color:#bfdbfe'; } 
+      else if (c.placa) { displayReal = 'DESPACHADO'; stClass = 'background:#065f46;color:#34d399'; }
       let venceStyle = '';
       if (c.vence && !c.f_fin) {
         const fVence = new Date(c.vence);
@@ -146,14 +129,10 @@ app.get('/', async (req, res) => {
         if (diffDays <= 2) venceStyle = 'vence-rojo';
         else if (diffDays <= 6) venceStyle = 'vence-amarillo';
       }
-
       const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
       let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
       const idUnico = c.id.toString().padStart(4, '0');
-
-      // AJUSTE EN LA COLUMNA DE REGISTRO PARA MOSTRAR HORA COLOMBIA SIEMPRE
       const fechaLocal = new Date(c.createdAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' });
-
       rows += `<tr class="fila-datos">
         <td class="col-num">${index++}</td>
         <td class="col-id">${idUnico}</td>
@@ -171,7 +150,7 @@ app.get('/', async (req, res) => {
         <td>${c.mod||''}</td>
         <td>${c.lcl||''}</td>
         <td>${c.cont||''}</td>
-        <td>${c.float||''}</td>
+        <td>${c.peso||''}</td>
         <td>${c.unid||''}</td>
         <td>${c.prod||''}</td>
         <td>${c.esq||''}</td>
@@ -202,15 +181,9 @@ app.get('/', async (req, res) => {
         <td class="col-desp">${c.desp||''}</td>
         <td>${accionFin}</td>
         <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
-        <td class="col-acc">
-          <div class="acc-cell">
-            <a href="#" style="color:#f87171;text-decoration:none;font-size:10px" onclick="eliminarConClave(${c.id})">🗑️</a>
-            <input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()">
-          </div>
-        </td>
+        <td class="col-acc"><div class="acc-cell"><a href="#" style="color:#f87171;text-decoration:none;font-size:10px" onclick="eliminarConClave(${c.id})">🗑️</a><input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()"></div></td>
       </tr>`;
     }
-
     res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
       <h2 style="color:#3b82f6; margin: 0 0 10px 0;">SISTEMA LOGISTICO DE YEGO ECO T S.A.S</h2>
       <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">
@@ -218,12 +191,8 @@ app.get('/', async (req, res) => {
           <button class="btn-xls" onclick="exportExcel()">Excel</button>
           <a href="/stats" class="btn-stats">📈 Indicadores</a>
           <button id="btnDelMult" class="btn-del-mult" onclick="eliminarSeleccionados()">Borrar (<span id="count">0</span>)</button>
-          <div class="container-check-all">
-            <label style="font-size:10px;color:#fff;">Todos</label>
-            <input type="checkbox" id="checkAll" onclick="selectAll(this)">
-          </div>
+          <div class="container-check-all"><label style="font-size:10px;color:#fff;">Todos</label><input type="checkbox" id="checkAll" onclick="selectAll(this)"></div>
       </div>
-      
       <form action="/add" method="POST" class="form" style="padding:10px; gap:8px;">
         <datalist id="list_ciud">${opts.ciudades.map(c=>`<option value="${c}">`).join('')}</datalist>
         <div class="fg"><label>Oficina</label><select name="oficina">${opts.oficina.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
@@ -260,122 +229,25 @@ app.get('/', async (req, res) => {
         <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
         <div class="fg" style="grid-column: span 2"><label>Obs</label><textarea name="obs" rows="1"></textarea></div>
         <div class="fg" style="grid-column: span 2"><label>Cond</label><textarea name="cond" rows="1"></textarea></div>
-        <button class="btn-submit-serious">
-          <svg class="icon-serious" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
-          REGISTRAR SERVICIO
-        </button>
+        <button class="btn-submit-serious">REGISTRAR SERVICIO</button>
       </form>
-
       <div class="sc fs" id="st"><div class="fc"></div></div>
-      <div class="sc" id="sm">
-        <table id="tabla">
-          <thead>
-            <tr>
-              <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL/FCL</th><th>CONTENEDOR</th><th>PESO</th><th>UNID</th><th>PRODUCTO</th><th>ESQUEMA</th><th>VENCE</th><th>ORIGEN</th><th>DESTINO</th><th>VEHICULO</th><th>PEDIDO</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th class="col-placa">PLACA</th><th>PAGAR</th><th>FACTURA</th><th class="col-est">ESTADO</th><th>ACTUALIZACIÓN</th><th>ESTADO FINAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORA</th><th>MUC</th><th class="col-desp">DESPACHADOR</th><th>FIN</th><th class="col-hfin">H.FIN</th><th class="col-acc">ACCIONES</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-
+      <div class="sc" id="sm"><table id="tabla"><thead><tr><th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL/FCL</th><th>CONTENEDOR</th><th>PESO</th><th>UNID</th><th>PRODUCTO</th><th>ESQUEMA</th><th>VENCE</th><th>ORIGEN</th><th>DESTINO</th><th>VEHICULO</th><th>PEDIDO</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th class="col-placa">PLACA</th><th>PAGAR</th><th>FACTURA</th><th class="col-est">ESTADO</th><th>ACTUALIZACIÓN</th><th>ESTADO FINAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORA</th><th>MUC</th><th class="col-desp">DESPACHADOR</th><th>FIN</th><th class="col-hfin">H.FIN</th><th class="col-acc">ACCIONES</th></tr></thead><tbody>${rows}</tbody></table></div>
       <script>
       const CLAVE_ADMIN = "ADMIN123";
       const t=document.getElementById('st'),m=document.getElementById('sm');
       t.onscroll=()=>m.scrollLeft=t.scrollLeft;
       m.onscroll=()=>t.scrollLeft=m.scrollLeft;
-      
-      function selectAll(source){ 
-        const checkboxes = document.getElementsByClassName('row-check'); 
-        for(let i=0; i<checkboxes.length; i++){
-          if(checkboxes[i].closest('tr').style.display !== 'none') checkboxes[i].checked = source.checked;
-        }
-        toggleDelBtn(); 
-      }
-      
-      function toggleDelBtn(){ 
-        const checked = document.querySelectorAll('.row-check:checked');
-        const btn = document.getElementById('btnDelMult');
-        document.getElementById('count').innerText = checked.length;
-        btn.style.display = checked.length > 0 ? 'inline-block' : 'none'; 
-      }
-      
-      function eliminarConClave(id){
-        const pw = prompt("Ingrese contraseña para borrar despacho:");
-        if(pw === CLAVE_ADMIN){
-           if(confirm("¿Seguro que desea eliminar el registro?")) {
-              window.location.href = "/d/" + id;
-           }
-        } else if(pw !== null) {
-           alert("Contraseña incorrecta");
-        }
-      }
-      
-      function eliminarSeleccionados(){ 
-        const pw = prompt("Ingrese contraseña para borrar selección:");
-        if(pw !== CLAVE_ADMIN) return alert("Acceso denegado");
-        const checked = document.querySelectorAll('.row-check:checked');
-        const ids = Array.from(checked).map(cb => cb.value);
-        if(!confirm('¿Eliminar ' + ids.length + ' registros?')) return; 
-        fetch('/delete-multiple',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}).then(()=>location.reload()); 
-      }
-      
-      function updState(id,v){
-        fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:v})}).then(()=>location.reload());
-      }
-      
-      function buscar(){
-        let f = document.getElementById("busq").value.toUpperCase();
-        let filas = document.querySelectorAll(".fila-datos");
-        let visibleCount = 1;
-        filas.forEach(fila => {
-          let textoCeldas = fila.innerText.toUpperCase();
-          let inputs = Array.from(fila.querySelectorAll("input")).map(i => i.value.toUpperCase()).join(" ");
-          let selects = Array.from(fila.querySelectorAll("select")).map(s => s.value.toUpperCase()).join(" ");
-          let contenidoTotal = textoCeldas + " " + inputs + " " + selects;
-          let mostrar = contenidoTotal.includes(f);
-          fila.style.display = mostrar ? "" : "none";
-          if(mostrar) { fila.querySelector('.col-num').innerText = visibleCount++; }
-        });
-      }
-      
-      function exportExcel(){
-        let csv="sep=;\\n";
-        document.querySelectorAll("#tabla tr").forEach(row=>{
-          if(row.style.display!=="none"){
-            let cols=Array.from(row.querySelectorAll("td, th")).map(c=>{
-              let inp=c.querySelector("input,select,textarea");
-              return '"'+(inp?inp.value:c.innerText.split('\\n')[0]).replace(/;/g,",").trim()+'"';
-            });
-            csv+=cols.slice(0,-1).join(";")+"\\n";
-          }
-        });
-        const b=new Blob(["\\ufeff"+csv],{type:"text/csv;charset=utf-8;"}),u=URL.createObjectURL(b),a=document.createElement("a");
-        a.href=u;a.download="Reporte.csv";a.click();
-      }
-      
-      let audioContext; 
-      function activarAudio(){ 
-        if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); 
-        playAlert(); 
-      }
-      
-      function silenciar(el){ 
-        el.dataset.silenced = "true"; 
-        el.style.animation = "none"; 
-        el.style.background = "#450a0a"; 
-      }
-      
-      function playAlert(){ 
-        let reds = Array.from(document.querySelectorAll('.vence-rojo')).filter(el => el.dataset.silenced !== "true");
-        if(reds.length > 0 && audioContext){ 
-          let osc=audioContext.createOscillator(),gain=audioContext.createGain(); 
-          osc.type='square'; osc.frequency.setValueAtTime(440, audioContext.currentTime); 
-          gain.gain.setValueAtTime(0.1, audioContext.currentTime); 
-          osc.connect(gain); gain.connect(audioContext.destination); 
-          osc.start(); osc.stop(audioContext.currentTime+0.5); 
-          setTimeout(playAlert, 2000); 
-        }
-      } 
+      function selectAll(source){ const checkboxes = document.getElementsByClassName('row-check'); for(let i=0; i<checkboxes.length; i++){ if(checkboxes[i].closest('tr').style.display !== 'none') checkboxes[i].checked = source.checked; } toggleDelBtn(); }
+      function toggleDelBtn(){ const checked = document.querySelectorAll('.row-check:checked'); const btn = document.getElementById('btnDelMult'); document.getElementById('count').innerText = checked.length; btn.style.display = checked.length > 0 ? 'inline-block' : 'none'; }
+      function eliminarConClave(id){ const pw = prompt("Contraseña:"); if(pw === CLAVE_ADMIN){ if(confirm("¿Eliminar?")) window.location.href = "/d/" + id; } }
+      function eliminarSeleccionados(){ const pw = prompt("Contraseña:"); if(pw !== CLAVE_ADMIN) return alert("Error"); const checked = document.querySelectorAll('.row-check:checked'); const ids = Array.from(checked).map(cb => cb.value); if(confirm('¿Eliminar ' + ids.length + '?')) fetch('/delete-multiple',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}).then(()=>location.reload()); }
+      function updState(id,v){ fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:v})}).then(()=>location.reload()); }
+      function buscar(){ let f = document.getElementById("busq").value.toUpperCase(); let filas = document.querySelectorAll(".fila-datos"); let visibleCount = 1; filas.forEach(fila => { let textoCeldas = fila.innerText.toUpperCase(); let inputs = Array.from(fila.querySelectorAll("input")).map(i => i.value.toUpperCase()).join(" "); let mostrar = (textoCeldas + " " + inputs).includes(f); fila.style.display = mostrar ? "" : "none"; if(mostrar) { fila.querySelector('.col-num').innerText = visibleCount++; } }); }
+      function exportExcel(){ let csv="sep=;\\n"; document.querySelectorAll("#tabla tr").forEach(row=>{ if(row.style.display!=="none"){ let cols=Array.from(row.querySelectorAll("td, th")).map(c=>{ let inp=c.querySelector("input,select,textarea"); return '"'+(inp?inp.value:c.innerText.split('\\n')[0]).replace(/;/g,",").trim()+'"'; }); csv+=cols.slice(0,-1).join(";")+"\\n"; } }); const b=new Blob(["\\ufeff"+csv],{type:"text/csv;charset=utf-8;"}),u=URL.createObjectURL(b),a=document.createElement("a"); a.href=u;a.download="Reporte.csv";a.click(); }
+      let audioContext; function activarAudio(){ if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); playAlert(); }
+      function silenciar(el){ el.dataset.silenced = "true"; el.style.animation = "none"; el.style.background = "#450a0a"; }
+      function playAlert(){ let reds = Array.from(document.querySelectorAll('.vence-rojo')).filter(el => el.dataset.silenced !== "true"); if(reds.length > 0 && audioContext){ let osc=audioContext.createOscillator(),gain=audioContext.createGain(); osc.type='square'; osc.frequency.setValueAtTime(440, audioContext.currentTime); gain.gain.setValueAtTime(0.1, audioContext.currentTime); osc.connect(gain); gain.connect(audioContext.destination); osc.start(); osc.stop(audioContext.currentTime+0.5); setTimeout(playAlert, 2000); } }
       window.onload=()=>setTimeout(playAlert,1000);
       </script></body></html>`);
   } catch (e) { res.send(e.message); }
@@ -388,113 +260,75 @@ app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.
 app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
 app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
 
-// --- INDICADORES REQUERIDOS ---
+// --- RUTA DE INDICADORES (SOLO ESTA PARTE SE ACTUALIZÓ PARA REQUERIMIENTOS) ---
 app.get('/stats', async (req, res) => {
   try {
     const cargas = await C.findAll();
-    const hoyDate = new Date();
-    // Ajustar hoyStr para comparación en Colombia
-    const hoyStr = hoyDate.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
-    const mesActualStr = hoyStr.substring(0, 7);
-    
+    const hoyStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
     const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
     const perdidosTotal = cargas.filter(c => cancelTags.includes(c.obs_e));
-    const perdidaConteo = perdidosTotal.length;
-    const perdidaPorcentaje = cargas.length > 0 ? ((perdidaConteo / cargas.length) * 100).toFixed(1) : 0;
-    const perdidaMesActual = perdidosTotal.filter(c => {
-       const f = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
-       return f.startsWith(mesActualStr);
-    }).length;
+    
+    // Filtro para saber qué vehículos faltan (los que no tienen placa asignada)
+    const sinPlaca = cargas.filter(c => (!c.placa || c.placa.trim() === '') && !c.f_fin);
+    const requerimientoCiudad = {};
+    sinPlaca.forEach(c => {
+        const ciudad = (c.orig || 'SIN DEFINIR').toUpperCase();
+        const tipo = (c.t_v || 'TIPO NO ESPECIFICADO').toUpperCase();
+        if(!requerimientoCiudad[ciudad]) requerimientoCiudad[ciudad] = {};
+        requerimientoCiudad[ciudad][tipo] = (requerimientoCiudad[ciudad][tipo] || 0) + 1;
+    });
 
     const despLog = {};
     cargas.forEach(c => {
       const d = c.desp || 'SIN ASIGNAR';
       const fCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
-      const mCrea = fCrea.substring(0, 7);
       if(!despLog[d]) despLog[d] = { hoy:0, mes:0 };
       if(fCrea === hoyStr) despLog[d].hoy++;
-      if(mCrea === mesActualStr) despLog[d].mes++;
+      if(fCrea.startsWith(hoyStr.substring(0,7))) despLog[d].mes++;
     });
 
-    const total = cargas.length;
-    const fin = cargas.filter(c => c.f_fin).length;
-    const desp = cargas.filter(c => c.placa && !c.f_fin).length;
-    const ofis = {}; cargas.forEach(c => { if(c.oficina) ofis[c.oficina] = (ofis[c.oficina] || 0) + 1; });
-
-    res.send(`<html><head><meta charset="UTF-8"><title>KPI - LOGISV20</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    res.send(`<html><head><meta charset="UTF-8"><title>KPI</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
       body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:25px;}
       .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid #1e40af;padding-bottom:15px;}
       .btn-back{background:#2563eb;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:bold;}
-      .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;margin-bottom:25px;}
+      .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;margin-bottom:25px;}
       .card{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;}
-      .card h3{margin:0;font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;}
-      .card p{margin:10px 0 0;font-size:32px;font-weight:bold;color:#3b82f6;}
-      .lost-card{border-left: 5px solid #ef4444; background: rgba(239, 68, 68, 0.05);}
-      .lost-card p{color:#f87171;}
-      .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:20px;margin-bottom:25px;}
-      .chart-box{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;}
-      table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:10px;overflow:hidden;}
-      th{background:#1e40af;padding:12px;font-size:11px;text-align:center;}
-      td{padding:12px;border-bottom:1px solid #334155;font-size:13px;text-align:center;}
-      .badge{padding:4px 10px;border-radius:15px;font-weight:bold;font-size:12px;color:#fff;}
-      .prog-wrapper{display:flex;align-items:center;justify-content:center;gap:10px;}
-      .prog-bg{width:150px;background:#334155;height:12px;border-radius:6px;overflow:hidden;}
-      .prog-fill{background:#10b981;height:100%;border-radius:6px;}
+      .card p{margin:10px 0 0;font-size:32px;font-weight:bold;}
+      .table-box{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;margin-bottom:20px;}
+      table{width:100%;border-collapse:collapse;}
+      th{background:#1e40af;padding:10px;text-align:left;}
+      td{padding:10px;border-bottom:1px solid #334155;}
+      .badge{background:#ef4444;padding:2px 6px;border-radius:4px;font-weight:bold;margin-right:5px;}
     </style></head>
     <body>
-      <div class="header">
-        <h2 style="margin:0;">TABLERO DE INDICADORES</h2>
-        <a href="/" class="btn-back">VOLVER</a>
+      <div class="header"><h2>INDICADORES OPERATIVOS</h2><a href="/" class="btn-back">VOLVER</a></div>
+      <div class="grid">
+        <div class="card"><h3>Servicios Totales</h3><p>${cargas.length}</p></div>
+        <div class="card"><h3>Vehículos Requeridos</h3><p style="color:#ef4444">${sinPlaca.length}</p></div>
+        <div class="card"><h3>Pérdida Emergente</h3><p style="color:#f87171">${perdidosTotal.length}</p></div>
       </div>
-      <div class="kpi-grid">
-        <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
-        <div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
-        <div class="card"><h3>En Ruta</h3><p style="color:#fbbf24">${desp}</p></div>
-        <div class="card lost-card">
-            <h3>Pérdida Emergente</h3>
-            <p>${perdidaConteo} (${perdidaPorcentaje}%)</p>
-            <div style="font-size:11px; margin-top:5px; color:#94a3b8;">
-                Mes Actual: <b>${perdidaMesActual}</b>
-            </div>
+      <div class="grid" style="grid-template-columns: 1.5fr 1fr;">
+        <div class="table-box">
+          <h3>📍 REQUERIMIENTOS POR CIUDAD</h3>
+          <table>
+            <thead><tr><th>CIUDAD</th><th>VEHÍCULOS FALTANTES</th></tr></thead>
+            <tbody>
+              ${Object.entries(requerimientoCiudad).map(([city, types]) => `
+                <tr><td><b>${city}</b></td><td>${Object.entries(types).map(([t, q]) => `<span class="badge">${q}</span> ${t}`).join(' | ')}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="table-box">
+          <h3>👨‍💻 PRODUCTIVIDAD</h3>
+          <table>
+            <thead><tr><th>NOMBRE</th><th>HOY</th><th>MES</th></tr></thead>
+            <tbody>
+              ${Object.entries(despLog).map(([n, s]) => `<tr><td>${n}</td><td>${s.hoy}</td><td>${s.mes}</td></tr>`).join('')}
+            </tbody>
+          </table>
         </div>
       </div>
-      <div class="charts">
-        <div class="chart-box"><h4>OPERACIÓN</h4><canvas id="c1"></canvas></div>
-        <div class="chart-box"><h4>OFICINAS</h4><canvas id="c2"></canvas></div>
-      </div>
-      <h3 style="color:#3b82f6; border-left: 4px solid #2563eb; padding-left: 10px; margin-bottom:15px;">PRODUCTIVIDAD POR DESPACHADOR</h3>
-      <table>
-        <thead>
-            <tr>
-                <th>DESPACHADOR</th>
-                <th>HOY</th>
-                <th>MES</th>
-                <th>PRODUCTIVIDAD (%)</th>
-            </tr>
-        </thead>
-        <tbody>
-          ${Object.entries(despLog).map(([name, s]) => {
-            const prodPerc = total > 0 ? ((s.mes/total)*100).toFixed(1) : 0;
-            return `
-            <tr>
-              <td><b>${name}</b></td>
-              <td><span class="badge" style="background:#3b82f6">${s.hoy}</span></td>
-              <td><span class="badge" style="background:#8b5cf6">${s.mes}</span></td>
-              <td>
-                <div class="prog-wrapper">
-                    <div class="prog-bg"><div style="width:${prodPerc}%" class="prog-fill"></div></div>
-                    <b style="color:#10b981">${prodPerc}%</b>
-                </div>
-              </td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-      <script>
-        new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:['Fin','Ruta','Perdida','Otros'],datasets:[{data:[${fin},${desp},${perdidaConteo},${total-fin-desp-perdidaConteo}],backgroundColor:['#10b981','#fbbf24','#ef4444','#475569'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
-        new Chart(document.getElementById('c2'),{type:'bar',data:{labels:${JSON.stringify(Object.keys(ofis))},datasets:[{label:'Servicios',data:${JSON.stringify(Object.values(ofis))},backgroundColor:'#3b82f6'}]},options:{scales:{y:{beginAtZero:true,ticks:{color:'#fff'}},x:{ticks:{color:'#fff'}}},plugins:{legend:{display:false}}}});
-      </script>
     </body></html>`);
   } catch (e) { res.send(e.message); }
 });
