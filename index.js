@@ -1,61 +1,98 @@
 const express = require('express'), { Sequelize, DataTypes } = require('sequelize'), app = express();
 app.use(express.urlencoded({ extended: true })); app.use(express.json());
-const db = new Sequelize(process.env.DATABASE_URL, { dialect: 'postgres', logging: false, dialectOptions: { ssl: { require: true, rejectUnauthorized: false } } });
+
+const db = new Sequelize(process.env.DATABASE_URL, {
+  dialect: 'postgres', logging: false,
+  dialectOptions: { ssl: { require: true, rejectUnauthorized: false } }
+});
 
 const C = db.define('Carga', {
-  oficina: DataTypes.STRING, emp_gen: DataTypes.STRING, comercial: DataTypes.STRING, pto: DataTypes.STRING, refleja: DataTypes.STRING, f_doc: DataTypes.STRING, h_doc: DataTypes.STRING, do_bl: DataTypes.STRING, cli: DataTypes.STRING, subc: DataTypes.STRING, mod: DataTypes.STRING, lcl: DataTypes.STRING, cont: DataTypes.STRING, peso: DataTypes.STRING, unid: DataTypes.STRING, prod: DataTypes.STRING, esq: DataTypes.STRING, vence: DataTypes.STRING, orig: DataTypes.STRING, dest: DataTypes.STRING, t_v: DataTypes.STRING, ped: DataTypes.STRING, f_c: DataTypes.STRING, h_c: DataTypes.STRING, f_d: DataTypes.STRING, h_d: DataTypes.STRING, placa: DataTypes.STRING, f_p: DataTypes.STRING, f_f: DataTypes.STRING, obs_e: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' }, f_act: DataTypes.STRING, obs: DataTypes.TEXT, cond: DataTypes.TEXT, h_t: DataTypes.STRING, muc: DataTypes.STRING, desp: DataTypes.STRING, f_fin: DataTypes.STRING, est_real: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' }
+  oficina: DataTypes.STRING, emp_gen: DataTypes.STRING, comercial: DataTypes.STRING, pto: DataTypes.STRING,
+  refleja: DataTypes.STRING, f_doc: DataTypes.STRING, h_doc: DataTypes.STRING, do_bl: DataTypes.STRING,
+  cli: DataTypes.STRING, subc: DataTypes.STRING, mod: DataTypes.STRING, lcl: DataTypes.STRING,
+  cont: DataTypes.STRING, peso: DataTypes.STRING, unid: DataTypes.STRING, prod: DataTypes.STRING,
+  esq: DataTypes.STRING, vence: DataTypes.STRING, orig: DataTypes.STRING, dest: DataTypes.STRING,
+  t_v: DataTypes.STRING, ped: DataTypes.STRING, f_c: DataTypes.STRING, h_c: DataTypes.STRING,
+  f_d: DataTypes.STRING, h_d: DataTypes.STRING, placa: DataTypes.STRING, f_p: DataTypes.STRING,
+  f_f: DataTypes.STRING, obs_e: { type: DataTypes.STRING, defaultValue: 'PENDIENTE INSTRUCCIONES' },
+  f_act: DataTypes.STRING, obs: DataTypes.TEXT, cond: DataTypes.TEXT, h_t: DataTypes.STRING,
+  muc: DataTypes.STRING, desp: DataTypes.STRING, f_fin: DataTypes.STRING,
+  est_real: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' }
 }, { timestamps: true });
 
 const opts = {
   oficina: ['CARTAGENA', 'BOGOTÁ', 'BUENAVENTURA', 'MEDELLÍN'],
-  puertos: ['SPIA', 'SPRB', 'TCBUEN', 'CONTECAR', 'SPRC', 'PUERTO BAHÍA', 'N/A'],
-  clientes: ['GEODIS', 'MAERSK', 'SAMSUNG', 'ENVAECOL', 'YARA', 'ESENTTIA', 'BRINSA', 'TENARIS', 'CORONA', 'FAJOBE'],
-  estados: ['ASIGNADO VEHÍCULO', 'PENDIENTE CITA', 'VEHÍCULO CON CITA', 'DESPACHADO', 'FINALIZADO SIN NOVEDAD', 'CANCELADO']
+  puertos: ['SPIA', 'SPRB', 'TCBUEN', 'CONTECAR', 'SPRC', 'PUERTO COMPAS CCTO', 'PUERTO BAHÍA', 'SOCIEDAD PORTUARIA REGIONAL DE CARTAGENA', 'SPIA - AGUADULCE', 'PLANTA ESENTTIA KM 8 VIA MAMONAL', 'PLANTA YARA CARTAGENA MAMONAL', 'N/A'],
+  clientes: ['GEODIS COLOMBIA LTDA', 'MAERSK LOGISTICS SERVICES LTDA', 'SAMSUNG SDS COLOMBIA GLOBAL', 'ENVAECOL', 'SEA CARGO COLOMBIA LTDA', 'YARA COLOMBIA', 'ESENTTIA SA', 'BRINSA SA', 'ACERIAS PAZ DEL RIO', 'TERNIUM DEL ATLANTICO', 'PLASTICOS ESPECIALES SAS', 'INGENIO MAYAGUEZ', 'TENARIS', 'CASA LUKER', 'CORONA', 'EDITORIAL NOMOS', 'ALIMENTOS POLAR', 'PLEXA SAS ESP', 'FAJOBE'],
+  modalidades: ['NACIONALIZADO', 'OTM', 'DTA', 'TRASLADO', 'NACIONALIZADO EXP', 'ITR', 'VACÍO EN EXPRESO', 'VACÍO CONSOLIDADO', 'NACIONALIZADO IMP'],
+  lcl_fcl: ['CARGA SUELTA', 'CONTENEDOR 40', 'CONTENEDOR 20', 'REFER 40', 'REFER 20', 'FLAT RACK 20', 'FLAT RACK 40'],
+  esquemas: ['1 ESCOLTA - SELLO', '2 ESCOLTAS SELLO - SPIA', 'SELLO', '1 ESCOLTA', '2 ESCOLTA', 'NO REQUIERE', '2 ESCOLTAS SELLO', 'INSPECTORES VIALES'],
+  vehiculos: ['TURBO 2.5 TN', 'TURBO 4.5 TN', 'TURBO SENCILLO', 'SENCILLO 9 TN', 'PATINETA 2S3', 'TRACTOMULA 3S2', 'TRACTOMULA 3S3', 'CAMA BAJA', 'DOBLE TROQUE'],
+  ciudades: ['BOGOTÁ', 'MEDELLÍN', 'CALI', 'BARRANQUILLA', 'CARTAGENA', 'BUENAVENTURA', 'SANTA MARTA', 'CÚCUTA', 'IBAGUÉ', 'PEREIRA', 'MANIZALES', 'NEIVA', 'VILLAVICENCIO', 'YOPAL', 'SIBERIA', 'FUNZA', 'MOSQUERA', 'MADRID', 'FACATATIVÁ', 'TOCANCIPÁ', 'CHÍA', 'CAJICÁ'],
+  subclientes: ['HIKVISION', 'PAYLESS COLOMBIA', 'INDUSTRIAS DONSSON', 'SAMSUNG SDS', 'ÉXITO', 'ALKOSTO', 'FALABELLA', 'SODIMAC', 'ENVAECOL', 'ALPLA', 'AMCOR', 'MEXICHEM', 'KOBA D1', 'JERONIMO MARTINS', 'TERNIUM', 'BRINSA', 'TENARIS', 'CORONA', 'FAJOBE'],
+  estados: ['ASIGNADO VEHÍCULO', 'PENDIENTE CITA ASIGNADO', 'VEHÍCULO CON CITA', 'CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CONTENEDOR EN INSPECCIÓN', 'CONTENEDOR RETIRADO PARA ITR', 'DESPACHADO', 'DESPACHADO CON NOVEDAD', 'EN CONSECUCIÓN', 'EN PROGRAMACIÓN', 'EN SITIO DE CARGUE', 'FINALIZADO CON NOVEDAD', 'FINALIZADO SIN NOVEDAD', 'HOJA DE VIDA EN ESTUDIO', 'MERCANCÍA EN INSPECCIÓN', 'NOVEDAD', 'PENDIENTE BAJAR A PATIO', 'PENDIENTE INSTRUCCIONES', 'PRE ASIGNADO', 'RETIRADO DE PUERTO PENDIENTE CONSOLIDADO', 'CANCELADO POR GERENCIA', 'VEHICULO EN RUTA'],
+  despachadores: ['ABNNER MARTINEZ', 'CAMILO TRIANA', 'FREDY CARRILLO', 'RAUL LOPEZ', 'EDDIER RIVAS']
 };
 
-const css = `<style>body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}.sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}.fs{height:12px;margin-bottom:5px}.fc{width:8500px;height:1px}table{border-collapse:collapse;min-width:8500px;font-size:10px}th{background:#1e40af;padding:12px;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6}td{padding:10px;border:1px solid #334155;white-space:nowrap;text-align:center}.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}.fg{display:flex;flex-direction:column;gap:4px}label{font-size:9px;color:#94a3b8;font-weight:700}input,select{padding:8px;border-radius:4px;border:none;font-size:11px}.btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}.btn-xl{background:#10b981;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;margin-top:10px;cursor:pointer}</style>`;
+const css = `<style>body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}.sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}.fs{height:12px;margin-bottom:5px}.fc{width:8500px;height:1px}table{border-collapse:collapse;min-width:8500px;font-size:10px}th{background:#1e40af;padding:12px;text-align:center;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6}td{padding:10px;border:1px solid #334155;white-space:nowrap;text-align:center}.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}.fg{display:flex;flex-direction:column;gap:4px}label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}input,select{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000;text-align:center}.btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}.btn-fin{background:#10b981;color:white;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;font-weight:bold;text-decoration:none;font-size:10px}.sel-est{background:#334155;color:#fff;border:1px solid #475569;padding:6px;border-radius:4px;cursor:pointer;font-size:10px;text-align:center;width:100%}.sel-est:disabled{background:#1e293b;color:#94a3b8;cursor:not-allowed;border:1px solid #334155}.st-real{padding:5px 10px;border-radius:20px;font-weight:bold;font-size:9px;text-transform:uppercase}.st-desp{background:#065f46;color:#34d399}.st-fin{background:#1e40af;color:#93c5fd}.st-pend{background:#475569;color:#cbd5e1}.warn-placa{color:#f87171;font-weight:bold;font-size:9px;background:rgba(248,113,113,0.1);padding:5px;border-radius:4px}</style>`;
 
 app.get('/', async (req, res) => {
-  const d = await C.findAll({ order: [['id', 'DESC']] });
-  const rows = d.map(c => `<tr><td>${c.id}</td><td>${c.oficina}</td><td>${c.pto}</td><td>${c.do_bl}</td><td>${c.cli}</td><td>${c.subc}</td><td>${c.cont}</td><td>${c.prod}</td><td>${c.orig}</td><td>${c.dest}</td><td>${c.placa||'---'}</td><td>${c.obs_e}</td><td>${c.est_real}</td><td>${c.f_fin||'--'}</td><td><a href="/d/${c.id}" style="color:#f87171">X</a></td></tr>`).join('');
+  try {
+    const d = await C.findAll({ order: [['id', 'DESC']] });
+    const rows = d.map(c => {
+      const isLocked = c.f_fin ? 'disabled' : '';
+      const stClass = c.est_real === 'DESPACHADO' ? 'st-desp' : (c.est_real === 'FINALIZADO' ? 'st-fin' : 'st-pend');
+      const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">
+        ${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}
+      </select>`;
 
-  res.send(`<html><head><meta charset="UTF-8"><title>V20</title>${css}</head><body>
-    <h2>LOGÍSTICA V20</h2>
-    <form action="/add" method="POST" class="form">
-      <div class="fg"><label>Oficina</label><select name="oficina">${opts.oficina.map(o=>`<option>${o}</option>`).join('')}</select></div>
-      <div class="fg"><label>Puerto</label><select name="pto">${opts.puertos.map(o=>`<option>${o}</option>`).join('')}</select></div>
-      <div class="fg"><label>DO/BL/OC</label><input name="do_bl"></div>
-      <div class="fg"><label>Cliente</label><select name="cli">${opts.clientes.map(o=>`<option>${o}</option>`).join('')}</select></div>
-      <div class="fg"><label>Subcliente</label><input name="subc" placeholder="Escribir subcliente..."></div>
-      <div class="fg"><label>Contenedor</label><input name="cont"></div>
-      <div class="fg"><label>Producto</label><input name="prod"></div>
-      <div class="fg"><label>Origen</label><input name="orig"></div>
-      <div class="fg"><label>Destino</label><input name="dest"></div>
-      <button class="btn">💾 REGISTRAR</button>
-    </form>
-    <button class="btn-xl" onclick="exportExcel()">📥 DESCARGAR REPORTE EXCEL</button>
-    <div class="sc fs" id="st"><div class="fc"></div></div>
-    <div class="sc" id="sm"><table id="tabla-cargas"><thead><tr><th>ID</th><th>OFICINA</th><th>PUERTO</th><th>DO/BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>CONT</th><th>PROD</th><th>ORIGEN</th><th>DESTINO</th><th>PLACA</th><th>LOGÍSTICA</th><th>ESTADO REAL</th><th>FINALIZACIÓN</th><th>ACCIONES</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <script>
-      const t=document.getElementById('st'),m=document.getElementById('sm');t.onscroll=()=>m.scrollLeft=t.scrollLeft;m.onscroll=()=>t.scrollLeft=m.scrollLeft;
-      function exportExcel(){
-        let csv = [];
-        const rows = document.querySelectorAll("table tr");
-        for (const row of rows) {
-          const cols = Array.from(row.querySelectorAll("td, th")).map(c => '"' + c.innerText + '"');
-          csv.push(cols.join(","));
-        }
-        const blob = new Blob([csv.join("\\n")], { type: "text/csv" });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.setAttribute("href", url);
-        a.setAttribute("download", "Reporte_Logistica_V20.csv");
-        a.click();
+      let accionFin = '';
+      if (c.f_fin) {
+        accionFin = `<span style="color:#10b981;font-weight:bold">✓ FINALIZADO</span>`;
+      } else if (c.placa && c.placa.trim() !== "") {
+        accionFin = `<a href="/finish/${c.id}" class="btn-fin" onclick="return confirm('¿Finalizar despacho?')">🏁 FINALIZAR</a>`;
+      } else {
+        accionFin = `<span class="warn-placa">⚠️ REQUIERE PLACA</span>`;
       }
-    </script>
-  </body></html>`);
+
+      return `<tr><td><b>${c.id}</b></td><td>${new Date(c.createdAt).toLocaleString()}</td><td>${c.oficina||''}</td><td>${c.emp_gen||''}</td><td>${c.comercial||''}</td><td>${c.pto||''}</td><td>${c.refleja||''}</td><td>${c.f_doc||''}</td><td>${c.h_doc||''}</td><td>${c.do_bl||''}</td><td>${c.cli||''}</td><td>${c.subc||''}</td><td>${c.mod||''}</td><td>${c.lcl||''}</td><td>${c.cont||''}</td><td>${c.peso||''}</td><td>${c.unid||''}</td><td>${c.prod||''}</td><td>${c.esq||''}</td><td>${c.vence||''}</td><td>${c.orig||''}</td><td>${c.dest||''}</td><td>${c.t_v||''}</td><td>${c.ped||''}</td><td>${c.f_c||''}</td><td>${c.h_c||''}</td><td>${c.f_d||''}</td><td>${c.h_d||''}</td><td><form action="/u/${c.id}" method="POST" style="margin:0;display:flex;justify-content:center;gap:3px"><input name="placa" value="${c.placa||''}" ${isLocked} style="width:70px;text-align:center" oninput="this.value=this.value.toUpperCase()"><button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:4px;border-radius:3px">OK</button></form></td><td>${c.f_p||''}</td><td>${c.f_f||''}</td><td>${selectEstado}</td><td>${c.f_act||''}</td><td><span class="st-real ${stClass}">${c.est_real}</span></td><td>${c.obs||''}</td><td>${c.cond||''}</td><td>${c.h_t||''}</td><td>${c.muc||''}</td><td>${c.desp||''}</td><td>${accionFin}</td><td><b style="color:#3b82f6">${c.f_fin||'--:--'}</b></td><td><a href="/d/${c.id}" style="color:#f87171;text-decoration:none" onclick="return confirm('¿Borrar?')">X</a></td></tr>`;
+    }).join('');
+
+    res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body><h2 style="color:#3b82f6">SISTEMA LOGÍSTICO V20</h2><form action="/add" method="POST" class="form"><datalist id="list_ciud">${opts.ciudades.map(c=>`<option value="${c}">`).join('')}</datalist><div class="fg"><label>Oficina</label><select name="oficina">${opts.oficina.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>EMPRESA GENERADORA DE CARGA</label><select name="emp_gen"><option value="YEGO ECO-T SAS">YEGO ECO-T SAS</option></select></div><div class="fg"><label>Comercial</label><select name="comercial"><option value="RAÚL LÓPEZ">RAÚL LÓPEZ</option></select></div><div class="fg"><label>PUERTO CARGUE</label><select name="pto">${opts.puertos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>REFLEJA EN PUERTO Y / O PATIO DE RETIRO</label><select name="refleja"><option value="SI">SI</option><option value="NO">NO</option></select></div><div class="fg"><label>F.Doc</label><input name="f_doc" type="date"></div><div class="fg"><label>H.Doc</label><input name="h_doc" type="time"></div><div class="fg"><label>DO/BL/OC</label><input name="do_bl"></div><div class="fg"><label>Cliente</label><select name="cli">${opts.clientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Subcliente</label><select name="subc">${opts.subclientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Modalidad</label><select name="mod">${opts.modalidades.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>LCL / FCL</label><select name="lcl">${opts.lcl_fcl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>N.CONTENEDOR</label><input name="cont" oninput="this.value=this.value.toUpperCase()"></div><div class="fg"><label>PESO KG</label><input name="peso"></div><div class="fg"><label>Unidades</label><input name="unid"></div><div class="fg"><label>Producto</label><input name="prod"></div><div class="fg"><label>ESQ.SEGURIDAD</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>VENCE PTO</label><input name="vence" type="date"></div><div class="fg"><label>Origen</label><input name="orig" list="list_ciud"></div><div class="fg"><label>Destino</label><input name="dest" list="list_ciud"></div><div class="fg"><label>TIPO VEHÍCULO</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Pedido</label><input name="ped"></div><div class="fg"><label>F.CARGUE</label><input name="f_c" type="date"></div><div class="fg"><label>H.CARGUE</label><input name="h_c" type="time"></div><div class="fg"><label>F.DESCARGUE</label><input name="f_d" type="date"></div><div class="fg"><label>H.DESCARGUE</label><input name="h_d" type="time"></div><div class="fg"><label>Flete Pagar</label><input name="f_p"></div><div class="fg"><label>Flete Facturar</label><input name="f_f"></div><div class="fg"><label>OBSERVACIÓN / ESTADO</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><div class="fg"><label>Horario</label><input name="h_t"></div><div class="fg"><label>MUC</label><input name="muc"></div><div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div><button class="btn">💾 REGISTRAR NUEVA CARGA</button></form><div class="sc fs" id="st"><div class="fc"></div></div><div class="sc" id="sm"><table><thead><tr><th>ITEM</th><th>FECHA Y HORA DE REGISTRO</th><th>OFICINA</th><th>EMPRESA GENERADORA DE CARGA</th><th>COMERCIAL</th><th>PUERTO CARGUE</th><th>REFLEJA EN PUERTO Y / O PATIO DE RETIRO</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL/OC</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL / FCL</th><th>N.CONTENEDOR</th><th>PESO KG</th><th>UNIDADES</th><th>PRODUCTO</th><th>ESQ.SEGURIDAD</th><th>VENCE PTO</th><th>ORIGEN</th><th>DESTINO</th><th>TIPO VEHÍCULO</th><th>PEDIDO</th><th>F.CARGUE</th><th>H.CARGUE</th><th>F.DESCARGUE</th><th>H.DESCARGUE</th><th>PLACA</th><th>FLETE PAGAR</th><th>FLETE FACTURAR</th><th>OBSERVACIÓN / ESTADO</th><th>ACTUALIZACIÓN ESTADO</th><th>ESTADO REAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORARIO</th><th>MUC</th><th>DESPACHADOR</th><th>FECHA DE FINALIZACIÓN DEL DESPACHO</th><th>HORA FINALIZACIÓN</th><th>ACCIONES</th></tr></thead><tbody>${rows}</tbody></table></div><script>const t=document.getElementById('st'),m=document.getElementById('sm');t.onscroll=()=>m.scrollLeft=t.scrollLeft;m.onscroll=()=>t.scrollLeft=m.scrollLeft;function updState(id,val){fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:val})}).then(r=>{if(r.ok)location.reload();});}</script></body></html>`);
+  } catch (e) { res.send(e.message); }
 });
 
 app.post('/add', async (req, res) => { await C.create(req.body); res.redirect('/'); });
 app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
-db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
+
+app.post('/u/:id', async (req, res) => { 
+  await C.update({ 
+    placa: req.body.placa.toUpperCase(), 
+    est_real: 'DESPACHADO' 
+  }, { where: { id: req.params.id } }); 
+  res.redirect('/'); 
+});
+
+app.post('/state/:id', async (req, res) => { 
+  const ahora = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' });
+  await C.update({ obs_e: req.body.obs_e, f_act: ahora }, { where: { id: req.params.id } });
+  res.sendStatus(200);
+});
+
+app.get('/finish/:id', async (req, res) => {
+  const carga = await C.findByPk(req.params.id);
+  if (!carga.placa || carga.placa.trim() === "") {
+    return res.send("Error: No se puede finalizar un despacho sin placa.");
+  }
+  const ahora = new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' });
+  await C.update({ 
+    f_fin: ahora, 
+    obs_e: 'FINALIZADO SIN NOVEDAD',
+    est_real: 'FINALIZADO'
+  }, { where: { id: req.params.id } });
+  res.redirect('/');
+});
+
+db.sync({ alter: true }).then(() => {
+  app.listen(process.env.PORT || 3000, () => console.log('Server OK'));
+});
