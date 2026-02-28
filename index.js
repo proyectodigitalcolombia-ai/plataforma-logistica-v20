@@ -35,7 +35,8 @@ const opts = {
 };
 
 const css = `<style>body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}.sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}.fs{height:12px;margin-bottom:5px}.fc{width:8500px;height:1px}table{border-collapse:collapse;min-width:8500px;font-size:10px}th{background:#1e40af;padding:12px;text-align:center;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6}td{padding:10px;border:1px solid #334155;white-space:nowrap;text-align:center}.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}.fg{display:flex;flex-direction:column;gap:4px}label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}input,select{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000;text-align:center}.btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}.btn-fin{background:#10b981;color:white;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;font-weight:bold;text-decoration:none;font-size:10px}.sel-est{background:#334155;color:#fff;border:1px solid #475569;padding:6px;border-radius:4px;cursor:pointer;font-size:10px;text-align:center;width:100%}.sel-est:disabled{background:#1e293b;color:#94a3b8;cursor:not-allowed;border:1px solid #334155}.st-real{padding:5px 10px;border-radius:20px;font-weight:bold;font-size:9px;text-transform:uppercase}.st-desp{background:#065f46;color:#34d399}.st-fin{background:#1e40af;color:#93c5fd}.st-pend{background:#475569;color:#cbd5e1}.warn-placa{color:#f87171;font-weight:bold;font-size:9px;background:rgba(248,113,113,0.1);padding:5px;border-radius:4px}
-.btn-xls{background:#10b981;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;margin-bottom:10px;border:none;cursor:pointer}</style>`;
+.btn-xls{background:#10b981;color:white;padding:12px 20px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;margin-right:10px}
+#busq{padding:12px;width:300px;border-radius:6px;border:1px solid #3b82f6;background:#1e293b;color:white;font-weight:bold;margin-bottom:15px}</style>`;
 
 app.get('/', async (req, res) => {
   try {
@@ -52,7 +53,10 @@ app.get('/', async (req, res) => {
 
     res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body>
       <h2 style="color:#3b82f6">SISTEMA LOGÍSTICO V20</h2>
-      <button class="btn-xls" onclick="exportExcel()">📥 DESCARGAR REPORTE EXCEL</button>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Buscar por Placa, Contenedor, Cliente...">
+        <button class="btn-xls" onclick="exportExcel()">📥 DESCARGAR EXCEL</button>
+      </div>
       <form action="/add" method="POST" class="form">
         <datalist id="list_ciud">${opts.ciudades.map(c=>`<option value="${c}">`).join('')}</datalist>
         <div class="fg"><label>Oficina</label><select name="oficina">${opts.oficina.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
@@ -94,10 +98,21 @@ app.get('/', async (req, res) => {
       <script>
         const t=document.getElementById('st'),m=document.getElementById('sm');t.onscroll=()=>m.scrollLeft=t.scrollLeft;m.onscroll=()=>t.scrollLeft=m.scrollLeft;
         function updState(id,val){fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:val})}).then(r=>{if(r.ok)location.reload();});}
+        
+        function buscar() {
+          let filtro = document.getElementById("busq").value.toUpperCase();
+          let filas = document.getElementById("tabla").getElementsByTagName("tr");
+          for (let i = 1; i < filas.length; i++) {
+            let textoFila = filas[i].innerText.toUpperCase();
+            filas[i].style.display = textoFila.indexOf(filtro) > -1 ? "" : "none";
+          }
+        }
+
         function exportExcel(){
           let csv = "sep=;\\n";
           const rows = document.querySelectorAll("#tabla tr");
           for (const row of rows) {
+            if(row.style.display === "none") continue; // Solo exportar lo que está filtrado
             const cols = Array.from(row.querySelectorAll("td, th")).map(c => {
               let text = c.innerText.split('\\n')[0].replace(/;/g, ",").trim();
               return '"' + text + '"';
@@ -107,7 +122,7 @@ app.get('/', async (req, res) => {
           const blob = new Blob(["\\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
-          a.href = url; a.download = "Reporte_Logistica_V20.csv"; a.click();
+          a.href = url; a.download = "Reporte_Filtrado.csv"; a.click();
         }
       </script>
     </body></html>`);
