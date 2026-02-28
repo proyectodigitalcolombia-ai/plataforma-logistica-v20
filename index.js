@@ -41,21 +41,21 @@ const css = `<style>
   body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}
   .sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}
   .fs{height:12px;margin-bottom:5px}
-  .fc{width:8200px;height:1px}
-  table{border-collapse:collapse;min-width:8200px;font-size:10px;table-layout: fixed;}
+  .fc{width:8400px;height:1px}
+  table{border-collapse:collapse;min-width:8400px;font-size:10px;table-layout: fixed;}
   th{background:#1e40af;padding:8px;text-align:center;position:sticky;top:0;white-space:nowrap;border-right:1px solid #3b82f6; overflow: hidden;}
   td{padding:6px;border:1px solid #334155;white-space:nowrap;text-align:center; overflow: hidden; text-overflow: ellipsis;}
   
   .col-num { width: 30px; }
   .col-id { width: 45px; font-weight: bold; }
   .col-reg { width: 110px; font-size: 9px; }
-  
-  /* EMPRESA CENTRADA */
   .col-emp { width: 140px; text-align: center !important; }
-  
-  /* PLACA AGRANDADA */
   .col-placa { width: 115px; }
   .in-placa { width: 70px !important; font-size: 11px !important; font-weight: bold; height: 25px; }
+
+  /* ESTADO AJUSTADO A NEGLIGENCIA OPERATIVA */
+  .col-est { width: 210px; padding: 0 !important; }
+  .sel-est { background:#334155; color:#fff; border:none; padding:4px; font-size:9px; width:100%; height: 100%; cursor:pointer; text-align: center; }
 
   .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}
   .fg{display:flex;flex-direction:column;gap:4px}
@@ -91,7 +91,7 @@ app.get('/', async (req, res) => {
         else if (diffDays <= 6) venceStyle = 'vence-amarillo';
       }
 
-      const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)" style="background:#334155;color:#fff;border:none;padding:4px;font-size:9px;width:100%;cursor:pointer">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
+      const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
       let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
       
       const idUnico = c.id.toString().padStart(4, '0');
@@ -113,7 +113,7 @@ app.get('/', async (req, res) => {
           </form>
         </td>
         <td>${c.f_p||''}</td><td>${c.f_f||''}</td>
-        <td style="padding:0;width:120px">${selectEstado}</td>
+        <td class="col-est">${selectEstado}</td>
         <td style="width:110px;color:#fbbf24">${c.f_act||''}</td>
         <td><span style="padding:2px 6px;border-radius:10px;font-weight:bold;font-size:8px;${stClass}">${displayReal}</span></td>
         <td style="white-space:normal;min-width:200px;text-align:left">${c.obs||''}</td>
@@ -184,7 +184,7 @@ app.get('/', async (req, res) => {
         <table id="tabla">
           <thead>
             <tr>
-              <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLI</th><th>SUB</th><th>MOD</th><th>LCL</th><th>CONT</th><th>PESO</th><th>UNID</th><th>PROD</th><th>ESQ</th><th>VENCE</th><th>ORIGEN</th><th>DEST</th><th>VEHICULO</th><th>PED</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th class="col-placa">PLACA</th><th>PAGAR</th><th>FACT</th><th>ESTADO</th><th>ACTU</th><th>REAL</th><th>OBS</th><th>COND</th><th>HORA</th><th>MUC</th><th>DESP</th><th>FIN</th><th>H.FIN</th><th>ACCIONES</th>
+              <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLI</th><th>SUB</th><th>MOD</th><th>LCL</th><th>CONT</th><th>PESO</th><th>UNID</th><th>PROD</th><th>ESQ</th><th>VENCE</th><th>ORIGEN</th><th>DEST</th><th>VEHICULO</th><th>PED</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th class="col-placa">PLACA</th><th>PAGAR</th><th>FACT</th><th class="col-est">ESTADO</th><th>ACTU</th><th>REAL</th><th>OBS</th><th>COND</th><th>HORA</th><th>MUC</th><th>DESP</th><th>FIN</th><th>H.FIN</th><th>ACCIONES</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
