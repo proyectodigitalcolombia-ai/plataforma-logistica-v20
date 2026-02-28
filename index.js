@@ -27,20 +27,18 @@ const C = db.define('Carga', {
 const opts = {
   oficina: ['CARTAGENA', 'BOGOTÁ', 'BUENAVENTURA', 'MEDELLÍN'],
   comerciales: ['RAÚL LÓPEZ'],
-  refleja_opciones: ['SI', 'NO'],
-  puertos: ['SPIA', 'SPRB', 'TCBUEN', 'CONTECAR', 'SPRC', 'PUERTO BAHÍA'],
-  clientes: ['GEODIS', 'MAERSK', 'SAMSUNG SDS', 'ENVAECOL', 'YARA', 'ESENTTIA', 'BRINSA', 'TENARIS'],
-  modalidades: ['NACIONALIZADO', 'OTM', 'DTA', 'TRASLADO', 'ITR'],
-  lcl_fcl: ['CARGA SUELTA', 'CONTENEDOR 40', 'CONTENEDOR 20', 'REFER 40'],
-  esquemas: ['1 ESCOLTA - SELLO', 'SELLO', 'NO REQUIERE', 'INSPECTORES VIALES'],
-  vehiculos: ['TURBO', 'SENCILLO', 'PATINETA', 'TRACTOMULA 3S3', 'CAMA BAJA'],
+  puertos: ['SPIA', 'SPRB', 'TCBUEN', 'CONTECAR', 'SPRC'],
+  clientes: ['GEODIS', 'MAERSK', 'SAMSUNG SDS', 'ENVAECOL', 'YARA'],
+  modalidades: ['NACIONALIZADO', 'OTM', 'DTA', 'TRASLADO'],
+  lcl_fcl: ['CARGA SUELTA', 'CONTENEDOR 40', 'CONTENEDOR 20'],
+  esquemas: ['1 ESCOLTA - SELLO', 'SELLO', 'NO REQUIERE'],
+  vehiculos: ['TURBO', 'SENCILLO', 'PATINETA', 'TRACTOMULA'],
   ciudades: ['BOGOTÁ', 'MEDELLÍN', 'CALI', 'BARRANQUILLA', 'CARTAGENA', 'BUENAVENTURA'],
-  subclientes: ['HIKVISION', 'PAYLESS', 'PVC COMPUESTOS', 'EXITO', 'ALKOSTO', 'FALABELLA', 'SODIMAC'],
-  estados: ['ASIGNADO', 'CANCELADO', 'DESPACHADO', 'EN PROGRAMACIÓN', 'FINALIZADO', 'PENDIENTE'],
-  despachadores: ['ZULEIMA RIASCOS', 'ABNNER MARTINEZ', 'OSCAR CHACON', 'FREDY CARRILLO', 'RAUL LOPEZ']
+  estados: ['ASIGNADO', 'CANCELADO', 'DESPACHADO', 'EN PROGRAMACIÓN', 'PENDIENTE'],
+  despachadores: ['ZULEIMA RIASCOS', 'ABNNER MARTINEZ', 'OSCAR CHACON']
 };
 
-const css = `<style>body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}.sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}table{border-collapse:collapse;min-width:4500px;font-size:10px}th{background:#1e40af;padding:12px;text-align:left;position:sticky;top:0;white-space:nowrap}td{padding:8px;border:1px solid #334155;white-space:nowrap}.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:20px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700;display:flex;flex-direction:column;gap:4px}input,select{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000}.btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}</style>`;
+const css = `<style>body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}.sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}table{border-collapse:collapse;min-width:4000px;font-size:10px}th{background:#1e40af;padding:12px;text-align:left;position:sticky;top:0;white-space:nowrap}td{padding:8px;border:1px solid #334155;white-space:nowrap}.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:20px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700;display:flex;flex-direction:column;gap:4px}input,select{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000}.btn{grid-column:1/-1;background:#2563eb;color:#fff;padding:15px;cursor:pointer;border:none;font-weight:700;border-radius:6px}</style>`;
 
 app.get('/', async (req, res) => {
   const d = await C.findAll({ order: [['id', 'DESC']] });
@@ -48,11 +46,23 @@ app.get('/', async (req, res) => {
   res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body>
     <h2 style="color:#3b82f6">SISTEMA LOGÍSTICO V20</h2>
     <form action="/add" method="POST" class="form">
-      <datalist id="l_ciud">${opts.ciudades.map(c => `<option value="${c}">`).join('')}</datalist>
       <label>Oficina<select name="oficina">${opts.oficina.map(o => `<option value="${o}">${o}</option>`).join('')}</select></label>
-      <label>EMPRESA GENERADORA<select name="emp_gen"><option>YEGO ECO-T SAS</option></select></label>
+      <label>Empresa Generadora<select name="emp_gen"><option>YEGO ECO-T SAS</option></select></label>
       <label>Comercial<select name="comercial">${opts.comerciales.map(o => `<option value="${o}">${o}</option>`).join('')}</select></label>
       <label>Pto Cargue<select name="pto">${opts.puertos.map(o => `<option value="${o}">${o}</option>`).join('')}</select></label>
-      <label>Refleja<select name="refleja">${opts.refleja_opciones.map(o => `<option value="${o}">${o}</option>`).join('')}</select></label>
       <label>F.Doc<input name="f_doc" type="date"></label>
-      <label>DO/BL/
+      <label>DO/BL/OC<input name="do_bl"></label>
+      <label>Cliente<select name="cli">${opts.clientes.map(o => `<option value="${o}">${o}</option>`).join('')}</select></label>
+      <label>Estado<select name="obs_e">${opts.estados.map(o => `<option value="${o}" ${o==='PENDIENTE'?'selected':''}>${o}</option>`).join('')}</select></label>
+      <label>Placa<input name="placa" oninput="this.value=this.value.toUpperCase()"></label>
+      <button class="btn">💾 REGISTRAR NUEVA CARGA</button>
+    </form>
+    <div class="sc"><table><thead><tr><th>ITEM</th><th>REGISTRO</th><th>OFICINA</th><th>GENERADORA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL/OC</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MOD</th><th>LCL</th><th>N.CONT</th><th>PESO</th><th>UNID</th><th>PROD</th><th>SEG</th><th>VENCE</th><th>ORIG</th><th>DEST</th><th>T.VEH</th><th>PED</th><th>F.CAR</th><th>H.CAR</th><th>F.DESC</th><th>H.DESC</th><th>PLACA</th><th>F.PAG</th><th>F.FAC</th><th>ESTADO</th><th>ACT.EST</th><th>OBS</th><th>COND</th><th>HORA</th><th>MUC</th><th>DESP</th><th>FIN</th><th>DEL</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </body></html>`);
+});
+
+app.post('/add', async (req, res) => { await C.create(req.body); res.redirect('/'); });
+app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
+app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.toUpperCase() }, { where: { id: req.params.id } }); res.redirect('/'); });
+
+db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
