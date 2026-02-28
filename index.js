@@ -161,7 +161,7 @@ app.get('/', async (req, res) => {
  <td>${c.mod||''}</td>
  <td>${c.lcl||''}</td>
  <td>${c.cont||''}</td>
- <td>${c.float||''}</td>
+ <td>${c.peso||''}</td>
  <td>${c.unid||''}</td>
  <td>${c.prod||''}</td>
  <td>${c.esq||''}</td>
@@ -528,7 +528,7 @@ app.get('/stats', async (req, res) => {
  </table>
  <script>
  new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:['Fin','Ruta','Perdida','Otros'],datasets:[{data:[${fin},${desp},${perdidaConteo},${total-fin-desp-perdidaConteo}],backgroundColor:['#10b981','#fbbf24','#ef4444','#475569'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
- new Chart(document.getElementById('c2'),{type:'bar',data:{labels:${JSON.stringify(Object.keys(ofis))},datasets:[{label:'Servicios',data:${JSON.stringify(Object.values(ofis))},backgroundColor:#3b82f6'}]},options:{scales:{y:{beginAtZero:true,ticks:{color:'#fff'}},x:{ticks:{color:'#fff'}}},plugins:{legend:{display:false}}}});
+ new Chart(document.getElementById('c2'),{type:'bar',data:{labels:${JSON.stringify(Object.keys(ofis))},datasets:[{label:'Servicios',data:${JSON.stringify(Object.values(ofis))},backgroundColor:'#3b82f6'}]},options:{scales:{y:{beginAtZero:true,ticks:{color:'#fff'}},x:{ticks:{color:'#fff'}}},plugins:{legend:{display:false}}}});
  </script>
  </body></html>`);
  } catch (e) { res.send(e.message); }
