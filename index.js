@@ -46,7 +46,6 @@ app.get('/', async (req, res) => {
         ${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}
       </select>`;
 
-      // Lógica de validación de botón
       let accionFin = '';
       if (c.f_fin) {
         accionFin = `<span style="color:#10b981;font-weight:bold">✓ FINALIZADO</span>`;
@@ -82,7 +81,6 @@ app.post('/state/:id', async (req, res) => {
 
 app.get('/finish/:id', async (req, res) => {
   const carga = await C.findByPk(req.params.id);
-  // Validación de seguridad extra en el servidor
   if (!carga.placa || carga.placa.trim() === "") {
     return res.send("Error: No se puede finalizar un despacho sin placa.");
   }
