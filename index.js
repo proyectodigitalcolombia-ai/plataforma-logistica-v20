@@ -1,4 +1,7 @@
 const express = require('express'), { Sequelize, DataTypes, Op } = require('sequelize'), app = express();
+// --- INSERCIÓN A: LLAMADO AL ASISTENTE GPS ---
+const { enviarAMonitor } = require('./gpsService'); 
+
 app.use(express.urlencoded({ extended: true })); app.use(express.json());
 
 const db = new Sequelize(process.env.DATABASE_URL, { 
@@ -45,7 +48,11 @@ const C = db.define('Carga', {
  muc: DataTypes.STRING,
  desp: DataTypes.STRING,
  f_fin: DataTypes.STRING,
- est_real: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' }
+ est_real: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' },
+ // --- NUEVOS CAMPOS PARA EL ROBOT GPS ---
+ url_plataforma: DataTypes.STRING,
+ usuario_gps: DataTypes.STRING,
+ clave_gps: DataTypes.STRING
 }, { timestamps: true });
 
 const opts = {
@@ -71,6 +78,7 @@ const getNow = () => {
  }).replace(/\//g, '-');
 };
 
+// ... (Tus estilos CSS se mantienen idénticos) ...
 const css = `<style>
  body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}
  .sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}
@@ -250,6 +258,11 @@ app.get('/', async (req, res) => {
  <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
  <div class="fg" style="grid-column: span 2"><label>Obs</label><textarea name="obs" rows="1"></textarea></div>
  <div class="fg" style="grid-column: span 2"><label>Cond</label><textarea name="cond" rows="1"></textarea></div>
+ 
+ <input type="hidden" name="url_plataforma" value="https://plataforma-ejemplo.com">
+ <input type="hidden" name="usuario_gps" value="admin_yego">
+ <input type="hidden" name="clave_gps" value="clave123">
+
  <button class="btn-submit-serious">
  <svg class="icon-serious" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
  REGISTRAR SERVICIO
@@ -269,6 +282,7 @@ app.get('/', async (req, res) => {
  </div>
 
  <script>
+ // ... (Toda tu lógica de Script se mantiene intacta) ...
  const CLAVE_ADMIN = "ADMIN123";
  const t=document.getElementById('st'),m=document.getElementById('sm');
  t.onscroll=()=>m.scrollLeft=t.scrollLeft;
@@ -374,11 +388,34 @@ app.get('/', async (req, res) => {
 app.post('/add', async (req, res) => { req.body.f_act = getNow(); await C.create(req.body); res.redirect('/'); });
 app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
 app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id: { [Op.in]: req.body.ids } } }); res.sendStatus(200); });
-app.post('/u/:id', async (req, res) => { await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); res.redirect('/'); });
-app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
-app.get('/finish/:id', async (req, res) => { const ahora = getNow(); await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); res.redirect('/'); });
 
-// --- INDICADORES ---
+// --- INSERCIÓN B: EL BOTÓN OK AHORA ENVÍA AL MONITOR ---
+app.post('/u/:id', async (req, res) => { 
+    await C.update({ 
+        placa: req.body.placa.toUpperCase(), 
+        est_real: 'DESPACHADO', 
+        f_act: getNow() 
+    }, { where: { id: req.params.id } }); 
+
+    // Buscamos los datos completos para el monitor
+    const carga = await C.findByPk(req.params.id);
+    if(carga) {
+        // Disparamos la sincronización al Servicio B
+        enviarAMonitor(carga);
+    }
+    
+    res.redirect('/'); 
+});
+
+app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
+
+app.get('/finish/:id', async (req, res) => { 
+    const ahora = getNow(); 
+    await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); 
+    res.redirect('/'); 
+});
+
+// ... (Todo el código de STATS e INDICADORES se mantiene igual) ...
 app.get('/stats', async (req, res) => {
  try {
  const cargas = await C.findAll();
@@ -553,4 +590,5 @@ app.get('/stats', async (req, res) => {
  } catch (e) { res.send(e.message); }
 });
 
+// Sincronización final de la base de datos
 db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
