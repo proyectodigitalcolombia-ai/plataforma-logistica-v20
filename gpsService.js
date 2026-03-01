@@ -1,43 +1,48 @@
 const axios = require('axios');
 
 /**
- * Función para sincronizar la carga con el Monitor (Servicio B)
- * y activar el rastreo automático.
+ * Función para sincronizar la carga con el Robot Worker
+ * Activa el monitoreo automático en el navegador.
  */
 async function enviarAMonitor(datosCarga) {
     try {
-        // La URL de tu nuevo Servicio B en Render
-        const MONITOR_URL = 'https://yego-monitoreo-live.onrender.com/api/recibir-despacho';
+        // URL exacta de tu Robot Worker en Render
+        const MONITOR_URL = 'https://yego-robot-worker.onrender.com/api/robot';
 
-        await axios.post(MONITOR_URL, {
+        // Estructura de datos que el robot.js espera recibir
+        const payload = {
             placa: datosCarga.placa,
-            nombre_conductor: datosCarga.nombre_conductor || datosCarga.conductor,
-            cedula_conductor: datosCarga.cedula_conductor || datosCarga.cedula,
-            celular_conductor: datosCarga.celular_conductor || datosCarga.celular,
-            url_gps: datosCarga.url_plataforma, 
-            user_gps: datosCarga.usuario_gps,
-            pass_gps: datosCarga.clave_gps,
-            hora_inicio: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-        });
+            cont: datosCarga.contenedor || datosCarga.cont || "N/A",
+            config_gps: {
+                url: datosCarga.url_plataforma || datosCarga.url_gps,
+                user: datosCarga.usuario_gps || datosCarga.user_gps,
+                pass: datosCarga.clave_gps || datosCarga.pass_gps
+            }
+        };
 
-        console.log(`✅ Sincronización exitosa con Monitor: ${datosCarga.placa}`);
+        console.log(`📡 Enviando datos al Robot para placa: ${payload.placa}...`);
+
+        const response = await axios.post(MONITOR_URL, payload);
+
+        if (response.status === 200) {
+            console.log(`✅ Sincronización exitosa con Robot Worker: ${payload.placa}`);
+        }
     } catch (error) {
-        // Si el monitor está caído, tu plataforma principal NO se detiene
-        console.error(`⚠️ No se pudo enviar a Monitor, pero la logística sigue: ${error.message}`);
+        // El error se muestra en el log de la Plataforma, pero no detiene la operación
+        console.error(`⚠️ El Robot no respondió: ${error.message}`);
+        console.log("Revisa que el servicio 'yego-robot-worker' esté en verde (Live).");
     }
 }
 
 /**
- * Tu función original (Mantenida por si la usas internamente)
+ * Función para actualizar datos en tu base de datos local (Postgres)
  */
 async function actualizarUbicacionReal(placa) {
     try {
-        // Mantenemos tu lógica original aquí por si decides 
-        // seguir actualizando tu DB local de Postgres
-        console.log(`Buscando datos para placa: ${placa}...`);
-        // ... (resto de tu código original)
+        console.log(`[DB] Buscando registros locales para placa: ${placa}...`);
+        // Aquí va tu lógica original de base de datos si la necesitas
     } catch (error) {
-        console.error(`❌ Error vinculando GPS:`, error.message);
+        console.error(`❌ Error en base de datos local:`, error.message);
     }
 }
 
