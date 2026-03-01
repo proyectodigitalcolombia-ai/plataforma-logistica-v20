@@ -1,8 +1,11 @@
 const express = require('express'), { Sequelize, DataTypes, Op } = require('sequelize'), app = express();
+
 // --- INSERCIÓN A: LLAMADO AL ASISTENTE GPS ---
+// Asegúrate de tener el archivo gpsService.js en la misma carpeta
 const { enviarAMonitor } = require('./gpsService'); 
 
-app.use(express.urlencoded({ extended: true })); app.use(express.json());
+app.use(express.urlencoded({ extended: true })); 
+app.use(express.json());
 
 const db = new Sequelize(process.env.DATABASE_URL, { 
  dialect: 'postgres', 
@@ -10,6 +13,7 @@ const db = new Sequelize(process.env.DATABASE_URL, {
  dialectOptions: { ssl: { require: true, rejectUnauthorized: false } } 
 });
 
+// MODELO DE DATOS (Incluye los campos para el robot)
 const C = db.define('Carga', {
  oficina: DataTypes.STRING,
  emp_gen: DataTypes.STRING,
@@ -49,7 +53,7 @@ const C = db.define('Carga', {
  desp: DataTypes.STRING,
  f_fin: DataTypes.STRING,
  est_real: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' },
- // --- NUEVOS CAMPOS PARA EL ROBOT GPS ---
+ // --- CAMPOS PARA EL ROBOT GPS ---
  url_plataforma: DataTypes.STRING,
  usuario_gps: DataTypes.STRING,
  clave_gps: DataTypes.STRING
@@ -78,7 +82,6 @@ const getNow = () => {
  }).replace(/\//g, '-');
 };
 
-// ... (Tus estilos CSS se mantienen idénticos) ...
 const css = `<style>
  body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}
  .sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}
@@ -259,9 +262,9 @@ app.get('/', async (req, res) => {
  <div class="fg" style="grid-column: span 2"><label>Obs</label><textarea name="obs" rows="1"></textarea></div>
  <div class="fg" style="grid-column: span 2"><label>Cond</label><textarea name="cond" rows="1"></textarea></div>
  
- <input type="hidden" name="url_plataforma" value="https://plataforma-ejemplo.com">
+ <input type="hidden" name="url_plataforma" value="https://mi-gps-login.com">
  <input type="hidden" name="usuario_gps" value="admin_yego">
- <input type="hidden" name="clave_gps" value="clave123">
+ <input type="hidden" name="clave_gps" value="yego2026">
 
  <button class="btn-submit-serious">
  <svg class="icon-serious" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
@@ -282,7 +285,6 @@ app.get('/', async (req, res) => {
  </div>
 
  <script>
- // ... (Toda tu lógica de Script se mantiene intacta) ...
  const CLAVE_ADMIN = "ADMIN123";
  const t=document.getElementById('st'),m=document.getElementById('sm');
  t.onscroll=()=>m.scrollLeft=t.scrollLeft;
@@ -334,7 +336,6 @@ app.get('/', async (req, res) => {
  filas.forEach(fila => {
  let textoCeldas = fila.innerText.toUpperCase();
  let inputs = Array.from(fila.querySelectorAll("input")).map(i => i.value.toUpperCase()).join(" ");
- let selects = Array.from(fila.querySelectorAll("select")).map(s => s.value.toUpperCase()).join(" ");
  let contenidoTotal = textoCeldas + " " + inputs + " " + selects;
  let mostrar = contenidoTotal.includes(f);
  fila.style.display = mostrar ? "" : "none";
@@ -385,11 +386,12 @@ app.get('/', async (req, res) => {
  } catch (e) { res.send(e.message); }
 });
 
+// RUTAS CRUD
 app.post('/add', async (req, res) => { req.body.f_act = getNow(); await C.create(req.body); res.redirect('/'); });
 app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
 app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id: { [Op.in]: req.body.ids } } }); res.sendStatus(200); });
 
-// --- INSERCIÓN B: EL BOTÓN OK AHORA ENVÍA AL MONITOR ---
+// --- INSERCIÓN B: ACTUALIZACIÓN DE PLACA Y DISPARO AL ROBOT ---
 app.post('/u/:id', async (req, res) => { 
     await C.update({ 
         placa: req.body.placa.toUpperCase(), 
@@ -397,13 +399,11 @@ app.post('/u/:id', async (req, res) => {
         f_act: getNow() 
     }, { where: { id: req.params.id } }); 
 
-    // Buscamos los datos completos para el monitor
     const carga = await C.findByPk(req.params.id);
-    if(carga) {
-        // Disparamos la sincronización al Servicio B
+    if(carga && carga.placa) {
+        // Ejecutamos la función asíncrona para enviar al Servicio B
         enviarAMonitor(carga);
     }
-    
     res.redirect('/'); 
 });
 
@@ -415,18 +415,14 @@ app.get('/finish/:id', async (req, res) => {
     res.redirect('/'); 
 });
 
-// ... (Todo el código de STATS e INDICADORES se mantiene igual) ...
+// KPI E INDICADORES (Mantenido y Mejorado)
 app.get('/stats', async (req, res) => {
  try {
  const cargas = await C.findAll();
- const hoyDate = new Date();
- const hoyStr = hoyDate.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+ const hoyStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
  const mesActualStr = hoyStr.substring(0, 7);
  
- // Vehículos Faltantes por Origen
  const sinPlaca = cargas.filter(c => (!c.placa || c.placa.trim() === '') && !c.f_fin);
- 
- // NUEVO INDICADOR: CARGAS PENDIENTES POR CLIENTE (SIN PLACA)
  const pendientesPorCliente = {};
  sinPlaca.forEach(c => {
   const cliente = (c.cli || 'SIN CLIENTE').toUpperCase();
@@ -443,28 +439,16 @@ app.get('/stats', async (req, res) => {
 
  const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
  const perdidosTotal = cargas.filter(c => cancelTags.includes(c.obs_e));
- 
- // Pérdida diaria (servicios creados hoy que están cancelados)
- const perdidaDiaria = perdidosTotal.filter(c => {
- return new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) === hoyStr;
- }).length;
-
- // Pérdida mes actual (servicios creados este mes que están cancelados)
- const perdidaMesActual = perdidosTotal.filter(c => {
- return new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).startsWith(mesActualStr);
- }).length;
-
- const perdidaConteo = perdidosTotal.length;
- const perdidaPorcentaje = cargas.length > 0 ? ((perdidaConteo / cargas.length) * 100).toFixed(1) : 0;
+ const perdidaDiaria = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) === hoyStr).length;
+ const perdidaMesActual = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).startsWith(mesActualStr)).length;
 
  const despLog = {};
  cargas.forEach(c => {
  const d = c.desp || 'SIN ASIGNAR';
  const fCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
- const mCrea = fCrea.substring(0, 7);
  if(!despLog[d]) despLog[d] = { hoy:0, mes:0 };
  if(fCrea === hoyStr) despLog[d].hoy++;
- if(mCrea === mesActualStr) despLog[d].mes++;
+ if(fCrea.startsWith(mesActualStr)) despLog[d].mes++;
  });
 
  const total = cargas.length;
@@ -505,90 +489,61 @@ app.get('/stats', async (req, res) => {
  <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
  <div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
  <div class="card"><h3>En Ruta</h3><p style="color:#fbbf24">${desp}</p></div>
- <div class="card lost-card">
- <h3>PÉRDIDA EMERGENTE (DIARIO)</h3>
- <p>${perdidaDiaria}</p>
- <span style="font-size:11px;color:#94a3b8">Total acumulado: ${perdidaConteo}</span>
- </div>
- <div class="card lost-card" style="border-left-color: #f87171;">
- <h3>PÉRDIDA EMERGENTE (MENSUAL)</h3>
- <p>${perdidaMesActual}</p>
- <span style="font-size:11px;color:#94a3b8">Mes: ${mesActualStr}</span>
- </div>
+ <div class="card lost-card"><h3>PERDIDAS HOY</h3><p>${perdidaDiaria}</p></div>
+ <div class="card lost-card"><h3>PERDIDAS MES</h3><p>${perdidaMesActual}</p></div>
  </div>
 
  <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:20px;">
   <div>
-    <h3 style="color:#f59e0b; border-left: 4px solid #f59e0b; padding-left: 10px; margin-bottom:15px;">CARGAS PENDIENTES POR CLIENTE</h3>
+    <h3 style="color:#f59e0b; border-left: 4px solid #f59e0b; padding-left: 10px; margin-bottom:15px;">PENDIENTES POR CLIENTE</h3>
     <table>
-    <thead><tr><th>CLIENTE</th><th>SIN PLACA</th></tr></thead>
+    <thead><tr><th>CLIENTE</th><th>CANT</th></tr></thead>
     <tbody>
     ${Object.entries(pendientesPorCliente).sort((a,b)=>b[1]-a[1]).map(([cli, cant]) => `
     <tr><td><b>${cli}</b></td><td><span class="badge cli-badge">${cant}</span></td></tr>`).join('')}
-    ${sinPlaca.length === 0 ? '<tr><td colspan="2">Sin pendientes</td></tr>' : ''}
     </tbody></table>
   </div>
   
   <div>
-    <h3 style="color:#ef4444; border-left: 4px solid #ef4444; padding-left: 10px; margin-bottom:15px;">VEHÍCULOS FALTANTES DESDE ORIGEN</h3>
+    <h3 style="color:#ef4444; border-left: 4px solid #ef4444; padding-left: 10px; margin-bottom:15px;">FALTANTES POR ORIGEN</h3>
     <table>
     <thead><tr><th>ORIGEN</th><th>REQUERIMIENTO</th><th>TOTAL</th></tr></thead>
     <tbody>
     ${Object.entries(reqPorCiudad).map(([city, types]) => {
-    const totalCiudad = Object.values(types).reduce((a, b) => a + b, 0);
-    return `<tr><td><b>${city}</b></td><td>${Object.entries(types).map(([t, q]) => `<span class="badge req-badge">${q}</span> ${t}`).join(' | ')}</td><td><b style="color:#ef4444">${totalCiudad}</b></td></tr>`;
+    const totalC = Object.values(types).reduce((a, b) => a + b, 0);
+    return `<tr><td><b>${city}</b></td><td>${Object.entries(types).map(([t, q]) => `<span class="badge req-badge">${q}</span> ${t}`).join(' | ')}</td><td><b style="color:#ef4444">${totalC}</b></td></tr>`;
     }).join('')}
-    ${sinPlaca.length === 0 ? '<tr><td colspan="3">Sin pendientes</td></tr>' : ''}
     </tbody></table>
   </div>
  </div>
 
  <div class="charts">
- <div class="chart-box"><h4>ESTADO DE OPERACIÓN</h4><canvas id="c1"></canvas></div>
- <div class="chart-box"><h4>SERVICIOS POR OFICINA</h4><canvas id="c2"></canvas></div>
+ <div class="chart-box"><h4>OPERACIÓN</h4><canvas id="c1"></canvas></div>
+ <div class="chart-box"><h4>OFICINAS</h4><canvas id="c2"></canvas></div>
  </div>
 
- <h3 style="color:#3b82f6; border-left: 4px solid #2563eb; padding-left: 10px; margin-bottom:15px;">PRODUCTIVIDAD POR DESPACHADOR</h3>
+ <h3 style="color:#3b82f6; border-left: 4px solid #2563eb; padding-left: 10px; margin-bottom:15px;">PRODUCTIVIDAD DESPACHADORES</h3>
  <table>
- <thead>
- <tr>
- <th>DESPACHADOR</th>
- <th>HOY</th>
- <th>MES</th>
- <th>RENDIMIENTO</th>
- <th>PRODUCTIVIDAD (%)</th>
- </tr>
- </thead>
+ <thead><tr><th>DESPACHADOR</th><th>HOY</th><th>MES</th><th>RENDIMIENTO</th><th>PROD %</th></tr></thead>
  <tbody>
  ${Object.entries(despLog).map(([name, s]) => {
  const prodPerc = total > 0 ? ((s.mes/total)*100).toFixed(1) : 0;
- let semColor = '#ef4444'; let semText = 'BAJO';
- if(prodPerc >= 25) { semColor = '#10b981'; semText = 'ÓPTIMO'; }
- else if(prodPerc >= 10) { semColor = '#fbbf24'; semText = 'MEDIO'; }
- 
- return `
- <tr>
- <td><b>${name}</b></td>
- <td><span class="badge" style="background:#3b82f6">${s.hoy}</span></td>
- <td><span class="badge" style="background:#8b5cf6">${s.mes}</span></td>
- <td><span class="semaforo-dot" style="background:${semColor}"></span><span style="color:${semColor};font-weight:bold;font-size:11px;">${semText}</span></td>
- <td>
- <div class="prog-wrapper">
- <div class="prog-bg"><div style="width:${prodPerc}%;background:${semColor}" class="prog-fill"></div></div>
- <b style="color:${semColor}">${prodPerc}%</b>
- </div>
- </td>
- </tr>`;
+ let sem = prodPerc >= 25 ? ['#10b981','ÓPTIMO'] : (prodPerc >= 10 ? ['#fbbf24','MEDIO'] : ['#ef4444','BAJO']);
+ return `<tr><td><b>${name}</b></td><td><span class="badge" style="background:#3b82f6">${s.hoy}</span></td><td><span class="badge" style="background:#8b5cf6">${s.mes}</span></td><td><span class="semaforo-dot" style="background:${sem[0]}"></span><span style="color:${sem[0]}">${sem[1]}</span></td>
+ <td><div class="prog-wrapper"><div class="prog-bg"><div style="width:${prodPerc}%;background:${sem[0]}" class="prog-fill"></div></div><b>${prodPerc}%</b></div></td></tr>`;
  }).join('')}
- </tbody>
- </table>
+ </tbody></table>
  <script>
- new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:['Fin','Ruta','Perdida','Otros'],datasets:[{data:[${fin},${desp},${perdidaConteo},${total-fin-desp-perdidaConteo}],backgroundColor:['#10b981','#fbbf24','#ef4444','#475569'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
+ new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:['Fin','Ruta','Perdida','Otros'],datasets:[{data:[${fin},${desp},${perdidaMesActual},${total-fin-desp-perdidaMesActual}],backgroundColor:['#10b981','#fbbf24','#ef4444','#475569'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
  new Chart(document.getElementById('c2'),{type:'bar',data:{labels:${JSON.stringify(Object.keys(ofis))},datasets:[{label:'Servicios',data:${JSON.stringify(Object.values(ofis))},backgroundColor:'#3b82f6'}]},options:{scales:{y:{beginAtZero:true,ticks:{color:'#fff'}},x:{ticks:{color:'#fff'}}},plugins:{legend:{display:false}}}});
  </script>
  </body></html>`);
  } catch (e) { res.send(e.message); }
 });
 
-// Sincronización final de la base de datos
-db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
+// SINCRONIZACIÓN Y ARRANQUE
+db.sync({ alter: true }).then(() => {
+    app.listen(process.env.PORT || 3000, () => {
+        console.log("Servidor Logística V20 - Activo");
+    });
+});
