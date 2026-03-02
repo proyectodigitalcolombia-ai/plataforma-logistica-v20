@@ -1,7 +1,6 @@
 const express = require('express'), { Sequelize, DataTypes, Op } = require('sequelize'), app = express();
 
 // --- INSERCIÓN A: LLAMADO AL ASISTENTE GPS ---
-// Asegúrate de tener el archivo gpsService.js en la misma carpeta
 const { enviarAMonitor } = require('./gpsService'); 
 
 app.use(express.urlencoded({ extended: true })); 
@@ -262,9 +261,14 @@ app.get('/', async (req, res) => {
  <div class="fg" style="grid-column: span 2"><label>Obs</label><textarea name="obs" rows="1"></textarea></div>
  <div class="fg" style="grid-column: span 2"><label>Cond</label><textarea name="cond" rows="1"></textarea></div>
  
- <input type="hidden" name="url_plataforma" value="https://mi-gps-login.com">
- <input type="hidden" name="usuario_gps" value="admin_yego">
- <input type="hidden" name="clave_gps" value="yego2026">
+ <div class="fg" style="grid-column: 1 / -1; margin-top: 10px; border-top: 1px solid #3b82f6; padding-top: 15px;">
+    <label style="color: #3b82f6; font-size: 11px;">Configuración de Monitoreo Robot</label>
+    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
+        <div class="fg"><label>URL Plataforma GPS</label><input name="url_plataforma" type="url" placeholder="https://gps.ejemplo.com"></div>
+        <div class="fg"><label>Usuario GPS</label><input name="usuario_gps" type="text"></div>
+        <div class="fg"><label>Clave GPS</label><input name="clave_gps" type="password"></div>
+    </div>
+ </div>
 
  <button class="btn-submit-serious">
  <svg class="icon-serious" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
@@ -336,7 +340,7 @@ app.get('/', async (req, res) => {
  filas.forEach(fila => {
  let textoCeldas = fila.innerText.toUpperCase();
  let inputs = Array.from(fila.querySelectorAll("input")).map(i => i.value.toUpperCase()).join(" ");
- let contenidoTotal = textoCeldas + " " + inputs + " " + selects;
+ let contenidoTotal = textoCeldas + " " + inputs;
  let mostrar = contenidoTotal.includes(f);
  fila.style.display = mostrar ? "" : "none";
  if(mostrar) { fila.querySelector('.col-num').innerText = visibleCount++; }
