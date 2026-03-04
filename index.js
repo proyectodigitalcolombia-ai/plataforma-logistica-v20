@@ -117,7 +117,6 @@ const css = `<style>
  .vence-rojo{background:#dc2626 !important;color:#fff !important;font-weight:bold;animation: blink 2s infinite;cursor:pointer}
  .vence-amarillo{background:#fbbf24 !important;color:#000 !important;font-weight:bold}
  
- /* EDICION FANTASMA: Color blanco, sin bordes, parece texto normal */
  .editable-cell { background: transparent !important; color: #fff !important; border: none !important; width: 100%; height: 32px; text-align: center; cursor: pointer; padding: 0; font-size: 10px; }
  .editable-cell:focus { background: #334155 !important; outline: 1px solid #3b82f6 !important; color: #fff !important; }
  .editable-cell:disabled { color: #94a3b8 !important; cursor: default; }
@@ -134,7 +133,9 @@ app.get('/', async (req, res) => {
  let index = 1;
 
  for (let c of d) {
- const isLocked = c.f_fin ? 'disabled' : '';
+ // BLOQUEO: Si tiene placa o está finalizado, no se puede modificar nada
+ const isLocked = (c.f_fin || c.placa) ? 'disabled' : '';
+ 
  let displayReal = 'PENDIENTE';
  let stClass = 'background:#475569;color:#cbd5e1'; 
 
@@ -159,7 +160,6 @@ app.get('/', async (req, res) => {
  const idUnico = c.id.toString().padStart(4, '0');
  const fechaLocal = new Date(c.createdAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' });
 
- // Helper para renderizar celdas editables fantasma
  const ed = (field, val) => `<td><form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="${field}" value="${val||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked} oninput="this.value=this.value.toUpperCase()"></form></td>`;
 
  rows += `<tr class="fila-datos">
@@ -183,9 +183,7 @@ app.get('/', async (req, res) => {
  ${ed('unid', c.unid)}
  ${ed('prod', c.prod)}
  ${ed('esq', c.esq)}
- <td class="${venceStyle}" onclick="silenciar(this)">
-    <form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="vence" value="${c.vence||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked}></form>
- </td>
+ <td class="${venceStyle}" onclick="silenciar(this)" style="padding:6px; min-width:80px;">${c.vence||''}</td>
  ${ed('orig', c.orig)}
  ${ed('dest', c.dest)}
  ${ed('t_v', c.t_v)}
@@ -196,8 +194,8 @@ app.get('/', async (req, res) => {
  ${ed('h_d', c.h_d)}
  <td class="col-placa">
  <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:4px;justify-content:center;align-items:center">
- <input name="placa" class="in-placa" value="${c.placa||''}" ${isLocked} placeholder="PLACA" oninput="this.value=this.value.toUpperCase()">
- <button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:5px;border-radius:3px;cursor:pointer;font-weight:bold">OK</button>
+ <input name="placa" class="in-placa" value="${c.placa||''}" ${c.f_fin ? 'disabled' : ''} placeholder="PLACA" oninput="this.value=this.value.toUpperCase()">
+ <button ${c.f_fin ? 'disabled' : ''} style="background:#10b981;color:#fff;border:none;padding:5px;border-radius:3px;cursor:pointer;font-weight:bold">OK</button>
  </form>
  </td>
  ${ed('f_p', c.f_p)}
@@ -431,7 +429,7 @@ app.get('/finish/:id', async (req, res) => {
  res.redirect('/'); 
 });
 
-// KPI E INDICADORES
+// KPI E INDICADORES (Mantenidos sin cambios)
 app.get('/stats', async (req, res) => {
  try {
  const cargas = await C.findAll();
