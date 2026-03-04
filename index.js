@@ -87,17 +87,17 @@ const css = `<style>
  .fc{width:8600px;height:1px}
  table{border-collapse:collapse;min-width:8600px;font-size:10px;table-layout: fixed;}
  th{background:#1e40af;padding:10px 5px;text-align:center;position:sticky;top:0;border-right:1px solid #3b82f6; word-wrap: break-word; white-space: normal; vertical-align: middle;}
- td{padding:6px;border:1px solid #334155;white-space:nowrap;text-align:center; overflow: hidden; text-overflow: ellipsis;}
- .col-num { width: 30px; }
- .col-id { width: 40px; font-weight: bold; }
- .col-reg { width: 110px; font-size: 9px; }
+ td{padding:0px;border:1px solid #334155;white-space:nowrap;text-align:center; overflow: hidden; text-overflow: ellipsis;}
+ .col-num { width: 30px; padding:6px; }
+ .col-id { width: 40px; font-weight: bold; padding:6px; }
+ .col-reg { width: 110px; font-size: 9px; padding:6px; }
  .col-emp { width: 150px; text-align: center !important; }
  .col-placa { width: 120px; }
  .in-placa { width: 75px !important; font-size: 11px !important; font-weight: bold; height: 25px; }
  .col-est { width: 210px; padding: 0 !important; }
  .sel-est { background:#334155; color:#fff; border:none; padding:4px; font-size:9px; width:100%; height: 100%; cursor:pointer; text-align: center; }
- .col-desp { width: 130px; }
- .col-hfin { width: 115px; font-size: 9px; }
+ .col-desp { width: 130px; padding:6px; }
+ .col-hfin { width: 115px; font-size: 9px; padding:6px; }
  .col-acc { width: 70px; }
  .acc-cell { display: flex; align-items: center; justify-content: center; gap: 8px; height: 35px; }
  .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}
@@ -116,8 +116,12 @@ const css = `<style>
  #busq{padding:10px;width:250px;border-radius:6px;border:1px solid #3b82f6;background:#1e293b;color:white;font-weight:bold;height:38px;box-sizing:border-box;}
  .vence-rojo{background:#dc2626 !important;color:#fff !important;font-weight:bold;animation: blink 2s infinite;cursor:pointer}
  .vence-amarillo{background:#fbbf24 !important;color:#000 !important;font-weight:bold}
- .editable-cell { background: transparent !important; color: #34d399 !important; border: none !important; width: 100%; text-align: center; font-weight: bold; cursor: pointer; padding: 4px; border-radius: 4px; }
- .editable-cell:focus { background: #334155 !important; outline: 1px solid #3b82f6 !important; }
+ 
+ /* EDICION FANTASMA: Color blanco, sin bordes, parece texto normal */
+ .editable-cell { background: transparent !important; color: #fff !important; border: none !important; width: 100%; height: 32px; text-align: center; cursor: pointer; padding: 0; font-size: 10px; }
+ .editable-cell:focus { background: #334155 !important; outline: 1px solid #3b82f6 !important; color: #fff !important; }
+ .editable-cell:disabled { color: #94a3b8 !important; cursor: default; }
+
  @keyframes blink { 0% {opacity:1} 50% {opacity:0.6} 100% {opacity:1} }
  tr:hover td { background: #334155; }
 </style>`;
@@ -155,70 +159,57 @@ app.get('/', async (req, res) => {
  const idUnico = c.id.toString().padStart(4, '0');
  const fechaLocal = new Date(c.createdAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' });
 
+ // Helper para renderizar celdas editables fantasma
+ const ed = (field, val) => `<td><form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="${field}" value="${val||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked} oninput="this.value=this.value.toUpperCase()"></form></td>`;
+
  rows += `<tr class="fila-datos">
  <td class="col-num">${index++}</td>
  <td class="col-id">${idUnico}</td>
  <td class="col-reg">${fechaLocal}</td>
- <td>${c.oficina||''}</td>
- <td class="col-emp" title="${c.emp_gen||''}">${c.emp_gen||''}</td>
- <td>${c.comercial||''}</td>
- <td>${c.pto||''}</td>
- <td>${c.refleja||''}</td>
- <td>${c.f_doc||''}</td>
- <td>${c.h_doc||''}</td>
- <td>${c.do_bl||''}</td>
- <td>${c.cli||''}</td>
- <td>${c.subc||''}</td>
- <td>${c.mod||''}</td>
- <td>${c.lcl||''}</td>
-
- <td>
-    <form action="/edit-live/${c.id}" method="POST" style="margin:0">
-        <input name="cont" value="${c.cont||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked} oninput="this.value=this.value.toUpperCase()">
-    </form>
+ ${ed('oficina', c.oficina)}
+ ${ed('emp_gen', c.emp_gen)}
+ ${ed('comercial', c.comercial)}
+ ${ed('pto', c.pto)}
+ ${ed('refleja', c.refleja)}
+ ${ed('f_doc', c.f_doc)}
+ ${ed('h_doc', c.h_doc)}
+ ${ed('do_bl', c.do_bl)}
+ ${ed('cli', c.cli)}
+ ${ed('subc', c.subc)}
+ ${ed('mod', c.mod)}
+ ${ed('lcl', c.lcl)}
+ ${ed('cont', c.cont)}
+ ${ed('peso', c.peso)}
+ ${ed('unid', c.unid)}
+ ${ed('prod', c.prod)}
+ ${ed('esq', c.esq)}
+ <td class="${venceStyle}" onclick="silenciar(this)">
+    <form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="vence" value="${c.vence||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked}></form>
  </td>
-
- <td>${c.peso||''}</td>
- <td>${c.unid||''}</td>
- <td>${c.prod||''}</td>
- <td>${c.esq||''}</td>
- <td class="${venceStyle}" onclick="silenciar(this)">${c.vence||''}</td>
- <td>${c.orig||''}</td>
- <td>${c.dest||''}</td>
- <td>${c.t_v||''}</td>
-
- <td>
-    <form action="/edit-live/${c.id}" method="POST" style="margin:0">
-        <input name="ped" value="${c.ped||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked} oninput="this.value=this.value.toUpperCase()">
-    </form>
- </td>
-
- <td>${c.f_c||''}</td>
- <td>${c.h_c||''}</td>
- <td>${c.f_d||''}</td>
- <td>${c.h_d||''}</td>
+ ${ed('orig', c.orig)}
+ ${ed('dest', c.dest)}
+ ${ed('t_v', c.t_v)}
+ ${ed('ped', c.ped)}
+ ${ed('f_c', c.f_c)}
+ ${ed('h_c', c.h_c)}
+ ${ed('f_d', c.f_d)}
+ ${ed('h_d', c.h_d)}
  <td class="col-placa">
  <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:4px;justify-content:center;align-items:center">
  <input name="placa" class="in-placa" value="${c.placa||''}" ${isLocked} placeholder="PLACA" oninput="this.value=this.value.toUpperCase()">
  <button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:5px;border-radius:3px;cursor:pointer;font-weight:bold">OK</button>
  </form>
  </td>
- <td>${c.f_p||''}</td>
- <td>${c.f_f||''}</td>
+ ${ed('f_p', c.f_p)}
+ ${ed('f_f', c.f_f)}
  <td class="col-est">${selectEstado}</td>
- <td style="width:115px;color:#fbbf24">${c.f_act||''}</td>
+ <td style="width:115px;color:#fbbf24;padding:6px">${c.f_act||''}</td>
  <td style="width:100px"><span style="padding:2px 6px;border-radius:10px;font-weight:bold;font-size:8px;${stClass}">${displayReal}</span></td>
- <td style="white-space:normal;min-width:250px;text-align:left">${c.obs||''}</td>
- <td style="white-space:normal;min-width:250px;text-align:left">${c.cond||''}</td>
- <td>${c.h_t||''}</td>
-
- <td>
-    <form action="/edit-live/${c.id}" method="POST" style="margin:0">
-        <input name="muc" value="${c.muc||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked} oninput="this.value=this.value.toUpperCase()">
-    </form>
- </td>
-
- <td class="col-desp">${c.desp||''}</td>
+ ${ed('obs', c.obs)}
+ ${ed('cond', c.cond)}
+ ${ed('h_t', c.h_t)}
+ ${ed('muc', c.muc)}
+ ${ed('desp', c.desp)}
  <td>${accionFin}</td>
  <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
  <td class="col-acc">
@@ -332,11 +323,15 @@ app.get('/', async (req, res) => {
  
  function eliminarSeleccionados(){ 
  const pw = prompt("Ingrese contraseña para borrar selección:");
- if(pw !== CLAVE_ADMIN) return alert("Acceso denegado");
- const checked = document.querySelectorAll('.row-check:checked');
- const ids = Array.from(checked).map(cb => cb.value);
- if(!confirm('¿Eliminar ' + ids.length + ' registros?')) return; 
- fetch('/delete-multiple',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}).then(()=>location.reload()); 
+ if(pw === CLAVE_ADMIN) {
+    const checked = document.querySelectorAll('.row-check:checked');
+    const ids = Array.from(checked).map(cb => cb.value);
+    if(ids.length === 0) return;
+    if(!confirm('¿Eliminar ' + ids.length + ' registros?')) return; 
+    fetch('/delete-multiple',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}).then(()=>location.reload()); 
+ } else if(pw !== null) {
+    alert("Acceso denegado");
+ }
  }
  
  function updState(id,v){
@@ -454,8 +449,8 @@ app.get('/stats', async (req, res) => {
  sinPlaca.forEach(c => {
  const ciudad = (c.orig || 'SIN ORIGEN').toUpperCase();
  const tipo = (c.t_v || 'NO ESPECIFICADO').toUpperCase();
- if(!reqPorCiudad[ciudad]) reqPorCiudad[ciudad] = {};
- reqPorCiudad[ciudad][tipo] = (reqPorCiudad[ciudad][tipo] || 0) + 1;
+ if(!reqPorCiudad[city = ciudad]) reqPorCiudad[city] = {};
+ reqPorCiudad[city][tipo] = (reqPorCiudad[city][tipo] || 0) + 1;
  });
 
  const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
