@@ -133,7 +133,6 @@ app.get('/', async (req, res) => {
  let index = 1;
 
  for (let c of d) {
- // BLOQUEO: Si tiene placa o está finalizado, no se puede modificar nada
  const isLocked = (c.f_fin || c.placa) ? 'disabled' : '';
  
  let displayReal = 'PENDIENTE';
@@ -235,39 +234,39 @@ app.get('/', async (req, res) => {
  <form action="/add" method="POST" class="form" style="padding:10px; gap:8px;">
  <datalist id="list_ciud">${opts.ciudades.map(c=>`<option value="${c}">`).join('')}</datalist>
  <div class="fg"><label>Oficina</label><select name="oficina">${opts.oficina.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
- <div class="fg"><label>Empresa</label><select name="emp_gen"><option value="YEGO ECO-T SAS">YEGO ECO-T SAS</option></select></div>
+ <div class="fg"><label>Empresa Generadora</label><select name="emp_gen"><option value="YEGO ECO-T SAS">YEGO ECO-T SAS</option></select></div>
  <div class="fg"><label>Comercial</label><select name="comercial"><option value="RAÚL LÓPEZ">RAÚL LÓPEZ</option></select></div>
  <div class="fg"><label>Puerto</label><select name="pto">${opts.puertos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
  <div class="fg"><label>Refleja</label><select name="refleja"><option value="SI">SI</option><option value="NO">NO</option></select></div>
- <div class="fg"><label>F. Doc</label><input name="f_doc" type="date"></div>
- <div class="fg"><label>H. Doc</label><input name="h_doc" type="time"></div>
- <div class="fg"><label>DO/BL</label><input name="do_bl"></div>
+ <div class="fg"><label>Fecha Documento</label><input name="f_doc" type="date"></div>
+ <div class="fg"><label>Hora Documento</label><input name="h_doc" type="time"></div>
+ <div class="fg"><label>DO / BL</label><input name="do_bl"></div>
  <div class="fg"><label>Cliente</label><select name="cli">${opts.clientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
  <div class="fg"><label>Subcliente</label><select name="subc">${opts.subclientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
  <div class="fg"><label>Modalidad</label><select name="mod">${opts.modalidades.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
- <div class="fg"><label>LCL/FCL</label><select name="lcl">${opts.lcl_fcl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+ <div class="fg"><label>LCL / FCL</label><select name="lcl">${opts.lcl_fcl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
  <div class="fg"><label>Contenedor</label><input name="cont" oninput="this.value=this.value.toUpperCase()"></div>
  <div class="fg"><label>Peso</label><input name="peso"></div>
- <div class="fg"><label>Unid</label><input name="unid"></div>
- <div class="fg"><label>Prod</label><input name="prod"></div>
- <div class="fg"><label>Esq</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
- <div class="fg"><label>Vence</label><input name="vence" type="date"></div>
+ <div class="fg"><label>Unidad</label><input name="unid"></div>
+ <div class="fg"><label>Producto</label><input name="prod"></div>
+ <div class="fg"><label>Esquema</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+ <div class="fg"><label>Vencimiento</label><input name="vence" type="date"></div>
  <div class="fg"><label>Origen</label><input name="orig" list="list_ciud"></div>
  <div class="fg"><label>Destino</label><input name="dest" list="list_ciud"></div>
- <div class="fg"><label>Vehículo</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+ <div class="fg"><label>Tipo Vehículo</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
  <div class="fg"><label>Pedido</label><input name="ped"></div>
- <div class="fg"><label>F.C</label><input name="f_c" type="date"></div>
- <div class="fg"><label>H.C</label><input name="h_c" type="time"></div>
- <div class="fg"><label>F.D</label><input name="f_d" type="date"></div>
- <div class="fg"><label>H.D</label><input name="h_d" type="time"></div>
- <div class="fg"><label>F. Pagar</label><input name="f_p"></div>
- <div class="fg"><label>F. Fact</label><input name="f_f"></div>
- <div class="fg"><label>Estado</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+ <div class="fg"><label>Fecha Cargue</label><input name="f_c" type="date"></div>
+ <div class="fg"><label>Hora Cargue</label><input name="h_c" type="time"></div>
+ <div class="fg"><label>Fecha Despacho</label><input name="f_d" type="date"></div>
+ <div class="fg"><label>Hora Despacho</label><input name="h_d" type="time"></div>
+ <div class="fg"><label>Fecha Pagar</label><input name="f_p"></div>
+ <div class="fg"><label>Fecha Factura</label><input name="f_f"></div>
+ <div class="fg"><label>Estado Operativo</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
  <div class="fg"><label>Horario</label><input name="h_t"></div>
  <div class="fg"><label>MUC</label><input name="muc"></div>
  <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
- <div class="fg" style="grid-column: span 2"><label>Obs</label><textarea name="obs" rows="1"></textarea></div>
- <div class="fg" style="grid-column: span 2"><label>Cond</label><textarea name="cond" rows="1"></textarea></div>
+ <div class="fg" style="grid-column: span 2"><label>Observaciones</label><textarea name="obs" rows="1"></textarea></div>
+ <div class="fg" style="grid-column: span 2"><label>Condiciones</label><textarea name="cond" rows="1"></textarea></div>
 
  <button class="btn-submit-serious">
  <svg class="icon-serious" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
@@ -280,7 +279,7 @@ app.get('/', async (req, res) => {
  <table id="tabla">
  <thead>
  <tr>
- <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F.DOC</th><th>H.DOC</th><th>DO/BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL/FCL</th><th>CONTENEDOR</th><th>PESO</th><th>UNID</th><th>PRODUCTO</th><th>ESQUEMA</th><th>VENCE</th><th>ORIGEN</th><th>DESTINO</th><th>VEHICULO</th><th>PEDIDO</th><th>F.C</th><th>H.C</th><th>F.D</th><th>H.D</th><th class="col-placa">PLACA</th><th>PAGAR</th><th>FACTURA</th><th class="col-est">ESTADO</th><th>ACTUALIZACIÓN</th><th>ESTADO FINAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORA</th><th>MUC</th><th class="col-desp">DESPACHADOR</th><th>FIN</th><th class="col-hfin">H.FIN</th><th class="col-acc">ACCIONES</th>
+ <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">FECHA REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>FECHA DOCUMENTO</th><th>HORA DOCUMENTO</th><th>DO / BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL / FCL</th><th>CONTENEDOR</th><th>PESO</th><th>UNIDAD</th><th>PRODUCTO</th><th>ESQUEMA</th><th>VENCIMIENTO</th><th>ORIGEN</th><th>DESTINO</th><th>TIPO VEHÍCULO</th><th>PEDIDO</th><th>FECHA CARGUE</th><th>HORA CARGUE</th><th>FECHA DESPACHO</th><th>HORA DESPACHO</th><th class="col-placa">PLACA</th><th>F. PAGAR</th><th>F. FACTURA</th><th class="col-est">ESTADO OPERATIVO</th><th>ACTUALIZACIÓN</th><th>ESTADO FINAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORARIO</th><th>MUC</th><th class="col-desp">DESPACHADOR</th><th>FINALIZAR</th><th class="col-hfin">HORA FIN</th><th class="col-acc">ACCIONES</th>
  </tr>
  </thead>
  <tbody>${rows}</tbody>
@@ -398,7 +397,6 @@ app.post('/add', async (req, res) => { req.body.f_act = getNow(); await C.create
 app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
 app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id: { [Op.in]: req.body.ids } } }); res.sendStatus(200); });
 
-// RUTA UNIVERSAL PARA EDITAR CAMPOS DESDE LA TABLA
 app.post('/edit-live/:id', async (req, res) => {
  try {
  const updates = {};
@@ -408,7 +406,6 @@ app.post('/edit-live/:id', async (req, res) => {
  } catch (e) { res.status(500).send("Error: " + e.message); }
 });
 
-// ACTUALIZACIÓN DE PLACA Y DISPARO AL ROBOT
 app.post('/u/:id', async (req, res) => { 
  await C.update({ 
  placa: req.body.placa.toUpperCase(), 
