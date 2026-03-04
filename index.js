@@ -12,7 +12,7 @@ const db = new Sequelize(process.env.DATABASE_URL, {
  dialectOptions: { ssl: { require: true, rejectUnauthorized: false } } 
 });
 
-// MODELO DE DATOS (Incluye los campos para el robot)
+// MODELO DE DATOS (Mantenemos los campos en la DB para no romper el robot, pero no los mostraremos)
 const C = db.define('Carga', {
  oficina: DataTypes.STRING,
  emp_gen: DataTypes.STRING,
@@ -52,7 +52,7 @@ const C = db.define('Carga', {
  desp: DataTypes.STRING,
  f_fin: DataTypes.STRING,
  est_real: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' },
- // --- CAMPOS PARA EL ROBOT GPS ---
+ // Los campos siguen en la DB para que el proceso de enviarAMonitor no falle
  url_plataforma: DataTypes.STRING,
  usuario_gps: DataTypes.STRING,
  clave_gps: DataTypes.STRING
@@ -260,15 +260,6 @@ app.get('/', async (req, res) => {
  <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
  <div class="fg" style="grid-column: span 2"><label>Obs</label><textarea name="obs" rows="1"></textarea></div>
  <div class="fg" style="grid-column: span 2"><label>Cond</label><textarea name="cond" rows="1"></textarea></div>
- 
- <div class="fg" style="grid-column: 1 / -1; margin-top: 10px; border-top: 1px solid #3b82f6; padding-top: 15px;">
-    <label style="color: #3b82f6; font-size: 11px;">Configuración de Monitoreo Robot</label>
-    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
-        <div class="fg"><label>URL Plataforma GPS</label><input name="url_plataforma" type="url" placeholder="https://gps.ejemplo.com"></div>
-        <div class="fg"><label>Usuario GPS</label><input name="usuario_gps" type="text"></div>
-        <div class="fg"><label>Clave GPS</label><input name="clave_gps" type="password"></div>
-    </div>
- </div>
 
  <button class="btn-submit-serious">
  <svg class="icon-serious" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
