@@ -206,7 +206,7 @@ app.get('/', async (req, res) => {
  ${ed('cond', c.cond)}
  ${ed('h_t', c.h_t)}
  ${ed('muc', c.muc)}
- ${ed('desp', c.desp)}
+ <td class="col-desp" style="padding:6px;">${c.desp||''}</td>
  <td>${accionFin}</td>
  <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
  <td class="col-acc">
