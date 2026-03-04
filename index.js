@@ -170,7 +170,14 @@ app.get('/', async (req, res) => {
  <td>${c.cli||''}</td>
  <td>${c.subc||''}</td>
  <td>${c.mod||''}</td>
- <td><form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="cont" value="${c.cont||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked}></form></td>
+ <td>${c.lcl||''}</td>
+
+ <td>
+    <form action="/edit-live/${c.id}" method="POST" style="margin:0">
+        <input name="cont" value="${c.cont||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked} oninput="this.value=this.value.toUpperCase()">
+    </form>
+ </td>
+
  <td>${c.peso||''}</td>
  <td>${c.unid||''}</td>
  <td>${c.prod||''}</td>
@@ -179,7 +186,13 @@ app.get('/', async (req, res) => {
  <td>${c.orig||''}</td>
  <td>${c.dest||''}</td>
  <td>${c.t_v||''}</td>
- <td><form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="ped" value="${c.ped||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked}></form></td>
+
+ <td>
+    <form action="/edit-live/${c.id}" method="POST" style="margin:0">
+        <input name="ped" value="${c.ped||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked} oninput="this.value=this.value.toUpperCase()">
+    </form>
+ </td>
+
  <td>${c.f_c||''}</td>
  <td>${c.h_c||''}</td>
  <td>${c.f_d||''}</td>
@@ -198,7 +211,13 @@ app.get('/', async (req, res) => {
  <td style="white-space:normal;min-width:250px;text-align:left">${c.obs||''}</td>
  <td style="white-space:normal;min-width:250px;text-align:left">${c.cond||''}</td>
  <td>${c.h_t||''}</td>
- <td><form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="muc" value="${c.muc||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked}></form></td>
+
+ <td>
+    <form action="/edit-live/${c.id}" method="POST" style="margin:0">
+        <input name="muc" value="${c.muc||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked} oninput="this.value=this.value.toUpperCase()">
+    </form>
+ </td>
+
  <td class="col-desp">${c.desp||''}</td>
  <td>${accionFin}</td>
  <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
@@ -388,36 +407,36 @@ app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id
 
 // RUTA UNIVERSAL PARA EDITAR CAMPOS DESDE LA TABLA
 app.post('/edit-live/:id', async (req, res) => {
-    try {
-        const updates = {};
-        for (let key in req.body) { updates[key] = req.body[key].toUpperCase(); }
-        await C.update(updates, { where: { id: req.params.id } });
-        res.redirect('/');
-    } catch (e) { res.status(500).send("Error: " + e.message); }
+ try {
+ const updates = {};
+ for (let key in req.body) { updates[key] = req.body[key].toUpperCase(); }
+ await C.update(updates, { where: { id: req.params.id } });
+ res.redirect('/');
+ } catch (e) { res.status(500).send("Error: " + e.message); }
 });
 
 // ACTUALIZACIÓN DE PLACA Y DISPARO AL ROBOT
 app.post('/u/:id', async (req, res) => { 
-    await C.update({ 
-        placa: req.body.placa.toUpperCase(), 
-        est_real: 'DESPACHADO', 
-        f_act: getNow() 
-    }, { where: { id: req.params.id } }); 
+ await C.update({ 
+ placa: req.body.placa.toUpperCase(), 
+ est_real: 'DESPACHADO', 
+ f_act: getNow() 
+ }, { where: { id: req.params.id } }); 
 
-    const carga = await C.findByPk(req.params.id);
-    if(carga && carga.placa) { enviarAMonitor(carga); }
-    res.redirect('/'); 
+ const carga = await C.findByPk(req.params.id);
+ if(carga && carga.placa) { enviarAMonitor(carga); }
+ res.redirect('/'); 
 });
 
 app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
 
 app.get('/finish/:id', async (req, res) => { 
-    const ahora = getNow(); 
-    await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); 
-    res.redirect('/'); 
+ const ahora = getNow(); 
+ await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); 
+ res.redirect('/'); 
 });
 
-// KPI E INDICADORES (Mantenido)
+// KPI E INDICADORES
 app.get('/stats', async (req, res) => {
  try {
  const cargas = await C.findAll();
@@ -545,7 +564,7 @@ app.get('/stats', async (req, res) => {
 
 // SINCRONIZACIÓN Y ARRANQUE
 db.sync({ alter: true }).then(() => {
-    app.listen(process.env.PORT || 3000, () => {
-        console.log("Servidor Logística V20 - Activo");
-    });
+ app.listen(process.env.PORT || 3000, () => {
+ console.log("Servidor Logística V20 - Activo");
+ });
 });
