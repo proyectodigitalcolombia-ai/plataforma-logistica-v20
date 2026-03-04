@@ -12,7 +12,7 @@ const db = new Sequelize(process.env.DATABASE_URL, {
  dialectOptions: { ssl: { require: true, rejectUnauthorized: false } } 
 });
 
-// MODELO DE DATOS (Mantenemos los campos en la DB para no romper el robot, pero no los mostraremos)
+// MODELO DE DATOS
 const C = db.define('Carga', {
  oficina: DataTypes.STRING,
  emp_gen: DataTypes.STRING,
@@ -52,7 +52,6 @@ const C = db.define('Carga', {
  desp: DataTypes.STRING,
  f_fin: DataTypes.STRING,
  est_real: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' },
- // Los campos siguen en la DB para que el proceso de enviarAMonitor no falle
  url_plataforma: DataTypes.STRING,
  usuario_gps: DataTypes.STRING,
  clave_gps: DataTypes.STRING
@@ -117,6 +116,8 @@ const css = `<style>
  #busq{padding:10px;width:250px;border-radius:6px;border:1px solid #3b82f6;background:#1e293b;color:white;font-weight:bold;height:38px;box-sizing:border-box;}
  .vence-rojo{background:#dc2626 !important;color:#fff !important;font-weight:bold;animation: blink 2s infinite;cursor:pointer}
  .vence-amarillo{background:#fbbf24 !important;color:#000 !important;font-weight:bold}
+ .editable-cell { background: transparent !important; color: #34d399 !important; border: none !important; width: 100%; text-align: center; font-weight: bold; cursor: pointer; padding: 4px; border-radius: 4px; }
+ .editable-cell:focus { background: #334155 !important; outline: 1px solid #3b82f6 !important; }
  @keyframes blink { 0% {opacity:1} 50% {opacity:0.6} 100% {opacity:1} }
  tr:hover td { background: #334155; }
 </style>`;
@@ -169,8 +170,7 @@ app.get('/', async (req, res) => {
  <td>${c.cli||''}</td>
  <td>${c.subc||''}</td>
  <td>${c.mod||''}</td>
- <td>${c.lcl||''}</td>
- <td>${c.cont||''}</td>
+ <td><form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="cont" value="${c.cont||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked}></form></td>
  <td>${c.peso||''}</td>
  <td>${c.unid||''}</td>
  <td>${c.prod||''}</td>
@@ -179,7 +179,7 @@ app.get('/', async (req, res) => {
  <td>${c.orig||''}</td>
  <td>${c.dest||''}</td>
  <td>${c.t_v||''}</td>
- <td>${c.ped||''}</td>
+ <td><form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="ped" value="${c.ped||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked}></form></td>
  <td>${c.f_c||''}</td>
  <td>${c.h_c||''}</td>
  <td>${c.f_d||''}</td>
@@ -198,7 +198,7 @@ app.get('/', async (req, res) => {
  <td style="white-space:normal;min-width:250px;text-align:left">${c.obs||''}</td>
  <td style="white-space:normal;min-width:250px;text-align:left">${c.cond||''}</td>
  <td>${c.h_t||''}</td>
- <td>${c.muc||''}</td>
+ <td><form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="muc" value="${c.muc||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked}></form></td>
  <td class="col-desp">${c.desp||''}</td>
  <td>${accionFin}</td>
  <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
@@ -386,7 +386,17 @@ app.post('/add', async (req, res) => { req.body.f_act = getNow(); await C.create
 app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
 app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id: { [Op.in]: req.body.ids } } }); res.sendStatus(200); });
 
-// --- INSERCIÓN B: ACTUALIZACIÓN DE PLACA Y DISPARO AL ROBOT ---
+// RUTA UNIVERSAL PARA EDITAR CAMPOS DESDE LA TABLA
+app.post('/edit-live/:id', async (req, res) => {
+    try {
+        const updates = {};
+        for (let key in req.body) { updates[key] = req.body[key].toUpperCase(); }
+        await C.update(updates, { where: { id: req.params.id } });
+        res.redirect('/');
+    } catch (e) { res.status(500).send("Error: " + e.message); }
+});
+
+// ACTUALIZACIÓN DE PLACA Y DISPARO AL ROBOT
 app.post('/u/:id', async (req, res) => { 
     await C.update({ 
         placa: req.body.placa.toUpperCase(), 
@@ -395,10 +405,7 @@ app.post('/u/:id', async (req, res) => {
     }, { where: { id: req.params.id } }); 
 
     const carga = await C.findByPk(req.params.id);
-    if(carga && carga.placa) {
-        // Ejecutamos la función asíncrona para enviar al Servicio B
-        enviarAMonitor(carga);
-    }
+    if(carga && carga.placa) { enviarAMonitor(carga); }
     res.redirect('/'); 
 });
 
@@ -410,7 +417,7 @@ app.get('/finish/:id', async (req, res) => {
     res.redirect('/'); 
 });
 
-// KPI E INDICADORES (Mantenido y Mejorado)
+// KPI E INDICADORES (Mantenido)
 app.get('/stats', async (req, res) => {
  try {
  const cargas = await C.findAll();
