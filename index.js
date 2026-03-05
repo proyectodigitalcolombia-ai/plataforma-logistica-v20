@@ -125,12 +125,99 @@ const css = `<style>
  tr:hover td { background: #334155; }
 </style>`;
 
-app.get('/', async (req, res) => {
- try {
- const d = await C.findAll({ order: [['id', 'DESC']] });
- let rows = '';
- const hoy = new Date(); hoy.setHours(0,0,0,0);
- let index = 1;
+app.get('/stats', async (req, res) => {
+  try {
+    const cargas = await C.findAll();
+    const hoyStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+    const mesActualStr = hoyStr.substring(0, 7);
+    
+    // 1. LÓGICA DE DESPACHADORES (INDICADOR RECUPERADO)
+    const despLog = {};
+    opts.despachadores.forEach(d => { despLog[d] = { hoy: 0, mes: 0 }; });
+
+    cargas.forEach(c => {
+      const d = c.desp || 'SIN ASIGNAR';
+      const fCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+      if (!despLog[d]) despLog[d] = { hoy: 0, mes: 0 };
+      if (fCrea === hoyStr) despLog[d].hoy++;
+      if (fCrea.startsWith(mesActualStr)) despLog[d].mes++;
+    });
+
+    // 2. OTROS INDICADORES (CLIENTES Y CIUDADES)
+    const sinPlaca = cargas.filter(c => (!c.placa || c.placa.trim() === '') && !c.f_fin);
+    const pendientesPorCliente = {};
+    sinPlaca.forEach(c => {
+      const cliente = (c.cli || 'SIN CLIENTE').toUpperCase();
+      pendientesPorCliente[cliente] = (pendientesPorCliente[cliente] || 0) + 1;
+    });
+
+    const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
+    const perdidasTotal = cargas.filter(c => cancelTags.includes(c.obs_e));
+    const perdidaDiaria = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) === hoyStr).length;
+    const perdidaMesActual = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).startsWith(mesActualStr)).length;
+
+    const total = cargas.length, fin = cargas.filter(c => c.f_fin).length, desp = cargas.filter(c => c.placa && !c.f_fin).length;
+
+    // 3. RESPUESTA HTML CON TABLA DE DESPACHADORES
+    res.send(`<html><head><meta charset="UTF-8"><title>KPI - YEGO</title>
+    <style>
+      body{background:#0f172a;color:#fff;font-family:sans-serif;padding:25px;}
+      .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid #1e40af;padding-bottom:15px;}
+      .btn-back{background:#2563eb;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:bold;}
+      .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:25px;}
+      .card{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;}
+      .card h3{margin:0;font-size:10px;color:#94a3b8;text-transform:uppercase;}
+      .card p{margin:10px 0 0;font-size:32px;font-weight:bold;color:#3b82f6;}
+      table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:10px;overflow:hidden;margin-top:20px;}
+      th{background:#1e40af;padding:12px;font-size:11px;}
+      td{padding:12px;border-bottom:1px solid #334155;text-align:center;}
+      .badge{padding:4px 10px;border-radius:15px;font-weight:bold;font-size:12px;}
+      .prog-bg{width:100px;background:#334155;height:8px;border-radius:4px;display:inline-block;margin-right:10px;}
+      .prog-fill{background:#10b981;height:100%;border-radius:4px;}
+    </style></head>
+    <body>
+      <div class="header"><h2>TABLERO DE INDICADORES LOGÍSTICOS</h2><a href="/" class="btn-back">VOLVER</a></div>
+      
+      <div class="kpi-grid">
+        <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
+        <div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
+        <div class="card"><h3>En Ruta</h3><p style="color:#fbbf24">${desp}</p></div>
+        <div class="card" style="border-left:5px solid #ef4444"><h3>Perdidos Mes</h3><p style="color:#f87171">${perdidaMesActual}</p></div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+        <div>
+          <h3 style="color:#10b981; border-left:4px solid #10b981; padding-left:10px;">PRODUCTIVIDAD POR DESPACHADOR</h3>
+          <table>
+            <thead><tr><th>NOMBRE</th><th>HOY</th><th>MES</th><th>EFICIENCIA</th></tr></thead>
+            <tbody>
+              ${Object.entries(despLog).sort((a,b)=>b[1].mes - a[1].mes).map(([name, s]) => {
+                const pct = Math.min((s.hoy / 10) * 100, 100); // Meta de 10 diarios
+                return `<tr>
+                  <td style="text-align:left; font-weight:bold;">${name}</td>
+                  <td><span class="badge" style="background:#065f46">${s.hoy}</span></td>
+                  <td><span class="badge" style="background:#1e40af">${s.mes}</span></td>
+                  <td><div class="prog-bg"><div class="prog-fill" style="width:${pct}%"></div></div>${Math.round(pct)}%</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <h3 style="color:#f59e0b; border-left:4px solid #f59e0b; padding-left:10px;">PENDIENTES POR CLIENTE</h3>
+          <table>
+            <thead><tr><th>CLIENTE</th><th>CANTIDAD</th></tr></thead>
+            <tbody>
+              ${Object.entries(pendientesPorCliente).sort((a,b)=>b[1]-a[1]).map(([cli, cant]) => `
+              <tr><td style="text-align:left;">${cli}</td><td><span class="badge" style="background:#f59e0b;color:#000">${cant}</span></td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </body></html>`);
+  } catch (e) { res.send("Error en KPIs: " + e.message); }
+});
 
  for (let c of d) {
  const isLocked = (c.f_fin || c.placa) ? 'disabled' : '';
