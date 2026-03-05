@@ -259,8 +259,8 @@ app.get('/', async (req, res) => {
  <div class="fg"><label>Hora Cargue</label><input name="h_c" type="time"></div>
  <div class="fg"><label>Fecha Despacho</label><input name="f_d" type="date"></div>
  <div class="fg"><label>Hora Despacho</label><input name="h_d" type="time"></div>
- <div class="fg"><label>Fecha Pagar</label><input name="f_p"></div>
- <div class="fg"><label>Fecha Factura</label><input name="f_f"></div>
+ <div class="fg"><label>Flete a Pagar</label><input name="f_p"></div>
+ <div class="fg"><label>Flete a Facturar</label><input name="f_f"></div>
  <div class="fg"><label>Estado Operativo</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
  <div class="fg"><label>Horario</label><input name="h_t"></div>
  <div class="fg"><label>MUC</label><input name="muc"></div>
