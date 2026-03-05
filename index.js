@@ -1,6 +1,6 @@
 const express = require('express'), { Sequelize, DataTypes, Op } = require('sequelize'), app = express();
 
-// --- INSERCIÓN A: LLAMADO AL ASISTENTE GPS ---
+// --- INSERCIÓN A: LLAMADO ASISTENTE GPS ---
 const { enviarAMonitor } = require('./gpsService'); 
 
 app.use(express.urlencoded({ extended: true })); 
@@ -66,7 +66,7 @@ const opts = {
  esquemas: ['1 ESCOLTA - SELLO', '2 ESCOLTAS SELLO - SPIA', 'SELLO', '1 ESCOLTA', '2 ESCOLTA', 'NO REQUIERE', '2 ESCOLTAS SELLO', 'INSPECTORES VIALES'],
  vehiculos: ['TURBO 2.5 TN', 'TURBO 4.5 TN', 'TURBO SENCILLO', 'SENCILLO 9 TN', 'PATINETA 2S3', 'TRACTOMULA 3S2', 'TRACTOMULA 3S3', 'CAMA BAJA', 'DOBLE TROQUE'],
  ciudades: ['BOGOTÁ', 'MEDELLÍN', 'CALI', 'BARRANQUILLA', 'CARTAGENA', 'BUENAVENTURA', 'SANTA MARTA', 'CÚCUTA', 'IBAGUÉ', 'PEREIRA', 'MANIZALES', 'NEIVA', 'VILLAVICENCIO', 'YOPAL', 'SIBERIA', 'FUNZA', 'MOSQUERA', 'MADRID', 'FACATATIVÁ', 'TOCANCIPÁ', 'CHÍA', 'CAJICÁ'],
- subclientes: ['HIKVISION', 'PAYLESS COLOMBIA', 'GRUPO PVC COMPUESTOS Y RESINAS', 'INDUSTRIAS DONSSON', 'RAIRAN IMPRESORES SAS', 'MC TUBOS CARTON SAS', 'ASFALTEL SAS', 'AISLAPOR SAS', 'WEBER STEPHEN COLOMBIA SAS', 'INTALPEL SAS', 'CRESTLINE GLOBAL VENTURE SAS', 'DISTRIBUIDORA DE AGLOMERADOS MT SAS', 'BEST CHOICE SAS', 'IMPROPLAST RC SAS', 'TEXTILES 1x1 SAS', 'GRUPO EMPRESARIAL ROJAS Y ASOCIADOS SAS', 'INTERPHARMA COLOMBIA SAS', 'INDECOR SAS', 'DISPROMED MK SAS', 'ARKADIA FAMILY CENTER', 'BRENNTAG COLOMBIA', 'DIPEC SAS', 'INGREDION COLOMBIA', 'SAMSUNG SDS COLOMBIA GLOBAL', 'ÉXITO', 'COLOMBIANA DE COMERCIO - ALKOSTO', 'FALABELLA', 'SODIMAC COLOMBIA', 'GRUPO MANSION', 'OLIMPICA', 'ENVAECOL', 'INNOVAR SOLUCIONES', 'VOLCARGA', 'ACME LEON PLASTICOS SAS', 'ALPLA COLOMBIA S A S', 'AMCOR HOLDINGS AUSTRALIA PTY LTD', 'ARPACK S A S', 'CARPAK', 'CARPAK', 'COINTEC S.A.S.', 'COLPLAS S.A.S COLOMBIANA DE PLASTICO', 'COMTUCAR S.A.S', 'CONSTRUTUBOS', 'COROPLAST LIMITADA', 'DARPLAS S.A.S', 'DISTRIBUIDORA CORDOBA S.A.S', 'ENVASES PLASTICOS DE LA SABANA S A S', 'ENVASES PLASTICOS DE LA SABANA S A S', 'EUROPLASTICOS LTDA', 'FAMILIA DEL PACIFICO SAS', 'FLEXO SPRING SAS', 'GROUPE SEB COLOMBIA S.A.', 'GRUPO EFEXPORT ZF S.A.S.', 'GRUPO PV CENTRO S.A.S.', 'GUTVAN S.A.S', 'HIDALPLAST SAS', 'IDEPLAS SAS', 'INDUSTRIA COLOMBIANA DE TAPAS', 'INDUSTRIAS GOYAINCOL S A S', 'INDUSTRIAS PLASTICAS HERBEPLAS', 'INDUSTRIAS VANIPLAS LTDA', 'INTECPLAST', 'MEXICHEM', 'MULTIDIMENSIONALES S A S', 'NTECPLAST INYECCION TECNICA DE PLASTICOS S.A.S.', 'PELICULAS EXTRUIDAS S.A.S.', 'PELPAK ZF SAS', 'PLASMOTEC SAS', 'PLASTICOS MAFRA COLEY Y COMPANIA S EN C', 'PLASTICOS MQ SAS', 'PLASTICOS TRUHER S.A.', 'PLASTITEC S.A.S.', 'POLYAGRO S.A.S', 'PROENFAR', 'PROENFAR', 'QUALYPLASTICOS S.A.S', 'RECIPLAST SAS', 'SOLUTIONS GROUP S A S', 'TECNOPLAST S A S', 'TRACTOCAR', 'TROFORMAS SAS', 'UNION PLASTICA SAS', 'OPL BETANIA', 'KOBA D1', 'OLIMPICA', 'JERONIMO MARTINS', 'ÉXITO', 'COLOMBIANA DE COMERCIO', 'TERNIUM DEL ATLANTICO', 'LADECA', 'SIDOC', 'AGOFER', 'RIDUCO', 'GYJ FERRETERIAS SA', 'STECKERL ACEROS', 'FERRETERIA MULTIALAMBRES', 'SURECA SAS', 'FERROSVEL', 'DISTRIACERO SAS', 'FIGUHIERROS', 'SURTIFERRETERIAS SAS', 'HOMCECENTER SAS', 'TERNIUM COLOMBIA', 'PLASTICOS ESPECIALES SAS', 'INGENIO MAYAGUEZ', 'ÉXITO ', 'COLOMBIANA DE COMERCIO', 'OLIMPICA', 'ACERIAS PAZ DEL RIO', 'TAURUS LOGISTICS COLOMBIA', 'CI SOEXCOL', 'TERNIUM DEL ATLANTICO', 'BRINSA SA', 'TENARIS', 'CORONA', 'TENARIS TUBOCARIBE YARD BARRANCA', 'TENARIS TUBOCARIBE YARD VVO', 'CASA LUKER BOGOTA', 'SUPPLIES 4 PETS S.A.S', 'EQUIPOS Y ANDAMIOS SAS', 'SOFTYS', 'MANUFACTURAS EL ARQUITECTO', 'EDITORIAL NOMOS', 'DISEÑO Y CONSTRUCCUION DE OBRAS ELECTRICAS', 'PROCOLDEXT', 'ABB', 'FACOPACK', 'ALIMENTOS POLAR URBANO', 'ORINOCO E-SCRAP', 'AUTO GAS SOLEDAD PLEXA', 'ALONDRA MUEBLES', 'MAXFLEX', 'FAJOBE CEDI SIBERIA', 'POLIPAK', 'FILTROS Y SOLUCIONES SAS', 'PROVELECTRICOS', 'ELECTROJAPONESA', 'GEOSQUIMICAS', 'RIN TRUCK'],
+ subclientes: ['HIKVISION', 'PAYLESS COLOMBIA', 'GRUPO PVC COMPUESTOS Y RESINAS', 'INDUSTRIAS DONSSON', 'RAIRAN IMPRESORES SAS', 'MC TUBOS CARTON SAS', 'ASFALTEL SAS', 'AISLAPOR SAS', 'WEBER STEPHEN COLOMBIA SAS', 'INTALPEL SAS', 'CRESTLINE GLOBAL VENTURE SAS', 'DISTRIBUIDORA DE AGLOMERADOS MT SAS', 'BEST CHOICE SAS', 'IMPROPLAST RC SAS', 'TEXTILES 1x1 SAS', 'GRUPO EMPRESARIAL ROJAS Y ASOCIADOS SAS', 'INTERPHARMA COLOMBIA SAS', 'INDECOR SAS', 'DISPROMED MK SAS', 'ARKADIA FAMILY CENTER', 'BRENNTAG COLOMBIA', 'DIPEC SAS', 'INGREDION COLOMBIA', 'SAMSUNG SDS COLOMBIA GLOBAL', 'ÉXITO', 'COLOMBIANA DE COMERCIO - ALKOSTO', 'FALABELLA', 'SODIMAC COLOMBIA', 'GRUPO MANSION', 'OLIMPICA', 'ENVAECOL', 'INNOVAR SOLUCIONES', 'VOLCARGA', 'ACME LEON PLASTICOS SAS', 'ALPLA COLOMBIA S A S', 'AMCOR HOLDINGS AUSTRALIA PTY LTD', 'ARPACK S A S', 'CARPAK', 'CARPAK', 'COINTEC S.A.S.', 'COLPLAS S.A.S COLOMBIANA DE PLASTICO', 'COMTUCAR S.A.S', 'CONSTRUTUBOS', 'COROPLAST LIMITADA', 'DARPLAS S.A.S', 'DISTRIBUIDORA CORDOBA S.A.S', 'ENVASES PLASTICOS DE LA SABANA S A S', 'ENVASES PLASTICOS DE LA SABANA S A S', 'EUROPLASTICOS LTDA', 'FAMILIA DEL PACIFICO SAS', 'FLEXO SPRING SAS', 'GROUPE SEB COLOMBIA S.A.', 'GRUPO EFEXPORT ZF S.A.S.', 'GRUPO PV CENTRO S.A.S.', 'GUTVAN S.A.S', 'HIDALPLAST SAS', 'IDEPLAS SAS', 'INDUSTRIA COLOMBIANA DE TAPAS', 'INDUSTRIAS GOYAINCOL S A S', 'INDUSTRIAS PLASTICAS HERBEPLAS', 'INDUSTRIAS VANIPLAS LTDA', 'INTECPLAST', 'MEXICHEM', 'MULTIDIMENSIONALES S A S', 'NTECPLAST INYECCION TECNICA DE PLASTICOS S.A.S.', 'PELICULAS EXTRUIDAS S.A.S.', 'PELPAK ZF SAS', 'PLASMOTEC SAS', 'PLASTICOS MAFRA COLEY Y COMPANIA S EN C', 'PLASTICOS MQ SAS', 'PLASTICOS TRUHER S.A.', 'PLASTITEC S.A.S.', 'POLYAGRO S.A.S', 'PROENFAR', 'PROENFAR', 'QUALYPLASTICOS S.A.S', 'RECIPLAST SAS', 'SOLUTIONS GROUP S A S', 'TECNOPLAST S A S', 'TRACTOCAR', 'TROFORMAS SAS', 'UNION PLASTICA SAS', 'OPL BETANIA', 'KOBA D1', 'OLIMPICA', 'JERONIMO MARTINS', 'ÉXITO', 'COLOMBIANA DE COMERCIO', 'TERNIUM DEL ATLANTICO', 'LADECA', 'SIDOC', 'AGOFER', 'RIDUCO', 'GYJ FERRETERIAS SA', 'STECKERL ACEROS', 'FERRETERIA MULTIALAMBRES', 'SURECA SAS', 'FERROSVEL', 'DISTRIACERO SAS', 'FIGUHIERROS', 'SURTIFERRETERIAS SAS', 'HOMCECENTER SAS', 'TERNIUM COLOMBIA', 'PLASTICOS ESPECIALES SAS', 'INGENIO MAYAGUEZ', 'ÉXITO ', 'COLOMBIANA DE COMERCIO', 'OLIMPICA', 'ACERIAS PAZ DEL RIO', 'TAURUS LOGISTICS COLOMBIA', 'CI SOEXCOL', 'TERNIUM DEL ATLANTICO', 'BRINSA SA', 'TENARIS', 'CORONA', 'TENARIS TUBOCARIBE YARD BARRANCA', 'TENARIS TUBOCARIBE YARD VVO', 'CASA LUKER BOGOTA', 'SUPPLIES 4 PETS S.A.S', 'EQUIPOS Y ANDAMIOS SAS', 'SOFTYS', 'MANUFACTURAS EL ARQUITECTO', 'EDITORIAL NOMOS', 'DISEÑO Y CONSTRUCCUION DE OBRAS ELECTRICAS', 'PROCOLDEXT', 'ABB', 'FACOPACK', 'ALIMENTOS POLAR URBANO', 'ORINOCO E-SCRAP', 'AUTO GAS SOLEDAD PLEXA', 'ALONDRA MUEBLES', 'MAXFLEX', 'FAJOBE CEDI SIBERIA', 'POLIPAK', 'FILTROS Y SOLUCIONES SAS', 'PROVELECTRICOS', 'ELECTROJAPONESA', 'GEOSQUIMICAS', 'RIN TRUCK'],
  estados: ['ASIGNADO VEHÍCULO', 'PENDIENTE CITA ASIGNADO', 'VEHÍCULO CON CITA', 'CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CONTENEDOR EN INSPECCIÓN', 'CONTENEDOR RETIRADO PARA ITR', 'DESPACHADO', 'DESPACHADO CON NOVEDAD', 'EN CONSECUCIÓN', 'EN PROGRAMACIÓN', 'EN SITIO DE CARGUE', 'FINALIZADO CON NOVEDAD', 'FINALIZADO SIN NOVEDAD', 'HOJA DE VIDA EN ESTUDIO', 'MERCANCÍA EN INSPECCIÓN', 'NOVEDAD', 'PENDIENTE BAJAR A PATIO', 'PENDIENTE INSTRUCCIONES', 'PRE ASIGNADO', 'RETIRADO DE PUERTO PENDIENTE CONSOLIDADO', 'CANCELADO POR GERENCIA', 'VEHICULO EN RUTA'],
  despachadores: ['ABNNER MARTINEZ', 'CAMILO TRIANA', 'FREDY CARRILLO', 'RAUL LOPEZ', 'EDDIER RIVAS']
 };
@@ -291,6 +291,22 @@ app.get('/', async (req, res) => {
  const t=document.getElementById('st'),m=document.getElementById('sm');
  t.onscroll=()=>m.scrollLeft=t.scrollLeft;
  m.onscroll=()=>t.scrollLeft=m.scrollLeft;
+
+ function formatearFletes() {
+  document.querySelectorAll('.fila-datos').forEach(fila => {
+   fila.querySelectorAll('input.editable-cell').forEach(inp => {
+    if(inp.name === 'f_p' || inp.name === 'f_f') {
+     let val = inp.value.replace(/[^0-9.-]+/g, "");
+     if(val && !isNaN(val)) {
+      inp.dataset.raw = val;
+      inp.value = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(val);
+      inp.onfocus = function() { this.value = this.dataset.raw || ""; };
+      inp.onblur = function() { formatearFletes(); };
+     }
+    }
+   });
+  });
+ }
  
  function selectAll(source){ 
  const checkboxes = document.getElementsByClassName('row-check'); 
@@ -347,6 +363,7 @@ app.get('/', async (req, res) => {
  fila.style.display = mostrar ? "" : "none";
  if(mostrar) { fila.querySelector('.col-num').innerText = visibleCount++; }
  });
+ formatearFletes();
  }
  
  function exportExcel(){
@@ -387,7 +404,7 @@ app.get('/', async (req, res) => {
  setTimeout(playAlert, 2000); 
  }
  } 
- window.onload=()=>setTimeout(playAlert,1000);
+ window.onload=()=>{setTimeout(playAlert,1000); formatearFletes();};
  </script></body></html>`);
  } catch (e) { res.send(e.message); }
 });
@@ -532,29 +549,12 @@ app.get('/stats', async (req, res) => {
  <div class="chart-box"><h4>OPERACIÓN</h4><canvas id="c1"></canvas></div>
  <div class="chart-box"><h4>OFICINAS</h4><canvas id="c2"></canvas></div>
  </div>
-
- <h3 style="color:#3b82f6; border-left: 4px solid #2563eb; padding-left: 10px; margin-bottom:15px;">PRODUCTIVIDAD DESPACHADORES</h3>
- <table>
- <thead><tr><th>DESPACHADOR</th><th>HOY</th><th>MES</th><th>RENDIMIENTO</th><th>PROD %</th></tr></thead>
- <tbody>
- ${Object.entries(despLog).map(([name, s]) => {
- const prodPerc = total > 0 ? ((s.mes/total)*100).toFixed(1) : 0;
- let sem = prodPerc >= 25 ? ['#10b981','ÓPTIMO'] : (prodPerc >= 10 ? ['#fbbf24','MEDIO'] : ['#ef4444','BAJO']);
- return `<tr><td><b>${name}</b></td><td><span class="badge" style="background:#3b82f6">${s.hoy}</span></td><td><span class="badge" style="background:#8b5cf6">${s.mes}</span></td><td><span class="semaforo-dot" style="background:${sem[0]}"></span><span style="color:${sem[0]}">${sem[1]}</span></td>
- <td><div class="prog-wrapper"><div class="prog-bg"><div style="width:${prodPerc}%;background:${sem[0]}" class="prog-fill"></div></div><b>${prodPerc}%</b></div></td></tr>`;
- }).join('')}
- </tbody></table>
  <script>
- new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:['Fin','Ruta','Perdida','Otros'],datasets:[{data:[${fin},${desp},${perdidaMesActual},${total-fin-desp-perdidaMesActual}],backgroundColor:['#10b981','#fbbf24','#ef4444','#475569'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
- new Chart(document.getElementById('c2'),{type:'bar',data:{labels:${JSON.stringify(Object.keys(ofis))},datasets:[{label:'Servicios',data:${JSON.stringify(Object.values(ofis))},backgroundColor:'#3b82f6'}]},options:{scales:{y:{beginAtZero:true,ticks:{color:'#fff'}},x:{ticks:{color:'#fff'}}},plugins:{legend:{display:false}}}});
+  new Chart(document.getElementById('c1'), { type: 'doughnut', data: { labels: ['Finalizados', 'En Ruta', 'Pendientes'], datasets: [{ data: [${fin}, ${desp}, ${total - fin - desp}], backgroundColor: ['#10b981', '#fbbf24', '#334155'] }] } });
+  new Chart(document.getElementById('c2'), { type: 'bar', data: { labels: ${JSON.stringify(Object.keys(ofis))}, datasets: [{ label: 'Servicios', data: ${JSON.stringify(Object.values(ofis))}, backgroundColor: '#3b82f6' }] } });
  </script>
- </body></html>`);
+</body></html>`);
  } catch (e) { res.send(e.message); }
 });
 
-// SINCRONIZACIÓN Y ARRANQUE
-db.sync({ alter: true }).then(() => {
- app.listen(process.env.PORT || 3000, () => {
- console.log("Servidor Logística V20 - Activo");
- });
-});
+app.listen(process.env.PORT || 3000);
