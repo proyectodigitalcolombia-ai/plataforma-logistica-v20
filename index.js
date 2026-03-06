@@ -581,219 +581,119 @@ app.get('/stats', async (req, res) => {
     const hoyDate = new Date();
     const hoyStr = hoyDate.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
     const mesActualStr = hoyStr.substring(0, 7);
+    
+    // Lógica de tiempo para la transición de 24 horas
+    const ahora = new Date();
+    const msEn24Horas = 24 * 60 * 60 * 1000;
 
-    // --- FILTRADO DE CARGAS PENDIENTES ---
     const sinPlaca = cargas.filter(c => (!c.placa || c.placa.trim() === '') && !c.f_fin);
     const pendientesPorCliente = {};
-    
     sinPlaca.forEach(c => { 
       const cliente = (c.cli || 'SIN CLIENTE').toUpperCase(); 
       pendientesPorCliente[cliente] = (pendientesPorCliente[cliente] || 0) + 1; 
     });
 
-    // --- REQUERIMIENTOS POR CIUDAD ---
     const reqPorCiudad = {};
     sinPlaca.forEach(c => { 
       const ciudad = (c.orig || 'SIN ORIGEN').toUpperCase(); 
       const tipo = (c.t_v || 'NO ESPECIFICADO').toUpperCase(); 
-      if (!reqPorCiudad[ciudad]) reqPorCiudad[ciudad] = {}; 
+      if(!reqPorCiudad[ciudad]) reqPorCiudad[ciudad] = {}; 
       reqPorCiudad[ciudad][tipo] = (reqPorCiudad[ciudad][tipo] || 0) + 1; 
     });
 
-    // --- LÓGICA DE PÉRDIDAS (CANCELACIONES) ---
     const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
     const perdidosTotal = cargas.filter(c => cancelTags.includes(c.obs_e));
-    
-    const perdidaDiaria = perdidosTotal.filter(c => 
-      new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) === hoyStr
-    ).length;
-
-    const perdidaMesActual = perdidosTotal.filter(c => 
-      new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).startsWith(mesActualStr)
-    ).length;
-    
+    const perdidaDiaria = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) === hoyStr).length;
+    const perdidaMesActual = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).startsWith(mesActualStr)).length;
     const perdidaConteo = perdidosTotal.length;
 
-    // --- LOG DE DESPACHADORES ---
     const despLog = {};
     cargas.forEach(c => { 
       const d = c.desp || 'SIN ASIGNAR'; 
       const fCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); 
       const mCrea = fCrea.substring(0, 7); 
-      if (!despLog[d]) despLog[d] = { hoy: 0, mes: 0 }; 
-      if (fCrea === hoyStr) despLog[d].hoy++; 
-      if (mCrea === mesActualStr) despLog[d].mes++; 
+      if(!despLog[d]) despLog[d] = { hoy:0, mes:0 }; 
+      if(fCrea === hoyStr) despLog[d].hoy++; 
+      if(mCrea === mesActualStr) despLog[d].mes++; 
     });
 
-    // --- CONTADORES PRINCIPALES ---
+    // --- CONTADORES CON REGLA DE 24 HORAS ---
     const total = cargas.length;
     const fin = cargas.filter(c => c.f_fin).length;
-    const desp = cargas.filter(c => c.placa && !c.f_fin).length;
-    
-    // INTEGRACIÓN: Casilla de Despachados (Cargas con placa pero sin finalizar)
-    const despachadosCount = cargas.filter(c => c.f_desp && !c.f_fin).length;
+
+    // DESPACHADOS: Tienen placa, no han fin, y llevan MENOS de 24h
+    const despachadosCount = cargas.filter(c => {
+      const transcurrido = ahora - new Date(c.createdAt);
+      return c.placa && !c.f_fin && transcurrido < msEn24Horas;
+    }).length;
+
+    // EN RUTA: Tienen placa, no han fin, y llevan MÁS de 24h
+    const desp = cargas.filter(c => {
+      const transcurrido = ahora - new Date(c.createdAt);
+      return c.placa && !c.f_fin && transcurrido >= msEn24Horas;
+    }).length;
 
     const ofis = {}; 
-    cargas.forEach(c => { 
-      if (c.oficina) ofis[c.oficina] = (ofis[c.oficina] || 0) + 1; 
-    });
+    cargas.forEach(c => { if(c.oficina) ofis[c.oficina] = (ofis[c.oficina] || 0) + 1; });
 
-    res.send(`
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>KPI - LOGISV20</title>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <style>
-          body { background: #0f172a; color: #fff; font-family: sans-serif; margin: 0; padding: 25px; }
-          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #1e40af; padding-bottom: 15px; }
-          .btn-back { background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; }
-          
-          .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px; }
-          
-          .card { background: #1e293b; padding: 20px; border-radius: 10px; border: 1px solid #334155; text-align: center; display: flex; flex-direction: column; justify-content: center; transition: 0.3s; }
-          .card:hover { border-color: #3b82f6; transform: translateY(-2px); }
-          .card h3 { margin: 0; font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-          .card p { margin: 10px 0 0; font-size: 32px; font-weight: bold; color: #3b82f6; }
-          
-          .lost-card { border-left: 5px solid #ef4444; background: rgba(239, 68, 68, 0.05); }
-          .lost-card p { color: #f87171; }
-          
-          /* ESTILO INTEGRADO: DESPACHADOS */
-          .desp-card { border-left: 5px solid #3b82f6; background: rgba(59, 130, 246, 0.1); }
-          .desp-card p { color: #60a5fa; }
-
-          .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-bottom: 25px; }
-          .chart-box { background: #1e293b; padding: 20px; border-radius: 10px; border: 1px solid #334155; text-align: center; }
-          
-          table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 10px; overflow: hidden; margin-bottom: 30px; }
-          th { background: #1e40af; padding: 12px; font-size: 11px; text-align: center; text-transform: uppercase; }
-          td { padding: 12px; border-bottom: 1px solid #334155; font-size: 13px; text-align: center; }
-          
-          .badge { padding: 4px 10px; border-radius: 15px; font-weight: bold; font-size: 12px; color: #fff; margin: 2px; display: inline-block; }
-          .req-badge { background: #ef4444; font-size: 10px; }
-          .cli-badge { background: #f59e0b; color: #000; font-size: 11px; }
-          
-          .prog-wrapper { display: flex; align-items: center; justify-content: center; gap: 10px; }
-          .prog-bg { width: 150px; background: #334155; height: 12px; border-radius: 6px; overflow: hidden; }
-          .prog-fill { background: #10b981; height: 100%; border-radius: 6px; }
-          .semaforo-dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h2 style="margin:0;">TABLERO DE INDICADORES LOGÍSTICOS</h2>
-          <a href="/" class="btn-back">VOLVER AL INICIO</a>
-        </div>
-
-        <div class="kpi-grid">
-          <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
-          <div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
-          
-          <div class="card desp-card"><h3>Despachados</h3><p>${despachadosCount}</p></div>
-          
-          <div class="card"><h3>En Ruta</h3><p style="color:#fbbf24">${desp}</p></div>
-          <div class="card lost-card"><h3>Pérdida Diaria</h3><p>${perdidaDiaria}</p></div>
-          <div class="card lost-card" style="border-left-color: #f87171;"><h3>Pérdida Mensual</h3><p>${perdidaMesActual}</p></div>
-        </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:20px;">
-          <div>
-            <h3 style="color:#f59e0b; border-left: 4px solid #f59e0b; padding-left: 10px; margin-bottom:15px;">CARGAS PENDIENTES POR CLIENTE</h3>
-            <table>
-              <thead><tr><th>CLIENTE</th><th>SIN PLACA</th></tr></thead>
-              <tbody>
-                ${Object.entries(pendientesPorCliente).sort((a,b)=>b[1]-a[1]).map(([cli, cant]) => `
-                  <tr><td><b>${cli}</b></td><td><span class="badge cli-badge">${cant}</span></td></tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-          <div>
-            <h3 style="color:#ef4444; border-left: 4px solid #ef4444; padding-left: 10px; margin-bottom:15px;">VEHÍCULOS FALTANTES DESDE ORIGEN</h3>
-            <table>
-              <thead><tr><th>ORIGEN</th><th>REQUERIMIENTO</th><th>TOTAL</th></tr></thead>
-              <tbody>
-                ${Object.entries(reqPorCiudad).map(([city, types]) => `
-                  <tr>
-                    <td><b>${city}</b></td>
-                    <td>${Object.entries(types).map(([t, q]) => `<span class="badge req-badge">${q}</span> ${t}`).join(' | ')}</td>
-                    <td><b style="color:#ef4444">${Object.values(types).reduce((a, b) => a + b, 0)}</b></td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="charts">
-          <div class="chart-box"><h4>ESTADO DE OPERACIÓN</h4><canvas id="c1"></canvas></div>
-          <div class="chart-box"><h4>SERVICIOS POR OFICINA</h4><canvas id="c2"></canvas></div>
-        </div>
-
-        <table>
-          <thead>
-            <tr><th>DESPACHADOR</th><th>HOY</th><th>MES</th><th>RENDIMIENTO</th><th>PRODUCTIVIDAD (%)</th></tr>
-          </thead>
-          <tbody>
-            ${Object.entries(despLog).map(([name, s]) => {
-              const prodPerc = total > 0 ? ((s.mes/total)*100).toFixed(1) : 0;
-              let semColor = prodPerc >= 25 ? '#10b981' : (prodPerc >= 10 ? '#fbbf24' : '#ef4444');
-              return `
-                <tr>
-                  <td><b>${name}</b></td>
-                  <td><span class="badge" style="background:#3b82f6">${s.hoy}</span></td>
-                  <td><span class="badge" style="background:#8b5cf6">${s.mes}</span></td>
-                  <td><span class="semaforo-dot" style="background:${semColor}"></span></td>
-                  <td>
-                    <div class="prog-wrapper">
-                      <div class="prog-bg"><div style="width:${prodPerc}%;background:${semColor}" class="prog-fill"></div></div>
-                      <b>${prodPerc}%</b>
-                    </div>
-                  </td>
-                </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-
-        <script>
-          new Chart(document.getElementById('c1'), {
-            type: 'doughnut',
-            data: {
-              labels: ['Finalizados', 'En Ruta', 'Despachados', 'Perdida', 'Otros'],
-              datasets: [{
-                data: [${fin}, ${desp}, ${despachadosCount}, ${perdidaConteo}, ${total - fin - desp - despachadosCount - perdidaConteo}],
-                backgroundColor: ['#10b981', '#fbbf24', '#3b82f6', '#ef4444', '#475569'],
-                borderWidth: 0
-              }]
-            },
-            options: { plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } }
-          });
-
-          new Chart(document.getElementById('c2'), {
-            type: 'bar',
-            data: {
-              labels: ${JSON.stringify(Object.keys(ofis))},
-              datasets: [{
-                label: 'Servicios',
-                data: ${JSON.stringify(Object.values(ofis))},
-                backgroundColor: '#3b82f6'
-              }]
-            },
-            options: {
-              scales: {
-                y: { beginAtZero: true, ticks: { color: '#fff' } },
-                x: { ticks: { color: '#fff' } }
-              },
-              plugins: { legend: { display: false } }
-            }
-          });
-        </script>
-      </body>
-      </html>
-    `);
+    res.send(`<html><head><meta charset="UTF-8"><title>KPI - LOGISV20</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+    body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:25px;}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid #1e40af;padding-bottom:15px;}
+    .btn-back{background:#2563eb;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:bold;}
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:25px;}
+    .card{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;display:flex;flex-direction:column;justify-content:center;}
+    .card h3{margin:0;font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;}
+    .card p{margin:10px 0 0;font-size:32px;font-weight:bold;color:#3b82f6;}
+    .lost-card{border-left: 5px solid #ef4444; background: rgba(239, 68, 68, 0.05);}
+    .lost-card p{color:#f87171;}
+    .desp-card{border-left: 5px solid #3b82f6; background: rgba(59, 130, 246, 0.1);}
+    .desp-card p{color:#60a5fa;}
+    .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:20px;margin-bottom:25px;}
+    .chart-box{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;}
+    table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:10px;overflow:hidden;margin-bottom:30px;}
+    th{background:#1e40af;padding:12px;font-size:11px;text-align:center;}
+    td{padding:12px;border-bottom:1px solid #334155;font-size:13px;text-align:center;}
+    .badge{padding:4px 10px;border-radius:15px;font-weight:bold;font-size:12px;color:#fff;margin:2px;display:inline-block;}
+    .req-badge{background:#ef4444; font-size:10px;}
+    .cli-badge{background:#f59e0b; color:#000; font-size:11px;}
+    .prog-wrapper{display:flex;align-items:center;justify-content:center;gap:10px;}
+    .prog-bg{width:150px;background:#334155;height:12px;border-radius:6px;overflow:hidden;}
+    .prog-fill{background:#10b981;height:100%;border-radius:6px;}
+    .semaforo-dot{height:12px;width:12px;border-radius:50%;display:inline-block;margin-right:5px;}
+    </style></head>
+    <body>
+    <div class="header"><h2 style="margin:0;">TABLERO DE INDICADORES</h2><a href="/" class="btn-back">VOLVER</a></div>
+    <div class="kpi-grid">
+    <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
+    <div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
+    
+    <div class="card desp-card"><h3>Despachados</h3><p>${despachadosCount}</p></div>
+    
+    <div class="card"><h3>En Ruta</h3><p style="color:#fbbf24">${desp}</p></div>
+    <div class="card lost-card"><h3>PÉRDIDA EMERGENTE (DIARIO)</h3><p>${perdidaDiaria}</p></div>
+    <div class="card lost-card" style="border-left-color: #f87171;"><h3>PÉRDIDA EMERGENTE (MENSUAL)</h3><p>${perdidaMesActual}</p></div>
+    </div>
+    <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:20px;">
+    <div><h3 style="color:#f59e0b; border-left: 4px solid #f59e0b; padding-left: 10px; margin-bottom:15px;">CARGAS PENDIENTES POR CLIENTE</h3><table><thead><tr><th>CLIENTE</th><th>SIN PLACA</th></tr></thead><tbody>
+    ${Object.entries(pendientesPorCliente).sort((a,b)=>b[1]-a[1]).map(([cli, cant]) => `<tr><td><b>${cli}</b></td><td><span class="badge cli-badge">${cant}</span></td></tr>`).join('')}
+    </tbody></table></div>
+    <div><h3 style="color:#ef4444; border-left: 4px solid #ef4444; padding-left: 10px; margin-bottom:15px;">VEHÍCULOS FALTANTES DESDE ORIGEN</h3><table><thead><tr><th>ORIGEN</th><th>REQUERIMIENTO</th><th>TOTAL</th></tr></thead><tbody>
+    ${Object.entries(reqPorCiudad).map(([city, types]) => `<tr><td><b>${city}</b></td><td>${Object.entries(types).map(([t, q]) => `<span class="badge req-badge">${q}</span> ${t}`).join(' | ')}</td><td><b style="color:#ef4444">${Object.values(types).reduce((a, b) => a + b, 0)}</b></td></tr>`).join('')}
+    </tbody></table></div></div>
+    <div class="charts"><div class="chart-box"><h4>ESTADO DE OPERACIÓN</h4><canvas id="c1"></canvas></div><div class="chart-box"><h4>SERVICIOS POR OFICINA</h4><canvas id="c2"></canvas></div></div>
+    <table><thead><tr><th>DESPACHADOR</th><th>HOY</th><th>MES</th><th>RENDIMIENTO</th><th>PRODUCTIVIDAD (%)</th></tr></thead><tbody>
+    ${Object.entries(despLog).map(([name, s]) => {
+     const prodPerc = total > 0 ? ((s.mes/total)*100).toFixed(1) : 0;
+     let semColor = prodPerc >= 25 ? '#10b981' : (prodPerc >= 10 ? '#fbbf24' : '#ef4444');
+     return `<tr><td><b>${name}</b></td><td><span class="badge" style="background:#3b82f6">${s.hoy}</span></td><td><span class="badge" style="background:#8b5cf6">${s.mes}</span></td><td><span class="semaforo-dot" style="background:${semColor}"></span></td><td><div class="prog-wrapper"><div class="prog-bg"><div style="width:${prodPerc}%;background:${semColor}" class="prog-fill"></div></div><b>${prodPerc}%</b></div></td></tr>`;
+    }).join('')}
+    </tbody></table>
+    <script>
+    new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:['Fin','Ruta','Despachados','Perdida','Otros'],datasets:[{data:[${fin},${desp},${despachadosCount},${perdidaConteo},${total-fin-desp-despachadosCount-perdidaConteo}],backgroundColor:['#10b981','#fbbf24','#3b82f6','#ef4444','#475569'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
+    new Chart(document.getElementById('c2'),{type:'bar',data:{labels:${JSON.stringify(Object.keys(ofis))},datasets:[{label:'Servicios',data:${JSON.stringify(Object.values(ofis))},backgroundColor:'#3b82f6'}]},options:{scales:{y:{beginAtZero:true,ticks:{color:'#fff'}},x:{ticks:{color:'#fff'}}},plugins:{legend:{display:false}}}});
+    </script></body></html>`);
   } catch (e) { res.send(e.message); }
 });
 
-// SINCRONIZACIÓN Y ARRANQUE (NODE_VERSION 20)
 db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
