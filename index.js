@@ -230,6 +230,10 @@ try {
    </tr>`;
   }
 
+ const total = cargas.length;
+ const fin = cargas.filter(c => c.f_fin).length;
+ const desp = cargas.filter(c => c.placa && !c.f_fin).length;
+ 
  res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
  <h2 style="color:#3b82f6; margin: 0 0 10px 0;">SISTEMA LOGISTICO DE YEGO ECO T S.A.S</h2>
  <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">
