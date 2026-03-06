@@ -4,8 +4,7 @@
   "description": "Sistema de gestión logística y seguimiento de carga",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node index.js"
   },
   "engines": {
     "node": "20.x"
@@ -15,7 +14,8 @@
     "sequelize": "^6.33.0",
     "pg": "^8.11.3",
     "pg-hstore": "^2.3.4",
-    "node-cron": "^3.0.3"
+    "node-cron": "^3.0.3",
+    "axios": "^1.6.0"
   },
   "author": "",
   "license": "ISC"
