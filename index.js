@@ -283,39 +283,46 @@ try {
  <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
  <div class="fg" style="grid-column: span 2"><label>Observaciones</label><textarea name="obs" rows="1"></textarea></div>
  <div class="fg" style="grid-column: span 2"><label>Condiciones</label><textarea name="cond" rows="1"></textarea></div>
-
  <button class="btn-submit-serious">
- <svg class="icon-serious" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
- REGISTRAR SERVICIO
+  <svg class="icon-serious" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+  REGISTRAR SERVICIO
  </button>
- </form>
+</form>
 
 <div class="kpi-grid">
   <div class="card">
     <h3>Total Servicios</h3>
     <p>${total}</p>
   </div>
-
   <div class="card" style="border-bottom: 4px solid #10b981;">
     <h3>Finalizados</h3>
     <p style="color:#10b981">${fin}</p>
   </div>
-
   <div class="card" style="border-bottom: 4px solid #34d399;">
-    <h3>Despachados (Hoy)</h3>
-    <p style="color:#34d399">${despachadosHoy}</p>
-  </div>
-
-  <div class="card" style="border-bottom: 4px solid #3b82f6;">
-    <h3>En Ruta (Pasados)</h3>
-    <p style="color:#3b82f6">${enRutaPasados}</p>
-  </div>
-
-  <div class="card lost-card">
-    <h3>Pérdida Diaria</h3>
-    <p style="color:#f87171">${perdidaDiaria}</p>
+    <h3>Despachados (Total)</h3>
+    <p style="color:#34d399">${desp}</p>
   </div>
 </div>
+
+<div class="table-wrapper">
+  <table id="tbl">
+    <thead>
+      <tr>
+        <th>#</th><th>ID</th><th>REGISTRO</th><th>OFICINA</th><th>EMP. GEN</th>
+        <th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F. DOC</th>
+        <th>H. DOC</th><th>DO/BL</th><th>CLIENTE</th><th>SUBCLIENTE</th>
+        <th>MOD</th><th>LCL/FCL</th><th>CONT</th><th>PESO</th><th>UNID</th>
+        <th>PROD</th><th>ESQ</th><th>VENCE</th><th>ORIG</th><th>DEST</th>
+        <th>T.V.</th><th>PED</th><th>F.C.</th><th>H.C.</th><th>F.D.</th>
+        <th>H.D.</th><th>PLACA</th><th>F.P.</th><th>F.F.</th><th>ESTADO</th>
+        <th>ACTUALIZADO</th><th>STATUS</th><th>OBS</th><th>COND</th>
+        <th>HORARIO</th><th>MUC</th><th>DESP</th><th>FIN</th><th>H. FIN</th><th>ACC</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+</div>
+</body></html>`);
 
  <script>
  const CLAVE_ADMIN = "ADMIN123";
