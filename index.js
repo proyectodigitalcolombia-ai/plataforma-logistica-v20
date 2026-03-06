@@ -126,114 +126,98 @@ const css = `<style>
 </style>`;
 
 app.get('/', async (req, res) => {
-try {
-  const d = await C.findAll({ order: [['id', 'DESC']] });
-  let rows = '';
-  let index = 1;
+ try {
+ const d = await C.findAll({ order: [['id', 'DESC']] });
+ let rows = '';
+ const hoy = new Date(); hoy.setHours(0,0,0,0);
+ let index = 1;
 
-  // 1. Definimos hoyStr UNA SOLA VEZ antes del bucle
-  const hoyStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
-  const hoyParaVence = new Date(); hoyParaVence.setHours(0,0,0,0);
-
-  for (let c of d) {
-   // 2. Definimos isLocked y fechaCreacion DENTRO del bucle para cada registro
-   const isLocked = c.f_fin ? 'disabled' : '';
-   const fechaCreacion = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
-
-   // 3. Lógica de estado automático
-   let displayReal = 'PENDIENTE';
-   let stClass = 'background:#475569;color:#cbd5e1'; 
-
-   if (c.f_fin) {
-    displayReal = 'FINALIZADO';
-    stClass = 'background:#1e40af;color:#bfdbfe'; 
-   } else if (c.placa) {
-    if (fechaCreacion !== hoyStr) { 
-     displayReal = 'VEHICULO EN RUTA';
-     stClass = 'background:#1e3a8a;color:#93c5fd;border:1px solid #3b82f6'; 
-    } else {
-     displayReal = 'DESPACHADO';
-     stClass = 'background:#065f46;color:#34d399'; 
-    }
-   }
-
-   // 4. Lógica de vencimiento
-   let venceStyle = '';
-   if (c.vence && !c.f_fin && !c.placa) {
-    const fVence = new Date(c.vence);
-    const diffDays = Math.ceil((fVence - hoyParaVence) / 864e5);
-    if (diffDays <= 2) venceStyle = 'vence-rojo';
-    else if (diffDays <= 6) venceStyle = 'vence-amarillo';
-   }
-
-   const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
-   let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
-   const idUnico = c.id.toString().padStart(4, '0');
-   const fechaLocal = new Date(c.createdAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' });
-
-   const ed = (field, val) => `<td><form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="${field}" value="${val||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked} oninput="this.value=this.value.toUpperCase()"></form></td>`;
-
-   rows += `<tr class="fila-datos">
-    <td class="col-num">${index++}</td>
-    <td class="col-id">${idUnico}</td>
-    <td class="col-reg">${fechaLocal}</td>
-    ${ed('oficina', c.oficina)}
-    ${ed('emp_gen', c.emp_gen)}
-    ${ed('comercial', c.comercial)}
-    ${ed('pto', c.pto)}
-    ${ed('refleja', c.refleja)}
-    ${ed('f_doc', c.f_doc)}
-    ${ed('h_doc', c.h_doc)}
-    ${ed('do_bl', c.do_bl)}
-    ${ed('cli', c.cli)}
-    ${ed('subc', c.subc)}
-    ${ed('mod', c.mod)}
-    ${ed('lcl', c.lcl)}
-    ${ed('cont', c.cont)}
-    ${ed('peso', c.peso)}
-    ${ed('unid', c.unid)}
-    ${ed('prod', c.prod)}
-    ${ed('esq', c.esq)}
-    <td class="${venceStyle}" onclick="silenciar(this)" style="padding:6px; min-width:80px;">${c.vence||''}</td>
-    ${ed('orig', c.orig)}
-    ${ed('dest', c.dest)}
-    ${ed('t_v', c.t_v)}
-    ${ed('ped', c.ped)}
-    ${ed('f_c', c.f_c)}
-    ${ed('h_c', c.h_c)}
-    ${ed('f_d', c.f_d)}
-    ${ed('h_d', c.h_d)}
-    <td class="col-placa">
-     <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:4px;justify-content:center;align-items:center">
-      <input name="placa" class="in-placa" value="${c.placa||''}" ${isLocked} placeholder="PLACA" oninput="this.value=this.value.toUpperCase()">
-      <button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:5px;border-radius:3px;cursor:pointer;font-weight:bold">OK</button>
-     </form>
-    </td>
-    ${ed('f_p', c.f_p)}
-    ${ed('f_f', c.f_f)}
-    <td class="col-est">${selectEstado}</td>
-    <td style="width:115px;color:#fbbf24;padding:6px">${c.f_act||''}</td>
-    <td style="width:100px"><span style="padding:2px 6px;border-radius:10px;font-weight:bold;font-size:8px;${stClass}">${displayReal}</span></td>
-    ${ed('obs', c.obs)}
-    ${ed('cond', c.cond)}
-    ${ed('h_t', c.h_t)}
-    ${ed('muc', c.muc)}
-    <td class="col-desp" style="padding:6px;">${c.desp||''}</td>
-    <td>${accionFin}</td>
-    <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
-    <td class="col-acc">
-     <div class="acc-cell">
-      <a href="#" style="color:#f87171;text-decoration:none;font-size:10px" onclick="eliminarConClave(${c.id})">🗑️</a>
-      <input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()">
-     </div>
-    </td>
-   </tr>`;
-  }
-
- const total = d.length;
- const fin = d.filter(c => c.f_fin).length;
- const desp = d.filter(c => c.placa && !c.f_fin).length;
+ for (let c of d) {
+ const isLocked = (c.f_fin || c.placa) ? 'disabled' : '';
  
+ let displayReal = 'PENDIENTE';
+ let stClass = 'background:#475569;color:#cbd5e1'; 
+
+ if (c.f_fin) {
+ displayReal = 'FINALIZADO';
+ stClass = 'background:#1e40af;color:#bfdbfe'; 
+ } else if (c.placa) {
+ displayReal = 'DESPACHADO';
+ stClass = 'background:#065f46;color:#34d399'; 
+ }
+ 
+ let venceStyle = '';
+ if (c.vence && !c.f_fin && !c.placa) {
+ const fVence = new Date(c.vence);
+ const diffDays = Math.ceil((fVence - hoy) / 864e5);
+ if (diffDays <= 2) venceStyle = 'vence-rojo';
+ else if (diffDays <= 6) venceStyle = 'vence-amarillo';
+ }
+
+ const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
+ let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
+ const idUnico = c.id.toString().padStart(4, '0');
+ const fechaLocal = new Date(c.createdAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' });
+
+ const ed = (field, val) => `<td><form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="${field}" value="${val||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked} oninput="this.value=this.value.toUpperCase()"></form></td>`;
+
+ rows += `<tr class="fila-datos">
+ <td class="col-num">${index++}</td>
+ <td class="col-id">${idUnico}</td>
+ <td class="col-reg">${fechaLocal}</td>
+ ${ed('oficina', c.oficina)}
+ ${ed('emp_gen', c.emp_gen)}
+ ${ed('comercial', c.comercial)}
+ ${ed('pto', c.pto)}
+ ${ed('refleja', c.refleja)}
+ ${ed('f_doc', c.f_doc)}
+ ${ed('h_doc', c.h_doc)}
+ ${ed('do_bl', c.do_bl)}
+ ${ed('cli', c.cli)}
+ ${ed('subc', c.subc)}
+ ${ed('mod', c.mod)}
+ ${ed('lcl', c.lcl)}
+ ${ed('cont', c.cont)}
+ ${ed('peso', c.peso)}
+ ${ed('unid', c.unid)}
+ ${ed('prod', c.prod)}
+ ${ed('esq', c.esq)}
+ <td class="${venceStyle}" onclick="silenciar(this)" style="padding:6px; min-width:80px;">${c.vence||''}</td>
+ ${ed('orig', c.orig)}
+ ${ed('dest', c.dest)}
+ ${ed('t_v', c.t_v)}
+ ${ed('ped', c.ped)}
+ ${ed('f_c', c.f_c)}
+ ${ed('h_c', c.h_c)}
+ ${ed('f_d', c.f_d)}
+ ${ed('h_d', c.h_d)}
+ <td class="col-placa">
+ <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:4px;justify-content:center;align-items:center">
+ <input name="placa" class="in-placa" value="${c.placa||''}" ${c.f_fin ? 'disabled' : ''} placeholder="PLACA" oninput="this.value=this.value.toUpperCase()">
+ <button ${c.f_fin ? 'disabled' : ''} style="background:#10b981;color:#fff;border:none;padding:5px;border-radius:3px;cursor:pointer;font-weight:bold">OK</button>
+ </form>
+ </td>
+ ${ed('f_p', c.f_p)}
+ ${ed('f_f', c.f_f)}
+ <td class="col-est">${selectEstado}</td>
+ <td style="width:115px;color:#fbbf24;padding:6px">${c.f_act||''}</td>
+ <td style="width:100px"><span style="padding:2px 6px;border-radius:10px;font-weight:bold;font-size:8px;${stClass}">${displayReal}</span></td>
+ ${ed('obs', c.obs)}
+ ${ed('cond', c.cond)}
+ ${ed('h_t', c.h_t)}
+ ${ed('muc', c.muc)}
+ <td class="col-desp" style="padding:6px;">${c.desp||''}</td>
+ <td>${accionFin}</td>
+ <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
+ <td class="col-acc">
+ <div class="acc-cell">
+ <a href="#" style="color:#f87171;text-decoration:none;font-size:10px" onclick="eliminarConClave(${c.id})">🗑️</a>
+ <input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()">
+ </div>
+ </td>
+ </tr>`;
+ }
+
  res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
  <h2 style="color:#3b82f6; margin: 0 0 10px 0;">SISTEMA LOGISTICO DE YEGO ECO T S.A.S</h2>
  <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">
@@ -283,45 +267,24 @@ try {
  <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
  <div class="fg" style="grid-column: span 2"><label>Observaciones</label><textarea name="obs" rows="1"></textarea></div>
  <div class="fg" style="grid-column: span 2"><label>Condiciones</label><textarea name="cond" rows="1"></textarea></div>
+
  <button class="btn-submit-serious">
-  <svg class="icon-serious" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
-  REGISTRAR SERVICIO
+ <svg class="icon-serious" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+ REGISTRAR SERVICIO
  </button>
-</form>
+ </form>
 
-<div class="kpi-grid">
-  <div class="card">
-    <h3>Total Servicios</h3>
-    <p>${total}</p>
-  </div>
-  <div class="card" style="border-bottom: 4px solid #10b981;">
-    <h3>Finalizados</h3>
-    <p style="color:#10b981">${fin}</p>
-  </div>
-  <div class="card" style="border-bottom: 4px solid #34d399;">
-    <h3>Despachados (Total)</h3>
-    <p style="color:#34d399">${desp}</p>
-  </div>
-</div>
-
-<div class="table-wrapper">
-  <table id="tbl">
-    <thead>
-      <tr>
-        <th>#</th><th>ID</th><th>REGISTRO</th><th>OFICINA</th><th>EMP. GEN</th>
-        <th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>F. DOC</th>
-        <th>H. DOC</th><th>DO/BL</th><th>CLIENTE</th><th>SUBCLIENTE</th>
-        <th>MOD</th><th>LCL/FCL</th><th>CONT</th><th>PESO</th><th>UNID</th>
-        <th>PROD</th><th>ESQ</th><th>VENCE</th><th>ORIG</th><th>DEST</th>
-        <th>T.V.</th><th>PED</th><th>F.C.</th><th>H.C.</th><th>F.D.</th>
-        <th>H.D.</th><th>PLACA</th><th>F.P.</th><th>F.F.</th><th>ESTADO</th>
-        <th>ACTUALIZADO</th><th>STATUS</th><th>OBS</th><th>COND</th>
-        <th>HORARIO</th><th>MUC</th><th>DESP</th><th>FIN</th><th>H. FIN</th><th>ACC</th>
-      </tr>
-    </thead>
-    <tbody>${rows}</tbody>
-  </table>
-</div>
+ <div class="sc fs" id="st"><div class="fc"></div></div>
+ <div class="sc" id="sm">
+ <table id="tabla">
+ <thead>
+ <tr>
+ <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">FECHA REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>FECHA DOCUMENTO</th><th>HORA DOCUMENTO</th><th>DO / BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL / FCL</th><th>CONTENEDOR</th><th>PESO</th><th>UNIDAD</th><th>PRODUCTO</th><th>ESQUEMA</th><th>VENCIMIENTO</th><th>ORIGEN</th><th>DESTINO</th><th>TIPO VEHÍCULO</th><th>PEDIDO</th><th>FECHA CARGUE</th><th>HORA CARGUE</th><th>FECHA DESPACHO</th><th>HORA DESPACHO</th><th class="col-placa">PLACA</th><th>FLETE A PAGAR</th><th>FLETE A FACTURAR</th><th class="col-est">ESTADO OPERATIVO</th><th>ACTUALIZACIÓN</th><th>ESTADO FINAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORARIO</th><th>MUC</th><th class="col-desp">DESPACHADOR</th><th>FINALIZAR</th><th class="col-hfin">HORA FIN</th><th class="col-acc">ACCIONES</th>
+ </tr>
+ </thead>
+ <tbody>${rows}</tbody>
+ </table>
+ </div>
 
  <script>
  const CLAVE_ADMIN = "ADMIN123";
@@ -538,19 +501,7 @@ app.get('/stats', async (req, res) => {
 
  const total = cargas.length;
  const fin = cargas.filter(c => c.f_fin).length;
-
- // Despachados hoy: tienen placa y la fecha de creación es igual a hoy
- const despachadosHoy = cargas.filter(c => {
-  const fCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
-  return c.placa && !c.f_fin && fCrea === hoyStr;
- }).length;
-
- // En Ruta: tienen placa y la fecha de creación es diferente a hoy (días anteriores)
- const enRutaPasados = cargas.filter(c => {
-  const fCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
-  return c.placa && !c.f_fin && fCrea !== hoyStr;
- }).length;
-  
+ const desp = cargas.filter(c => c.placa && !c.f_fin).length;
  const ofis = {}; cargas.forEach(c => { if(c.oficina) ofis[c.oficina] = (ofis[c.oficina] || 0) + 1; });
 
  res.send(`<html><head><meta charset="UTF-8"><title>KPI - LOGISV20</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -582,31 +533,20 @@ app.get('/stats', async (req, res) => {
  <h2 style="margin:0;">TABLERO DE INDICADORES</h2>
  <a href="/" class="btn-back">VOLVER</a>
  </div>
-<div class="kpi-grid">
-  <div class="card">
-    <h3>Total Servicios</h3>
-    <p>${total}</p>
-  </div>
-
-  <div class="card" style="border-bottom: 4px solid #10b981;">
-    <h3>Finalizados</h3>
-    <p style="color:#10b981">${fin}</p>
-  </div>
-
-  <div class="card" style="border-bottom: 4px solid #34d399;">
-    <h3>Despachados (Hoy)</h3>
-    <p style="color:#34d399">${despachadosHoy}</p>
-  </div>
-
-  <div class="card" style="border-bottom: 4px solid #3b82f6;">
-    <h3>Vehículos en Ruta</h3>
-    <p style="color:#3b82f6">${enRutaPasados}</p>
-  </div>
-
-  <div class="card lost-card">
-    <h3>Pérdida Diaria</h3>
-    <p>${perdidaDiaria}</p>
-  </div>
+ <div class="kpi-grid">
+ <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
+ <div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
+ <div class="card"><h3>En Ruta</h3><p style="color:#fbbf24">${desp}</p></div>
+ <div class="card lost-card">
+ <h3>PÉRDIDA EMERGENTE (DIARIO)</h3>
+ <p>${perdidaDiaria}</p>
+ <span style="font-size:11px;color:#94a3b8">Total acumulado: ${perdidaConteo}</span>
+ </div>
+ <div class="card lost-card" style="border-left-color: #f87171;">
+ <h3>PÉRDIDA EMERGENTE (MENSUAL)</h3>
+ <p>${perdidaMesActual}</p>
+ <span style="font-size:11px;color:#94a3b8">Mes: ${mesActualStr}</span>
+ </div>
  </div>
 
  <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:20px;">
