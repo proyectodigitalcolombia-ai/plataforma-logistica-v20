@@ -147,7 +147,7 @@ app.get('/', async (req, res) => {
  }
  
  let venceStyle = '';
- if (c.vence && !c.f_fin) {
+ if (c.vence && !c.f_fin && !c.placa) {
  const fVence = new Date(c.vence);
  const diffDays = Math.ceil((fVence - hoy) / 864e5);
  if (diffDays <= 2) venceStyle = 'vence-rojo';
@@ -393,17 +393,21 @@ app.get('/', async (req, res) => {
  el.style.background = "#450a0a"; 
  }
  
- function playAlert(){ 
- let reds = Array.from(document.querySelectorAll('.vence-rojo')).filter(el => el.dataset.silenced !== "true");
- if(reds.length > 0 && audioContext){ 
- let osc=audioContext.createOscillator(),gain=audioContext.createGain(); 
- osc.type='square'; osc.frequency.setValueAtTime(440, audioContext.currentTime); 
- gain.gain.setValueAtTime(0.1, audioContext.currentTime); 
- osc.connect(gain); gain.connect(audioContext.destination); 
- osc.start(); osc.stop(audioContext.currentTime+0.5); 
- setTimeout(playAlert, 2000); 
- }
- } 
+function playAlert(){ 
+  // Busca si hay algún elemento con la clase de alarma roja que no haya sido silenciado
+  let reds = Array.from(document.querySelectorAll('.vence-rojo')).filter(el => el.dataset.silenced !== "true");
+  
+  if(reds.length > 0 && audioContext){ 
+    let osc=audioContext.createOscillator(), gain=audioContext.createGain(); 
+    osc.type='square'; // Tipo de onda sonora
+    osc.frequency.setValueAtTime(440, audioContext.currentTime); // Tono de la alarma
+    gain.gain.setValueAtTime(0.1, audioContext.currentTime); 
+    osc.connect(gain); gain.connect(audioContext.destination); 
+    osc.start(); 
+    osc.stop(audioContext.currentTime+0.5); // Duración del pitido
+    setTimeout(playAlert, 2000); // Repetir cada 2 segundos si sigue habiendo rojos
+  }
+}
  window.onload=()=>{setTimeout(playAlert,1000); formatearFletes();};
  </script></body></html>`);
  } catch (e) { res.send(e.message); }
