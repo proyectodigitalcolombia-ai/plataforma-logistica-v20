@@ -322,7 +322,6 @@ try {
     <tbody>${rows}</tbody>
   </table>
 </div>
-</body></html>`);
 
  <script>
  const CLAVE_ADMIN = "ADMIN123";
@@ -684,4 +683,4 @@ app.get('/stats', async (req, res) => {
 });
 
 db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
-
+</body></html>`);
