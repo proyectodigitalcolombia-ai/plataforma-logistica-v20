@@ -1,4 +1,6 @@
-const express = require('express'), { Sequelize, DataTypes, Op } = require('sequelize'), app = express();
+const express = require('express');
+const { Sequelize, DataTypes, Op } = require('sequelize');
+const app = express();
 
 // --- INSERCIÓN A: LLAMADO ASISTENTE GPS ---
 const { enviarAMonitor } = require('./gpsService'); 
@@ -58,27 +60,175 @@ const C = db.define('Carga', {
 }, { timestamps: true });
 
 const opts = {
- oficina: ['CARTAGENA', 'BOGOTÁ', 'BUENAVENTURA', 'MEDELLÍN'],
- puertos: ['SPIA', 'SPRB', 'TCBUEN', 'CONTECAR', 'SPRC', 'PUERTO COMPAS CCTO', 'PUERTO BAHÍA', 'SOCIEDAD PORTUARIA REGIONAL DE CARTAGENA', 'SPIA - AGUADULCE', 'PLANTA ESENTTIA KM 8 VIA MAMONAL', 'PLANTA YARA CARTAGENA MAMONAL', 'N/A'],
- clientes: ['GEODIS COLOMBIA LTDA', 'MAERSK LOGISTICS SERVICES LTDA', 'SAMSUNG SDS COLOMBIA GLOBAL', 'ENVAECOL', 'SEA CARGO COLOMBIA LTDA', 'YARA COLOMBIA', 'ESENTTIA SA', 'BRINSA SA', 'ACERIAS PAZ DEL RIO', 'TERNIUM DEL ATLANTICO', 'PLASTICOS ESPECIALES SAS', 'INGENIO MAYAGUEZ', 'TENARIS', 'CASA LUKER', 'CORONA', 'EDITORIAL NOMOS', 'ALIMENTOS POLAR', 'PLEXA SAS ESP', 'FAJOBE'],
- modalidades: ['NACIONALIZADO', 'OTM', 'DTA', 'TRASLADO', 'NACIONALIZADO EXP', 'ITR', 'VACÍO EN EXPRESO', 'VACÍO CONSOLIDADO', 'NACIONALIZADO IMP'],
- lcl_fcl: ['CARGA SUELTA', 'CONTENEDOR 40', 'CONTENEDOR 20', 'REFER 40', 'REFER 20', 'FLAT RACK 20', 'FLAT RACK 40'],
- esquemas: ['1 ESCOLTA - SELLO', '2 ESCOLTAS SELLO - SPIA', 'SELLO', '1 ESCOLTA', '2 ESCOLTA', 'NO REQUIERE', '2 ESCOLTAS SELLO', 'INSPECTORES VIALES'],
- vehiculos: ['TURBO 2.5 TN', 'TURBO 4.5 TN', 'TURBO SENCILLO', 'SENCILLO 9 TN', 'PATINETA 2S3', 'TRACTOMULA 3S2', 'TRACTOMULA 3S3', 'CAMA BAJA', 'DOBLE TROQUE'],
- ciudades: ['BOGOTÁ', 'MEDELLÍN', 'CALI', 'BARRANQUILLA', 'CARTAGENA', 'BUENAVENTURA', 'SANTA MARTA', 'CÚCUTA', 'IBAGUÉ', 'PEREIRA', 'MANIZALES', 'NEIVA', 'VILLAVICENCIO', 'YOPAL', 'SIBERIA', 'FUNZA', 'MOSQUERA', 'MADRID', 'FACATATIVÁ', 'TOCANCIPÁ', 'CHÍA', 'CAJICÁ'],
- subclientes: ['HIKVISION', 'PAYLESS COLOMBIA', 'GRUPO PVC COMPUESTOS Y RESINAS', 'INDUSTRIAS DONSSON', 'RAIRAN IMPRESORES SAS', 'MC TUBOS CARTON SAS', 'ASFALTEL SAS', 'AISLAPOR SAS', 'WEBER STEPHEN COLOMBIA SAS', 'INTALPEL SAS', 'CRESTLINE GLOBAL VENTURE SAS', 'DISTRIBUIDORA DE AGLOMERADOS MT SAS', 'BEST CHOICE SAS', 'IMPROPLAST RC SAS', 'TEXTILES 1x1 SAS', 'GRUPO EMPRESARIAL ROJAS Y ASOCIADOS SAS', 'INTERPHARMA COLOMBIA SAS', 'INDECOR SAS', 'DISPROMED MK SAS', 'ARKADIA FAMILY CENTER', 'BRENNTAG COLOMBIA', 'DIPEC SAS', 'INGREDION COLOMBIA', 'SAMSUNG SDS COLOMBIA GLOBAL', 'ÉXITO', 'COLOMBIANA DE COMERCIO - ALKOSTO', 'FALABELLA', 'SODIMAC COLOMBIA', 'GRUPO MANSION', 'OLIMPICA', 'ENVAECOL', 'INNOVAR SOLUCIONES', 'VOLCARGA', 'ACME LEON PLASTICOS SAS', 'ALPLA COLOMBIA S A S', 'AMCOR HOLDINGS AUSTRALIA PTY LTD', 'ARPACK S A S', 'CARPAK', 'CARPAK', 'COINTEC S.A.S.', 'COLPLAS S.A.S COLOMBIANA DE PLASTICO', 'COMTUCAR S.A.S', 'CONSTRUTUBOS', 'COROPLAST LIMITADA', 'DARPLAS S.A.S', 'DISTRIBUIDORA CORDOBA S.A.S', 'ENVASES PLASTICOS DE LA SABANA S A S', 'ENVASES PLASTICOS DE LA SABANA S A S', 'EUROPLASTICOS LTDA', 'FAMILIA DEL PACIFICO SAS', 'FLEXO SPRING SAS', 'GROUPE SEB COLOMBIA S.A.', 'GRUPO EFEXPORT ZF S.A.S.', 'GRUPO PV CENTRO S.A.S.', 'GUTVAN S.A.S', 'HIDALPLAST SAS', 'IDEPLAS SAS', 'INDUSTRIA COLOMBIANA DE TAPAS', 'INDUSTRIAS GOYAINCOL S A S', 'INDUSTRIAS PLASTICAS HERBEPLAS', 'INDUSTRIAS VANIPLAS LTDA', 'INTECPLAST', 'MEXICHEM', 'MULTIDIMENSIONALES S A S', 'NTECPLAST INYECCION TECNICA DE PLASTICOS S.A.S.', 'PELICULAS EXTRUIDAS S.A.S.', 'PELPAK ZF SAS', 'PLASMOTEC SAS', 'PLASTICOS MAFRA COLEY Y COMPANIA S EN C', 'PLASTICOS MQ SAS', 'PLASTICOS TRUHER S.A.', 'PLASTITEC S.A.S.', 'POLYAGRO S.A.S', 'PROENFAR', 'PROENFAR', 'QUALYPLASTICOS S.A.S', 'RECIPLAST SAS', 'SOLUTIONS GROUP S A S', 'TECNOPLAST S A S', 'TRACTOCAR', 'TROFORMAS SAS', 'UNION PLASTICA SAS', 'OPL BETANIA', 'KOBA D1', 'OLIMPICA', 'JERONIMO MARTINS', 'ÉXITO', 'COLOMBIANA DE COMERCIO', 'TERNIUM DEL ATLANTICO', 'LADECA', 'SIDOC', 'AGOFER', 'RIDUCO', 'GYJ FERRETERIAS SA', 'STECKERL ACEROS', 'FERRETERIA MULTIALAMBRES', 'SURECA SAS', 'FERROSVEL', 'DISTRIACERO SAS', 'FIGUHIERROS', 'SURTIFERRETERIAS SAS', 'HOMCECENTER SAS', 'TERNIUM COLOMBIA', 'PLASTICOS ESPECIALES SAS', 'INGENIO MAYAGUEZ', 'ÉXITO ', 'COLOMBIANA DE COMERCIO', 'OLIMPICA', 'ACERIAS PAZ DEL RIO', 'TAURUS LOGISTICS COLOMBIA', 'CI SOEXCOL', 'TERNIUM DEL ATLANTICO', 'BRINSA SA', 'TENARIS', 'CORONA', 'TENARIS TUBOCARIBE YARD BARRANCA', 'TENARIS TUBOCARIBE YARD VVO', 'CASA LUKER BOGOTA', 'SUPPLIES 4 PETS S.A.S', 'EQUIPOS Y ANDAMIOS SAS', 'SOFTYS', 'MANUFACTURAS EL ARQUITECTO', 'EDITORIAL NOMOS', 'DISEÑO Y CONSTRUCCUION DE OBRAS ELECTRICAS', 'PROCOLDEXT', 'ABB', 'FACOPACK', 'ALIMENTOS POLAR URBANO', 'ORINOCO E-SCRAP', 'AUTO GAS SOLEDAD PLEXA', 'ALONDRA MUEBLES', 'MAXFLEX', 'FAJOBE CEDI SIBERIA', 'POLIPAK', 'FILTROS Y SOLUCIONES SAS', 'PROVELECTRICOS', 'ELECTROJAPONESA', 'GEOSQUIMICAS', 'RIN TRUCK'],
- estados: ['ASIGNADO VEHÍCULO', 'PENDIENTE CITA ASIGNADO', 'VEHÍCULO CON CITA', 'CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CONTENEDOR EN INSPECCIÓN', 'CONTENEDOR RETIRADO PARA ITR', 'DESPACHADO', 'DESPACHADO CON NOVEDAD', 'EN CONSECUCIÓN', 'EN PROGRAMACIÓN', 'EN SITIO DE CARGUE', 'FINALIZADO CON NOVEDAD', 'FINALIZADO SIN NOVEDAD', 'HOJA DE VIDA EN ESTUDIO', 'MERCANCÍA EN INSPECCIÓN', 'NOVEDAD', 'PENDIENTE BAJAR A PATIO', 'PENDIENTE INSTRUCCIONES', 'PRE ASIGNADO', 'RETIRADO DE PUERTO PENDIENTE CONSOLIDADO', 'CANCELADO POR GERENCIA', 'VEHICULO EN RUTA'],
- despachadores: ['ABNNER MARTINEZ', 'CAMILO TRIANA', 'FREDY CARRILLO', 'RAUL LOPEZ', 'EDDIER RIVAS']
+ oficina: [
+  'CARTAGENA', 
+  'BOGOTÁ', 
+  'BUENAVENTURA', 
+  'MEDELLÍN'
+ ],
+ puertos: [
+  'SPIA', 
+  'SPRB', 
+  'TCBUEN', 
+  'CONTECAR', 
+  'SPRC', 
+  'PUERTO COMPAS CCTO', 
+  'PUERTO BAHÍA', 
+  'SOCIEDAD PORTUARIA REGIONAL DE CARTAGENA', 
+  'SPIA - AGUADULCE', 
+  'PLANTA ESENTTIA KM 8 VIA MAMONAL', 
+  'PLANTA YARA CARTAGENA MAMONAL', 
+  'N/A'
+ ],
+ clientes: [
+  'GEODIS COLOMBIA LTDA', 
+  'MAERSK LOGISTICS SERVICES LTDA', 
+  'SAMSUNG SDS COLOMBIA GLOBAL', 
+  'ENVAECOL', 
+  'SEA CARGO COLOMBIA LTDA', 
+  'YARA COLOMBIA', 
+  'ESENTTIA SA', 
+  'BRINSA SA', 
+  'ACERIAS PAZ DEL RIO', 
+  'TERNIUM DEL ATLANTICO', 
+  'PLASTICOS ESPECIALES SAS', 
+  'INGENIO MAYAGUEZ', 
+  'TENARIS', 
+  'CASA LUKER', 
+  'CORONA', 
+  'EDITORIAL NOMOS', 
+  'ALIMENTOS POLAR', 
+  'PLEXA SAS ESP', 
+  'FAJOBE'
+ ],
+ modalidades: [
+  'NACIONALIZADO', 
+  'OTM', 
+  'DTA', 
+  'TRASLADO', 
+  'NACIONALIZADO EXP', 
+  'ITR', 
+  'VACÍO EN EXPRESO', 
+  'VACÍO CONSOLIDADO', 
+  'NACIONALIZADO IMP'
+ ],
+ lcl_fcl: [
+  'CARGA SUELTA', 
+  'CONTENEDOR 40', 
+  'CONTENEDOR 20', 
+  'REFER 40', 
+  'REFER 20', 
+  'FLAT RACK 20', 
+  'FLAT RACK 40'
+ ],
+ esquemas: [
+  '1 ESCOLTA - SELLO', 
+  '2 ESCOLTAS SELLO - SPIA', 
+  'SELLO', 
+  '1 ESCOLTA', 
+  '2 ESCOLTA', 
+  'NO REQUIERE', 
+  '2 ESCOLTAS SELLO', 
+  'INSPECTORES VIALES'
+ ],
+ vehiculos: [
+  'TURBO 2.5 TN', 
+  'TURBO 4.5 TN', 
+  'TURBO SENCILLO', 
+  'SENCILLO 9 TN', 
+  'PATINETA 2S3', 
+  'TRACTOMULA 3S2', 
+  'TRACTOMULA 3S3', 
+  'CAMA BAJA', 
+  'DOBLE TROQUE'
+ ],
+ ciudades: [
+  'BOGOTÁ', 'MEDELLÍN', 'CALI', 'BARRANQUILLA', 'CARTAGENA', 'BUENAVENTURA', 'SANTA MARTA', 
+  'CÚCUTA', 'IBAGUÉ', 'PEREIRA', 'MANIZALES', 'NEIVA', 'VILLAVICENCIO', 'YOPAL', 'SIBERIA', 
+  'FUNZA', 'MOSQUERA', 'MADRID', 'FACATATIVÁ', 'TOCANCIPÁ', 'CHÍA', 'CAJICÁ'
+ ],
+ subclientes: [
+  'HIKVISION', 'PAYLESS COLOMBIA', 'GRUPO PVC COMPUESTOS Y RESINAS', 'INDUSTRIAS DONSSON', 
+  'RAIRAN IMPRESORES SAS', 'MC TUBOS CARTON SAS', 'ASFALTEL SAS', 'AISLAPOR SAS', 
+  'WEBER STEPHEN COLOMBIA SAS', 'INTALPEL SAS', 'CRESTLINE GLOBAL VENTURE SAS', 
+  'DISTRIBUIDORA DE AGLOMERADOS MT SAS', 'BEST CHOICE SAS', 'IMPROPLAST RC SAS', 
+  'TEXTILES 1x1 SAS', 'GRUPO EMPRESARIAL ROJAS Y ASOCIADOS SAS', 'INTERPHARMA COLOMBIA SAS', 
+  'INDECOR SAS', 'DISPROMED MK SAS', 'ARKADIA FAMILY CENTER', 'BRENNTAG COLOMBIA', 
+  'DIPEC SAS', 'INGREDION COLOMBIA', 'SAMSUNG SDS COLOMBIA GLOBAL', 'ÉXITO', 
+  'COLOMBIANA DE COMERCIO - ALKOSTO', 'FALABELLA', 'SODIMAC COLOMBIA', 'GRUPO MANSION', 
+  'OLIMPICA', 'ENVAECOL', 'INNOVAR SOLUCIONES', 'VOLCARGA', 'ACME LEON PLASTICOS SAS', 
+  'ALPLA COLOMBIA S A S', 'AMCOR HOLDINGS AUSTRALIA PTY LTD', 'ARPACK S A S', 
+  'CARPAK', 'COINTEC S.A.S.', 'COLPLAS S.A.S COLOMBIANA DE PLASTICO', 'COMTUCAR S.A.S', 
+  'CONSTRUTUBOS', 'COROPLAST LIMITADA', 'DARPLAS S.A.S', 'DISTRIBUIDORA CORDOBA S.A.S', 
+  'ENVASES PLASTICOS DE LA SABANA S A S', 'EUROPLASTICOS LTDA', 'FAMILIA DEL PACIFICO SAS', 
+  'FLEXO SPRING SAS', 'GROUPE SEB COLOMBIA S.A.', 'GRUPO EFEXPORT ZF S.A.S.', 
+  'GRUPO PV CENTRO S.A.S.', 'GUTVAN S.A.S', 'HIDALPLAST SAS', 'IDEPLAS SAS', 
+  'INDUSTRIA COLOMBIANA DE TAPAS', 'INDUSTRIAS GOYAINCOL S A S', 'INDUSTRIAS PLASTICAS HERBEPLAS', 
+  'INDUSTRIAS VANIPLAS LTDA', 'INTECPLAST', 'MEXICHEM', 'MULTIDIMENSIONALES S A S', 
+  'NTECPLAST INYECCION TECNICA DE PLASTICOS S.A.S.', 'PELICULAS EXTRUIDAS S.A.S.', 
+  'PELPAK ZF SAS', 'PLASMOTEC SAS', 'PLASTICOS MAFRA COLEY Y COMPANIA S EN C', 
+  'PLASTICOS MQ SAS', 'PLASTICOS TRUHER S.A.', 'PLASTITEC S.A.S.', 'POLYAGRO S.A.S', 
+  'PROENFAR', 'QUALYPLASTICOS S.A.S', 'RECIPLAST SAS', 'SOLUTIONS GROUP S A S', 
+  'TECNOPLAST S A S', 'TRACTOCAR', 'TROFORMAS SAS', 'UNION PLASTICA SAS', 'OPL BETANIA', 
+  'KOBA D1', 'JERONIMO MARTINS', 'TERNIUM DEL ATLANTICO', 'LADECA', 'SIDOC', 'AGOFER', 
+  'RIDUCO', 'GYJ FERRETERIAS SA', 'STECKERL ACEROS', 'FERRETERIA MULTIALAMBRES', 
+  'SURECA SAS', 'FERROSVEL', 'DISTRIACERO SAS', 'FIGUHIERROS', 'SURTIFERRETERIAS SAS', 
+  'HOMCECENTER SAS', 'TERNIUM COLOMBIA', 'PLASTICOS ESPECIALES SAS', 'INGENIO MAYAGUEZ',
+  'ACERIAS PAZ DEL RIO', 'TAURUS LOGISTICS COLOMBIA', 'CI SOEXCOL', 'BRINSA SA',
+  'TENARIS', 'CORONA', 'TENARIS TUBOCARIBE YARD BARRANCA', 'TENARIS TUBOCARIBE YARD VVO', 
+  'CASA LUKER BOGOTA', 'SUPPLIES 4 PETS S.A.S', 'EQUIPOS Y ANDAMIOS SAS', 'SOFTYS', 
+  'MANUFACTURAS EL ARQUITECTO', 'EDITORIAL NOMOS', 'DISEÑO Y CONSTRUCCUION DE OBRAS ELECTRICAS', 
+  'PROCOLDEXT', 'ABB', 'FACOPACK', 'ALIMENTOS POLAR URBANO', 'ORINOCO E-SCRAP', 
+  'AUTO GAS SOLEDAD PLEXA', 'ALONDRA MUEBLES', 'MAXFLEX', 'FAJOBE CEDI SIBERIA', 
+  'POLIPAK', 'FILTROS Y SOLUCIONES SAS', 'PROVELECTRICOS', 'ELECTROJAPONESA', 
+  'GEOSQUIMICAS', 'RIN TRUCK'
+ ],
+ estados: [
+  'ASIGNADO VEHÍCULO', 'PENDIENTE CITA ASIGNADO', 'VEHÍCULO CON CITA', 
+  'CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 
+  'CONTENEDOR EN INSPECCIÓN', 'CONTENEDOR RETIRADO PARA ITR', 'DESPACHADO', 
+  'DESPACHADO CON NOVEDAD', 'EN CONSECUCIÓN', 'EN PROGRAMACIÓN', 
+  'EN SITIO DE CARGUE', 'FINALIZADO CON NOVEDAD', 'FINALIZADO SIN NOVEDAD', 
+  'HOJA DE VIDA EN ESTUDIO', 'MERCANCÍA EN INSPECCIÓN', 'NOVEDAD', 
+  'PENDIENTE BAJAR A PATIO', 'PENDIENTE INSTRUCCIONES', 'PRE ASIGNADO', 
+  'RETIRADO DE PUERTO PENDIENTE CONSOLIDADO', 'CANCELADO POR GERENCIA', 
+  'VEHICULO EN RUTA'
+ ],
+ despachadores: [
+  'ABNNER MARTINEZ', 'CAMILO TRIANA', 'FREDY CARRILLO', 'RAUL LOPEZ', 'EDDIER RIVAS'
+ ]
 };
 
 const getNow = () => {
  return new Date().toLocaleString('es-CO', { 
- timeZone: 'America/Bogota', 
- year: 'numeric', month: '2-digit', day: '2-digit', 
- hour: '2-digit', minute: '2-digit', second: '2-digit', 
- hour12: false 
+  timeZone: 'America/Bogota', 
+  year: 'numeric', month: '2-digit', day: '2-digit', 
+  hour: '2-digit', minute: '2-digit', second: '2-digit', 
+  hour12: false 
  }).replace(/\//g, '-');
 };
+
+// --- LOGICA AUTOMATICA: CAMBIO A RUTA AL SIGUIENTE DIA ---
+async function autoTransitoRuta() {
+  const hoyStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+  const pendientes = await C.findAll({
+    where: {
+      placa: { [Op.ne]: null, [Op.not]: "" },
+      f_fin: null,
+      obs_e: { [Op.notIn]: ['VEHICULO EN RUTA', 'FINALIZADO SIN NOVEDAD', 'FINALIZADO CON NOVEDAD'] }
+    }
+  });
+
+  for (let s of pendientes) {
+    const fRegistro = new Date(s.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+    if (fRegistro < hoyStr) {
+      await C.update({ 
+        obs_e: 'VEHICULO EN RUTA', 
+        f_act: getNow() 
+      }, { where: { id: s.id } });
+    }
+  }
+}
 
 const css = `<style>
  body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}
@@ -104,9 +254,7 @@ const css = `<style>
  .fg{display:flex;flex-direction:column;gap:4px}
  label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}
  input,select,textarea{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000;text-align:center}
- .btn-submit-serious{
- grid-column:1/-1; background:#1e40af; color:#fff; padding:12px; cursor:pointer; border:none; font-weight:700; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:10px; transition: background 0.2s;
- }
+ .btn-submit-serious{ grid-column:1/-1; background:#1e40af; color:#fff; padding:12px; cursor:pointer; border:none; font-weight:700; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:10px; transition: background 0.2s; }
  .btn-submit-serious:hover{ background:#1d4ed8; }
  .icon-serious{ width:20px; height:20px; fill:#fff; }
  .btn-xls{background:#556b2f;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;height:38px;box-sizing:border-box;}
@@ -116,300 +264,274 @@ const css = `<style>
  #busq{padding:10px;width:250px;border-radius:6px;border:1px solid #3b82f6;background:#1e293b;color:white;font-weight:bold;height:38px;box-sizing:border-box;}
  .vence-rojo{background:#dc2626 !important;color:#fff !important;font-weight:bold;animation: blink 2s infinite;cursor:pointer}
  .vence-amarillo{background:#fbbf24 !important;color:#000 !important;font-weight:bold}
- 
  .editable-cell { background: transparent !important; color: #fff !important; border: none !important; width: 100%; height: 32px; text-align: center; cursor: pointer; padding: 0; font-size: 10px; }
  .editable-cell:focus { background: #334155 !important; outline: 1px solid #3b82f6 !important; color: #fff !important; }
  .editable-cell:disabled { color: #94a3b8 !important; cursor: default; }
-
  @keyframes blink { 0% {opacity:1} 50% {opacity:0.6} 100% {opacity:1} }
  tr:hover td { background: #334155; }
 </style>`;
 
 app.get('/', async (req, res) => {
  try {
- const d = await C.findAll({ order: [['id', 'DESC']] });
- let rows = '';
- const hoy = new Date(); hoy.setHours(0,0,0,0);
- let index = 1;
+  await autoTransitoRuta(); 
+  const d = await C.findAll({ order: [['id', 'DESC']] });
+  let rows = '';
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  let index = 1;
 
- for (let c of d) {
- const isLocked = (c.f_fin || c.placa) ? 'disabled' : '';
- 
- let displayReal = 'PENDIENTE';
- let stClass = 'background:#475569;color:#cbd5e1'; 
+  for (let c of d) {
+   const isLocked = (c.f_fin || c.placa) ? 'disabled' : '';
+   let displayReal = 'PENDIENTE';
+   let stClass = 'background:#475569;color:#cbd5e1'; 
 
- if (c.f_fin) {
- displayReal = 'FINALIZADO';
- stClass = 'background:#1e40af;color:#bfdbfe'; 
- } else if (c.placa) {
- displayReal = 'DESPACHADO';
- stClass = 'background:#065f46;color:#34d399'; 
- }
+   if (c.f_fin) {
+    displayReal = 'FINALIZADO';
+    stClass = 'background:#1e40af;color:#bfdbfe'; 
+   } else if (c.placa) {
+    displayReal = 'DESPACHADO';
+    stClass = 'background:#065f46;color:#34d399'; 
+   }
  
- let venceStyle = '';
- if (c.vence && !c.f_fin && !c.placa) {
- const fVence = new Date(c.vence);
- const diffDays = Math.ceil((fVence - hoy) / 864e5);
- if (diffDays <= 2) venceStyle = 'vence-rojo';
- else if (diffDays <= 6) venceStyle = 'vence-amarillo';
- }
+   let venceStyle = '';
+   if (c.vence && !c.f_fin && !c.placa) {
+    const fVence = new Date(c.vence);
+    const diffDays = Math.ceil((fVence - hoy) / 864e5);
+    if (diffDays <= 2) venceStyle = 'vence-rojo';
+    else if (diffDays <= 6) venceStyle = 'vence-amarillo';
+   }
 
- const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
- let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
- const idUnico = c.id.toString().padStart(4, '0');
- const fechaLocal = new Date(c.createdAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' });
+   const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
+   let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
+   const idUnico = c.id.toString().padStart(4, '0');
+   const fechaLocal = new Date(c.createdAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' });
 
- const ed = (field, val) => `<td><form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="${field}" value="${val||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked} oninput="this.value=this.value.toUpperCase()"></form></td>`;
+   const ed = (field, val) => `<td><form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="${field}" value="${val||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked} oninput="this.value=this.value.toUpperCase()"></form></td>`;
 
- rows += `<tr class="fila-datos">
- <td class="col-num">${index++}</td>
- <td class="col-id">${idUnico}</td>
- <td class="col-reg">${fechaLocal}</td>
- ${ed('oficina', c.oficina)}
- ${ed('emp_gen', c.emp_gen)}
- ${ed('comercial', c.comercial)}
- ${ed('pto', c.pto)}
- ${ed('refleja', c.refleja)}
- ${ed('f_doc', c.f_doc)}
- ${ed('h_doc', c.h_doc)}
- ${ed('do_bl', c.do_bl)}
- ${ed('cli', c.cli)}
- ${ed('subc', c.subc)}
- ${ed('mod', c.mod)}
- ${ed('lcl', c.lcl)}
- ${ed('cont', c.cont)}
- ${ed('peso', c.peso)}
- ${ed('unid', c.unid)}
- ${ed('prod', c.prod)}
- ${ed('esq', c.esq)}
- <td class="${venceStyle}" onclick="silenciar(this)" style="padding:6px; min-width:80px;">${c.vence||''}</td>
- ${ed('orig', c.orig)}
- ${ed('dest', c.dest)}
- ${ed('t_v', c.t_v)}
- ${ed('ped', c.ped)}
- ${ed('f_c', c.f_c)}
- ${ed('h_c', c.h_c)}
- ${ed('f_d', c.f_d)}
- ${ed('h_d', c.h_d)}
- <td class="col-placa">
- <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:4px;justify-content:center;align-items:center">
- <input name="placa" class="in-placa" value="${c.placa||''}" ${c.f_fin ? 'disabled' : ''} placeholder="PLACA" oninput="this.value=this.value.toUpperCase()">
- <button ${c.f_fin ? 'disabled' : ''} style="background:#10b981;color:#fff;border:none;padding:5px;border-radius:3px;cursor:pointer;font-weight:bold">OK</button>
- </form>
- </td>
- ${ed('f_p', c.f_p)}
- ${ed('f_f', c.f_f)}
- <td class="col-est">${selectEstado}</td>
- <td style="width:115px;color:#fbbf24;padding:6px">${c.f_act||''}</td>
- <td style="width:100px"><span style="padding:2px 6px;border-radius:10px;font-weight:bold;font-size:8px;${stClass}">${displayReal}</span></td>
- ${ed('obs', c.obs)}
- ${ed('cond', c.cond)}
- ${ed('h_t', c.h_t)}
- ${ed('muc', c.muc)}
- <td class="col-desp" style="padding:6px;">${c.desp||''}</td>
- <td>${accionFin}</td>
- <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
- <td class="col-acc">
- <div class="acc-cell">
- <a href="#" style="color:#f87171;text-decoration:none;font-size:10px" onclick="eliminarConClave(${c.id})">🗑️</a>
- <input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()">
- </div>
- </td>
- </tr>`;
- }
-
- res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
- <h2 style="color:#3b82f6; margin: 0 0 10px 0;">SISTEMA LOGISTICO DE YEGO ECO T S.A.S</h2>
- <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">
- <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Filtrar por Placa, Cliente, ID...">
- <button class="btn-xls" onclick="exportExcel()">Excel</button>
- <a href="/stats" class="btn-stats">📈 Indicadores</a>
- <button id="btnDelMult" class="btn-del-mult" onclick="eliminarSeleccionados()">Borrar (<span id="count">0</span>)</button>
- <div class="container-check-all">
- <label style="font-size:10px;color:#fff;">Todos</label>
- <input type="checkbox" id="checkAll" onclick="selectAll(this)">
- </div>
- </div>
- 
- <form action="/add" method="POST" class="form" style="padding:10px; gap:8px;">
- <datalist id="list_ciud">${opts.ciudades.map(c=>`<option value="${c}">`).join('')}</datalist>
- <div class="fg"><label>Oficina</label><select name="oficina">${opts.oficina.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
- <div class="fg"><label>Empresa Generadora</label><select name="emp_gen"><option value="YEGO ECO-T SAS">YEGO ECO-T SAS</option></select></div>
- <div class="fg"><label>Comercial</label><select name="comercial"><option value="RAÚL LÓPEZ">RAÚL LÓPEZ</option></select></div>
- <div class="fg"><label>Puerto</label><select name="pto">${opts.puertos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
- <div class="fg"><label>Refleja</label><select name="refleja"><option value="SI">SI</option><option value="NO">NO</option></select></div>
- <div class="fg"><label>Fecha Documento</label><input name="f_doc" type="date"></div>
- <div class="fg"><label>Hora Documento</label><input name="h_doc" type="time"></div>
- <div class="fg"><label>DO / BL</label><input name="do_bl"></div>
- <div class="fg"><label>Cliente</label><select name="cli">${opts.clientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
- <div class="fg"><label>Subcliente</label><select name="subc">${opts.subclientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
- <div class="fg"><label>Modalidad</label><select name="mod">${opts.modalidades.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
- <div class="fg"><label>LCL / FCL</label><select name="lcl">${opts.lcl_fcl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
- <div class="fg"><label>Contenedor</label><input name="cont" oninput="this.value=this.value.toUpperCase()"></div>
- <div class="fg"><label>Peso</label><input name="peso"></div>
- <div class="fg"><label>Unidad</label><input name="unid"></div>
- <div class="fg"><label>Producto</label><input name="prod"></div>
- <div class="fg"><label>Esquema</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
- <div class="fg"><label>Vencimiento</label><input name="vence" type="date"></div>
- <div class="fg"><label>Origen</label><input name="orig" list="list_ciud"></div>
- <div class="fg"><label>Destino</label><input name="dest" list="list_ciud"></div>
- <div class="fg"><label>Tipo Vehículo</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
- <div class="fg"><label>Pedido</label><input name="ped"></div>
- <div class="fg"><label>Fecha Cargue</label><input name="f_c" type="date"></div>
- <div class="fg"><label>Hora Cargue</label><input name="h_c" type="time"></div>
- <div class="fg"><label>Fecha Despacho</label><input name="f_d" type="date"></div>
- <div class="fg"><label>Hora Despacho</label><input name="h_d" type="time"></div>
- <div class="fg"><label>Flete a Pagar</label><input name="f_p"></div>
- <div class="fg"><label>Flete a Facturar</label><input name="f_f"></div>
- <div class="fg"><label>Estado Operativo</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
- <div class="fg"><label>Horario</label><input name="h_t"></div>
- <div class="fg"><label>MUC</label><input name="muc"></div>
- <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
- <div class="fg" style="grid-column: span 2"><label>Observaciones</label><textarea name="obs" rows="1"></textarea></div>
- <div class="fg" style="grid-column: span 2"><label>Condiciones</label><textarea name="cond" rows="1"></textarea></div>
-
- <button class="btn-submit-serious">
- <svg class="icon-serious" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
- REGISTRAR SERVICIO
- </button>
- </form>
-
- <div class="sc fs" id="st"><div class="fc"></div></div>
- <div class="sc" id="sm">
- <table id="tabla">
- <thead>
- <tr>
- <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">FECHA REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>FECHA DOCUMENTO</th><th>HORA DOCUMENTO</th><th>DO / BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL / FCL</th><th>CONTENEDOR</th><th>PESO</th><th>UNIDAD</th><th>PRODUCTO</th><th>ESQUEMA</th><th>VENCIMIENTO</th><th>ORIGEN</th><th>DESTINO</th><th>TIPO VEHÍCULO</th><th>PEDIDO</th><th>FECHA CARGUE</th><th>HORA CARGUE</th><th>FECHA DESPACHO</th><th>HORA DESPACHO</th><th class="col-placa">PLACA</th><th>FLETE A PAGAR</th><th>FLETE A FACTURAR</th><th class="col-est">ESTADO OPERATIVO</th><th>ACTUALIZACIÓN</th><th>ESTADO FINAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORARIO</th><th>MUC</th><th class="col-desp">DESPACHADOR</th><th>FINALIZAR</th><th class="col-hfin">HORA FIN</th><th class="col-acc">ACCIONES</th>
- </tr>
- </thead>
- <tbody>${rows}</tbody>
- </table>
- </div>
-
- <script>
- const CLAVE_ADMIN = "ADMIN123";
- const t=document.getElementById('st'),m=document.getElementById('sm');
- t.onscroll=()=>m.scrollLeft=t.scrollLeft;
- m.onscroll=()=>t.scrollLeft=m.scrollLeft;
-
- function formatearFletes() {
-  document.querySelectorAll('.fila-datos').forEach(fila => {
-   fila.querySelectorAll('input.editable-cell').forEach(inp => {
-    if(inp.name === 'f_p' || inp.name === 'f_f') {
-     let val = inp.value.replace(/[^0-9.-]+/g, "");
-     if(val && !isNaN(val)) {
-      inp.dataset.raw = val;
-      inp.value = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(val);
-      inp.onfocus = function() { this.value = this.dataset.raw || ""; };
-      inp.onblur = function() { formatearFletes(); };
-     }
-    }
-   });
-  });
- }
- 
- function selectAll(source){ 
- const checkboxes = document.getElementsByClassName('row-check'); 
- for(let i=0; i<checkboxes.length; i++){
- if(checkboxes[i].closest('tr').style.display !== 'none') checkboxes[i].checked = source.checked;
- }
- toggleDelBtn(); 
- }
- 
- function toggleDelBtn(){ 
- const checked = document.querySelectorAll('.row-check:checked');
- const btn = document.getElementById('btnDelMult');
- document.getElementById('count').innerText = checked.length;
- btn.style.display = checked.length > 0 ? 'inline-block' : 'none'; 
- }
- 
- function eliminarConClave(id){
- const pw = prompt("Ingrese contraseña para borrar despacho:");
- if(pw === CLAVE_ADMIN){
- if(confirm("¿Seguro que desea eliminar el registro?")) {
- window.location.href = "/d/" + id;
- }
- } else if(pw !== null) {
- alert("Contraseña incorrecta");
- }
- }
- 
- function eliminarSeleccionados(){ 
- const pw = prompt("Ingrese contraseña para borrar selección:");
- if(pw === CLAVE_ADMIN) {
-    const checked = document.querySelectorAll('.row-check:checked');
-    const ids = Array.from(checked).map(cb => cb.value);
-    if(ids.length === 0) return;
-    if(!confirm('¿Eliminar ' + ids.length + ' registros?')) return; 
-    fetch('/delete-multiple',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}).then(()=>location.reload()); 
- } else if(pw !== null) {
-    alert("Acceso denegado");
- }
- }
- 
- function updState(id,v){
- fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:v})}).then(()=>location.reload());
- }
- 
- function buscar(){
- let f = document.getElementById("busq").value.toUpperCase();
- let filas = document.querySelectorAll(".fila-datos");
- let visibleCount = 1;
- filas.forEach(fila => {
- let textoCeldas = fila.innerText.toUpperCase();
- let inputs = Array.from(fila.querySelectorAll("input")).map(i => i.value.toUpperCase()).join(" ");
- let contenidoTotal = textoCeldas + " " + inputs;
- let mostrar = contenidoTotal.includes(f);
- fila.style.display = mostrar ? "" : "none";
- if(mostrar) { fila.querySelector('.col-num').innerText = visibleCount++; }
- });
- formatearFletes();
- }
- 
- function exportExcel(){
- let csv="sep=;\\n";
- document.querySelectorAll("#tabla tr").forEach(row=>{
- if(row.style.display!=="none"){
- let cols=Array.from(row.querySelectorAll("td, th")).map(c=>{
- let inp=c.querySelector("input,select,textarea");
- return '"'+(inp?inp.value:c.innerText.split('\\n')[0]).replace(/;/g,",").trim()+'"';
- });
- csv+=cols.slice(0,-1).join(";")+"\\n";
- }
- });
- const b=new Blob(["\\ufeff"+csv],{type:"text/csv;charset=utf-8;"}),u=URL.createObjectURL(b),a=document.createElement("a");
- a.href=u;a.download="Reporte.csv";a.click();
- }
- 
- let audioContext; 
- function activarAudio(){ 
- if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); 
- playAlert(); 
- }
- 
- function silenciar(el){ 
- el.dataset.silenced = "true"; 
- el.style.animation = "none"; 
- el.style.background = "#450a0a"; 
- }
- 
-function playAlert(){ 
-  // Busca si hay algún elemento con la clase de alarma roja que no haya sido silenciado
-  let reds = Array.from(document.querySelectorAll('.vence-rojo')).filter(el => el.dataset.silenced !== "true");
-  
-  if(reds.length > 0 && audioContext){ 
-    let osc=audioContext.createOscillator(), gain=audioContext.createGain(); 
-    osc.type='square'; // Tipo de onda sonora
-    osc.frequency.setValueAtTime(440, audioContext.currentTime); // Tono de la alarma
-    gain.gain.setValueAtTime(0.1, audioContext.currentTime); 
-    osc.connect(gain); gain.connect(audioContext.destination); 
-    osc.start(); 
-    osc.stop(audioContext.currentTime+0.5); // Duración del pitido
-    setTimeout(playAlert, 2000); // Repetir cada 2 segundos si sigue habiendo rojos
+   rows += `<tr class="fila-datos">
+    <td class="col-num">${index++}</td>
+    <td class="col-id">${idUnico}</td>
+    <td class="col-reg">${fechaLocal}</td>
+    ${ed('oficina', c.oficina)}
+    ${ed('emp_gen', c.emp_gen)}
+    ${ed('comercial', c.comercial)}
+    ${ed('pto', c.pto)}
+    ${ed('refleja', c.refleja)}
+    ${ed('f_doc', c.f_doc)}
+    ${ed('h_doc', c.h_doc)}
+    ${ed('do_bl', c.do_bl)}
+    ${ed('cli', c.cli)}
+    ${ed('subc', c.subc)}
+    ${ed('mod', c.mod)}
+    ${ed('lcl', c.lcl)}
+    ${ed('cont', c.cont)}
+    ${ed('peso', c.peso)}
+    ${ed('unid', c.unid)}
+    ${ed('prod', c.prod)}
+    ${ed('esq', c.esq)}
+    <td class="${venceStyle}" onclick="silenciar(this)" style="padding:6px; min-width:80px;">${c.vence||''}</td>
+    ${ed('orig', c.orig)}
+    ${ed('dest', c.dest)}
+    ${ed('t_v', c.t_v)}
+    ${ed('ped', c.ped)}
+    ${ed('f_c', c.f_c)}
+    ${ed('h_c', c.h_c)}
+    ${ed('f_d', c.f_d)}
+    ${ed('h_d', c.h_d)}
+    <td class="col-placa">
+     <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:4px;justify-content:center;align-items:center">
+      <input name="placa" class="in-placa" value="${c.placa||''}" ${c.f_fin ? 'disabled' : ''} placeholder="PLACA" oninput="this.value=this.value.toUpperCase()">
+      <button ${c.f_fin ? 'disabled' : ''} style="background:#10b981;color:#fff;border:none;padding:5px;border-radius:3px;cursor:pointer;font-weight:bold">OK</button>
+     </form>
+    </td>
+    ${ed('f_p', c.f_p)}
+    ${ed('f_f', c.f_f)}
+    <td class="col-est">${selectEstado}</td>
+    <td style="width:115px;color:#fbbf24;padding:6px">${c.f_act||''}</td>
+    <td style="width:100px"><span style="padding:2px 6px;border-radius:10px;font-weight:bold;font-size:8px;${stClass}">${displayReal}</span></td>
+    ${ed('obs', c.obs)}
+    ${ed('cond', c.cond)}
+    ${ed('h_t', c.h_t)}
+    ${ed('muc', c.muc)}
+    <td class="col-desp" style="padding:6px;">${c.desp||''}</td>
+    <td>${accionFin}</td>
+    <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
+    <td class="col-acc">
+     <div class="acc-cell">
+      <a href="#" style="color:#f87171;text-decoration:none;font-size:10px" onclick="eliminarConClave(${c.id})">🗑️</a>
+      <input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()">
+     </div>
+    </td>
+   </tr>`;
   }
-}
- window.onload=()=>{setTimeout(playAlert,1000); formatearFletes();};
- </script></body></html>`);
+
+  res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
+  <h2 style="color:#3b82f6; margin: 0 0 10px 0;">SISTEMA LOGISTICO DE YEGO ECO T S.A.S</h2>
+  <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">
+   <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Filtrar por Placa, Cliente, ID...">
+   <button class="btn-xls" onclick="exportExcel()">Excel</button>
+   <a href="/stats" class="btn-stats">📈 Indicadores</a>
+   <button id="btnDelMult" class="btn-del-mult" onclick="eliminarSeleccionados()">Borrar (<span id="count">0</span>)</button>
+   <div class="container-check-all">
+    <label style="font-size:10px;color:#fff;">Todos</label>
+    <input type="checkbox" id="checkAll" onclick="selectAll(this)">
+   </div>
+  </div>
+  
+  <form action="/add" method="POST" class="form" style="padding:10px; gap:8px;">
+   <datalist id="list_ciud">${opts.ciudades.map(c=>`<option value="${c}">`).join('')}</datalist>
+   <div class="fg"><label>Oficina</label><select name="oficina">${opts.oficina.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+   <div class="fg"><label>Empresa Generadora</label><select name="emp_gen"><option value="YEGO ECO-T SAS">YEGO ECO-T SAS</option></select></div>
+   <div class="fg"><label>Comercial</label><select name="comercial"><option value="RAÚL LÓPEZ">RAÚL LÓPEZ</option></select></div>
+   <div class="fg"><label>Puerto</label><select name="pto">${opts.puertos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+   <div class="fg"><label>Refleja</label><select name="refleja"><option value="SI">SI</option><option value="NO">NO</option></select></div>
+   <div class="fg"><label>Fecha Documento</label><input name="f_doc" type="date"></div>
+   <div class="fg"><label>Hora Documento</label><input name="h_doc" type="time"></div>
+   <div class="fg"><label>DO / BL</label><input name="do_bl"></div>
+   <div class="fg"><label>Cliente</label><select name="cli">${opts.clientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+   <div class="fg"><label>Subcliente</label><select name="subc">${opts.subclientes.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+   <div class="fg"><label>Modalidad</label><select name="mod">${opts.modalidades.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+   <div class="fg"><label>LCL / FCL</label><select name="lcl">${opts.lcl_fcl.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+   <div class="fg"><label>Contenedor</label><input name="cont" oninput="this.value=this.value.toUpperCase()"></div>
+   <div class="fg"><label>Peso</label><input name="peso"></div>
+   <div class="fg"><label>Unidad</label><input name="unid"></div>
+   <div class="fg"><label>Producto</label><input name="prod"></div>
+   <div class="fg"><label>Esquema</label><select name="esq">${opts.esquemas.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+   <div class="fg"><label>Vencimiento</label><input name="vence" type="date"></div>
+   <div class="fg"><label>Origen</label><input name="orig" list="list_ciud"></div>
+   <div class="fg"><label>Destino</label><input name="dest" list="list_ciud"></div>
+   <div class="fg"><label>Tipo Vehículo</label><select name="t_v">${opts.vehiculos.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+   <div class="fg"><label>Pedido</label><input name="ped"></div>
+   <div class="fg"><label>Fecha Cargue</label><input name="f_c" type="date"></div>
+   <div class="fg"><label>Hora Cargue</label><input name="h_c" type="time"></div>
+   <div class="fg"><label>Fecha Despacho</label><input name="f_d" type="date"></div>
+   <div class="fg"><label>Hora Despacho</label><input name="h_d" type="time"></div>
+   <div class="fg"><label>Flete a Pagar</label><input name="f_p"></div>
+   <div class="fg"><label>Flete a Facturar</label><input name="f_f"></div>
+   <div class="fg"><label>Estado Operativo</label><select name="obs_e">${opts.estados.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+   <div class="fg"><label>Horario</label><input name="h_t"></div>
+   <div class="fg"><label>MUC</label><input name="muc"></div>
+   <div class="fg"><label>Despachador</label><select name="desp">${opts.despachadores.map(o=>`<option value="${o}">${o}</option>`).join('')}</select></div>
+   <div class="fg" style="grid-column: span 2"><label>Observaciones</label><textarea name="obs" rows="1"></textarea></div>
+   <div class="fg" style="grid-column: span 2"><label>Condiciones</label><textarea name="cond" rows="1"></textarea></div>
+   <button class="btn-submit-serious"><svg class="icon-serious" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>REGISTRAR SERVICIO</button>
+  </form>
+
+  <div class="sc fs" id="st"><div class="fc"></div></div>
+  <div class="sc" id="sm">
+   <table id="tabla">
+    <thead>
+     <tr>
+      <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">FECHA REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>FECHA DOCUMENTO</th><th>HORA DOCUMENTO</th><th>DO / BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL / FCL</th><th>CONTENEDOR</th><th>PESO</th><th>UNIDAD</th><th>PRODUCTO</th><th>ESQUEMA</th><th>VENCIMIENTO</th><th>ORIGEN</th><th>DESTINO</th><th>TIPO VEHÍCULO</th><th>PEDIDO</th><th>FECHA CARGUE</th><th>HORA CARGUE</th><th>FECHA DESPACHO</th><th>HORA DESPACHO</th><th class="col-placa">PLACA</th><th>FLETE A PAGAR</th><th>FLETE A FACTURAR</th><th class="col-est">ESTADO OPERATIVO</th><th>ACTUALIZACIÓN</th><th>ESTADO FINAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORARIO</th><th>MUC</th><th class="col-desp">DESPACHADOR</th><th>FINALIZAR</th><th class="col-hfin">HORA FIN</th><th class="col-acc">ACCIONES</th>
+     </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+   </table>
+  </div>
+
+  <script>
+   const CLAVE_ADMIN = "ADMIN123";
+   const t=document.getElementById('st'),m=document.getElementById('sm');
+   t.onscroll=()=>m.scrollLeft=t.scrollLeft; m.onscroll=()=>t.scrollLeft=m.scrollLeft;
+
+   function formatearFletes() {
+    document.querySelectorAll('.fila-datos').forEach(fila => {
+     fila.querySelectorAll('input.editable-cell').forEach(inp => {
+      if(inp.name === 'f_p' || inp.name === 'f_f') {
+       let val = inp.value.replace(/[^0-9.-]+/g, "");
+       if(val && !isNaN(val)) {
+        inp.dataset.raw = val;
+        inp.value = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(val);
+        inp.onfocus = function() { this.value = this.dataset.raw || ""; };
+        inp.onblur = function() { formatearFletes(); };
+       }
+      }
+     });
+    });
+   }
+ 
+   function selectAll(source){ 
+    const checkboxes = document.getElementsByClassName('row-check'); 
+    for(let i=0; i<checkboxes.length; i++){
+     if(checkboxes[i].closest('tr').style.display !== 'none') checkboxes[i].checked = source.checked;
+    }
+    toggleDelBtn(); 
+   }
+ 
+   function toggleDelBtn(){ 
+    const checked = document.querySelectorAll('.row-check:checked');
+    const btn = document.getElementById('btnDelMult');
+    document.getElementById('count').innerText = checked.length;
+    btn.style.display = checked.length > 0 ? 'inline-block' : 'none'; 
+   }
+
+   function eliminarConClave(id){
+    const pw = prompt("Ingrese contraseña para borrar despacho:");
+    if(pw === CLAVE_ADMIN){ if(confirm("¿Seguro que desea eliminar el registro?")) { window.location.href = "/d/" + id; }
+    } else if(pw !== null) { alert("Contraseña incorrecta"); }
+   }
+ 
+   function eliminarSeleccionados(){ 
+    const pw = prompt("Ingrese contraseña para borrar selección:");
+    if(pw === CLAVE_ADMIN) {
+      const checked = document.querySelectorAll('.row-check:checked');
+      const ids = Array.from(checked).map(cb => cb.value);
+      if(ids.length === 0) return;
+      if(!confirm('¿Eliminar ' + ids.length + ' registros?')) return; 
+      fetch('/delete-multiple',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids})}).then(()=>location.reload()); 
+    } else if(pw !== null) { alert("Acceso denegado"); }
+   }
+ 
+   function updState(id,v){
+    fetch('/state/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({obs_e:v})}).then(()=>location.reload());
+   }
+ 
+   function buscar(){
+    let f = document.getElementById("busq").value.toUpperCase();
+    let filas = document.querySelectorAll(".fila-datos");
+    let visibleCount = 1;
+    filas.forEach(fila => {
+     let textoCeldas = fila.innerText.toUpperCase();
+     let inputs = Array.from(fila.querySelectorAll("input")).map(i => i.value.toUpperCase()).join(" ");
+     let contenidoTotal = textoCeldas + " " + inputs;
+     let mostrar = contenidoTotal.includes(f);
+     fila.style.display = mostrar ? "" : "none";
+     if(mostrar) { fila.querySelector('.col-num').innerText = visibleCount++; }
+    });
+    formatearFletes();
+   }
+ 
+   function exportExcel(){
+    let csv="sep=;\\n";
+    document.querySelectorAll("#tabla tr").forEach(row=>{
+     if(row.style.display!=="none"){
+      let cols=Array.from(row.querySelectorAll("td, th")).map(c=>{
+       let inp=c.querySelector("input,select,textarea");
+       return '"'+(inp?inp.value:c.innerText.split('\\n')[0]).replace(/;/g,",").trim()+'"';
+      });
+      csv+=cols.slice(0,-1).join(";")+"\\n";
+     }
+    });
+    const b=new Blob(["\\ufeff"+csv],{type:"text/csv;charset=utf-8;"}),u=URL.createObjectURL(b),a=document.createElement("a");
+    a.href=u;a.download="Reporte.csv";a.click();
+   }
+ 
+   let audioContext; 
+   function activarAudio(){ if(!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); playAlert(); }
+ 
+   function silenciar(el){ el.dataset.silenced = "true"; el.style.animation = "none"; el.style.background = "#450a0a"; }
+ 
+   function playAlert(){ 
+    let reds = Array.from(document.querySelectorAll('.vence-rojo')).filter(el => el.dataset.silenced !== "true");
+    if(reds.length > 0 && audioContext){ 
+      let osc=audioContext.createOscillator(), gain=audioContext.createGain(); 
+      osc.type='square'; osc.frequency.setValueAtTime(440, audioContext.currentTime); gain.gain.setValueAtTime(0.1, audioContext.currentTime); 
+      osc.connect(gain); gain.connect(audioContext.destination); 
+      osc.start(); osc.stop(audioContext.currentTime+0.5); 
+      setTimeout(playAlert, 2000); 
+    }
+   }
+   window.onload=()=>{setTimeout(playAlert,1000); formatearFletes();};
+  </script></body></html>`);
  } catch (e) { res.send(e.message); }
 });
 
@@ -420,20 +542,15 @@ app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id
 
 app.post('/edit-live/:id', async (req, res) => {
  try {
- const updates = {};
- for (let key in req.body) { updates[key] = req.body[key].toUpperCase(); }
- await C.update(updates, { where: { id: req.params.id } });
- res.redirect('/');
+  const updates = {};
+  for (let key in req.body) { updates[key] = req.body[key].toUpperCase(); }
+  await C.update(updates, { where: { id: req.params.id } });
+  res.redirect('/');
  } catch (e) { res.status(500).send("Error: " + e.message); }
 });
 
 app.post('/u/:id', async (req, res) => { 
- await C.update({ 
- placa: req.body.placa.toUpperCase(), 
- est_real: 'DESPACHADO', 
- f_act: getNow() 
- }, { where: { id: req.params.id } }); 
-
+ await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); 
  const carga = await C.findByPk(req.params.id);
  if(carga && carga.placa) { enviarAMonitor(carga); }
  res.redirect('/'); 
@@ -447,178 +564,85 @@ app.get('/finish/:id', async (req, res) => {
  res.redirect('/'); 
 });
 
-// --- INDICADORES ---
+// INDICADORES
 app.get('/stats', async (req, res) => {
  try {
- const cargas = await C.findAll();
- const hoyDate = new Date();
- const hoyStr = hoyDate.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
- const mesActualStr = hoyStr.substring(0, 7);
+  const cargas = await C.findAll();
+  const hoyDate = new Date();
+  const hoyStr = hoyDate.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+  const mesActualStr = hoyStr.substring(0, 7);
  
- // Vehículos Faltantes por Origen
- const sinPlaca = cargas.filter(c => (!c.placa || c.placa.trim() === '') && !c.f_fin);
- 
- // NUEVO INDICADOR: CARGAS PENDIENTES POR CLIENTE (SIN PLACA)
- const pendientesPorCliente = {};
- sinPlaca.forEach(c => {
-  const cliente = (c.cli || 'SIN CLIENTE').toUpperCase();
-  pendientesPorCliente[cliente] = (pendientesPorCliente[cliente] || 0) + 1;
- });
+  const sinPlaca = cargas.filter(c => (!c.placa || c.placa.trim() === '') && !c.f_fin);
+  const pendientesPorCliente = {};
+  sinPlaca.forEach(c => { const cliente = (c.cli || 'SIN CLIENTE').toUpperCase(); pendientesPorCliente[cliente] = (pendientesPorCliente[cliente] || 0) + 1; });
 
- const reqPorCiudad = {};
- sinPlaca.forEach(c => {
- const ciudad = (c.orig || 'SIN ORIGEN').toUpperCase();
- const tipo = (c.t_v || 'NO ESPECIFICADO').toUpperCase();
- if(!reqPorCiudad[ciudad]) reqPorCiudad[ciudad] = {};
- reqPorCiudad[ciudad][tipo] = (reqPorCiudad[ciudad][tipo] || 0) + 1;
- });
+  const reqPorCiudad = {};
+  sinPlaca.forEach(c => { const ciudad = (c.orig || 'SIN ORIGEN').toUpperCase(); const tipo = (c.t_v || 'NO ESPECIFICADO').toUpperCase(); if(!reqPorCiudad[ciudad]) reqPorCiudad[ciudad] = {}; reqPorCiudad[ciudad][tipo] = (reqPorCiudad[ciudad][tipo] || 0) + 1; });
 
- const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
- const perdidosTotal = cargas.filter(c => cancelTags.includes(c.obs_e));
- 
- // Pérdida diaria (servicios creados hoy que están cancelados)
- const perdidaDiaria = perdidosTotal.filter(c => {
- return new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) === hoyStr;
- }).length;
+  const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
+  const perdidosTotal = cargas.filter(c => cancelTags.includes(c.obs_e));
+  const perdidaDiaria = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) === hoyStr).length;
+  const perdidaMesActual = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).startsWith(mesActualStr)).length;
+  const perdidaConteo = perdidosTotal.length;
 
- // Pérdida mes actual (servicios creados este mes que están cancelados)
- const perdidaMesActual = perdidosTotal.filter(c => {
- return new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).startsWith(mesActualStr);
- }).length;
+  const despLog = {};
+  cargas.forEach(c => { const d = c.desp || 'SIN ASIGNAR'; const fCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); const mCrea = fCrea.substring(0, 7); if(!despLog[d]) despLog[d] = { hoy:0, mes:0 }; if(fCrea === hoyStr) despLog[d].hoy++; if(mCrea === mesActualStr) despLog[d].mes++; });
 
- const perdidaConteo = perdidosTotal.length;
- const perdidaPorcentaje = cargas.length > 0 ? ((perdidaConteo / cargas.length) * 100).toFixed(1) : 0;
+  const total = cargas.length, fin = cargas.filter(c => c.f_fin).length, desp = cargas.filter(c => c.placa && !c.f_fin).length;
+  const ofis = {}; cargas.forEach(c => { if(c.oficina) ofis[c.oficina] = (ofis[c.oficina] || 0) + 1; });
 
- const despLog = {};
- cargas.forEach(c => {
- const d = c.desp || 'SIN ASIGNAR';
- const fCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
- const mCrea = fCrea.substring(0, 7);
- if(!despLog[d]) despLog[d] = { hoy:0, mes:0 };
- if(fCrea === hoyStr) despLog[d].hoy++;
- if(mCrea === mesActualStr) despLog[d].mes++;
- });
-
- const total = cargas.length;
- const fin = cargas.filter(c => c.f_fin).length;
- const desp = cargas.filter(c => c.placa && !c.f_fin).length;
- const ofis = {}; cargas.forEach(c => { if(c.oficina) ofis[c.oficina] = (ofis[c.oficina] || 0) + 1; });
-
- res.send(`<html><head><meta charset="UTF-8"><title>KPI - LOGISV20</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
- <style>
- body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:25px;}
- .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid #1e40af;padding-bottom:15px;}
- .btn-back{background:#2563eb;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:bold;}
- .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:25px;}
- .card{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;display:flex;flex-direction:column;justify-content:center;}
- .card h3{margin:0;font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;}
- .card p{margin:10px 0 0;font-size:32px;font-weight:bold;color:#3b82f6;}
- .lost-card{border-left: 5px solid #ef4444; background: rgba(239, 68, 68, 0.05);}
- .lost-card p{color:#f87171;}
- .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:20px;margin-bottom:25px;}
- .chart-box{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;}
- table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:10px;overflow:hidden;margin-bottom:30px;}
- th{background:#1e40af;padding:12px;font-size:11px;text-align:center;}
- td{padding:12px;border-bottom:1px solid #334155;font-size:13px;text-align:center;}
- .badge{padding:4px 10px;border-radius:15px;font-weight:bold;font-size:12px;color:#fff;margin:2px;display:inline-block;}
- .req-badge{background:#ef4444; font-size:10px;}
- .cli-badge{background:#f59e0b; color:#000; font-size:11px;}
- .prog-wrapper{display:flex;align-items:center;justify-content:center;gap:10px;}
- .prog-bg{width:150px;background:#334155;height:12px;border-radius:6px;overflow:hidden;}
- .prog-fill{background:#10b981;height:100%;border-radius:6px;}
- .semaforo-dot{height:12px;width:12px;border-radius:50%;display:inline-block;margin-right:5px;}
- </style></head>
- <body>
- <div class="header">
- <h2 style="margin:0;">TABLERO DE INDICADORES</h2>
- <a href="/" class="btn-back">VOLVER</a>
- </div>
- <div class="kpi-grid">
- <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
- <div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
- <div class="card"><h3>En Ruta</h3><p style="color:#fbbf24">${desp}</p></div>
- <div class="card lost-card">
- <h3>PÉRDIDA EMERGENTE (DIARIO)</h3>
- <p>${perdidaDiaria}</p>
- <span style="font-size:11px;color:#94a3b8">Total acumulado: ${perdidaConteo}</span>
- </div>
- <div class="card lost-card" style="border-left-color: #f87171;">
- <h3>PÉRDIDA EMERGENTE (MENSUAL)</h3>
- <p>${perdidaMesActual}</p>
- <span style="font-size:11px;color:#94a3b8">Mes: ${mesActualStr}</span>
- </div>
- </div>
-
- <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:20px;">
-  <div>
-    <h3 style="color:#f59e0b; border-left: 4px solid #f59e0b; padding-left: 10px; margin-bottom:15px;">CARGAS PENDIENTES POR CLIENTE</h3>
-    <table>
-    <thead><tr><th>CLIENTE</th><th>SIN PLACA</th></tr></thead>
-    <tbody>
-    ${Object.entries(pendientesPorCliente).sort((a,b)=>b[1]-a[1]).map(([cli, cant]) => `
-    <tr><td><b>${cli}</b></td><td><span class="badge cli-badge">${cant}</span></td></tr>`).join('')}
-    ${sinPlaca.length === 0 ? '<tr><td colspan="2">Sin pendientes</td></tr>' : ''}
-    </tbody></table>
+  res.send(`<html><head><meta charset="UTF-8"><title>KPI - LOGISV20</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+  body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:25px;}
+  .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid #1e40af;padding-bottom:15px;}
+  .btn-back{background:#2563eb;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:bold;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:25px;}
+  .card{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;display:flex;flex-direction:column;justify-content:center;}
+  .card h3{margin:0;font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;}
+  .card p{margin:10px 0 0;font-size:32px;font-weight:bold;color:#3b82f6;}
+  .lost-card{border-left: 5px solid #ef4444; background: rgba(239, 68, 68, 0.05);}
+  .lost-card p{color:#f87171;}
+  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:20px;margin-bottom:25px;}
+  .chart-box{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;}
+  table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:10px;overflow:hidden;margin-bottom:30px;}
+  th{background:#1e40af;padding:12px;font-size:11px;text-align:center;}
+  td{padding:12px;border-bottom:1px solid #334155;font-size:13px;text-align:center;}
+  .badge{padding:4px 10px;border-radius:15px;font-weight:bold;font-size:12px;color:#fff;margin:2px;display:inline-block;}
+  .req-badge{background:#ef4444; font-size:10px;}
+  .cli-badge{background:#f59e0b; color:#000; font-size:11px;}
+  .prog-wrapper{display:flex;align-items:center;justify-content:center;gap:10px;}
+  .prog-bg{width:150px;background:#334155;height:12px;border-radius:6px;overflow:hidden;}
+  .prog-fill{background:#10b981;height:100%;border-radius:6px;}
+  .semaforo-dot{height:12px;width:12px;border-radius:50%;display:inline-block;margin-right:5px;}
+  </style></head>
+  <body>
+  <div class="header"><h2 style="margin:0;">TABLERO DE INDICADORES</h2><a href="/" class="btn-back">VOLVER</a></div>
+  <div class="kpi-grid">
+  <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
+  <div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
+  <div class="card"><h3>En Ruta</h3><p style="color:#fbbf24">${desp}</p></div>
+  <div class="card lost-card"><h3>PÉRDIDA EMERGENTE (DIARIO)</h3><p>${perdidaDiaria}</p></div>
+  <div class="card lost-card" style="border-left-color: #f87171;"><h3>PÉRDIDA EMERGENTE (MENSUAL)</h3><p>${perdidaMesActual}</p></div>
   </div>
-  
-  <div>
-    <h3 style="color:#ef4444; border-left: 4px solid #ef4444; padding-left: 10px; margin-bottom:15px;">VEHÍCULOS FALTANTES DESDE ORIGEN</h3>
-    <table>
-    <thead><tr><th>ORIGEN</th><th>REQUERIMIENTO</th><th>TOTAL</th></tr></thead>
-    <tbody>
-    ${Object.entries(reqPorCiudad).map(([city, types]) => {
-    const totalCiudad = Object.values(types).reduce((a, b) => a + b, 0);
-    return `<tr><td><b>${city}</b></td><td>${Object.entries(types).map(([t, q]) => `<span class="badge req-badge">${q}</span> ${t}`).join(' | ')}</td><td><b style="color:#ef4444">${totalCiudad}</b></td></tr>`;
-    }).join('')}
-    ${sinPlaca.length === 0 ? '<tr><td colspan="3">Sin pendientes</td></tr>' : ''}
-    </tbody></table>
-  </div>
- </div>
-
- <div class="charts">
- <div class="chart-box"><h4>ESTADO DE OPERACIÓN</h4><canvas id="c1"></canvas></div>
- <div class="chart-box"><h4>SERVICIOS POR OFICINA</h4><canvas id="c2"></canvas></div>
- </div>
-
- <h3 style="color:#3b82f6; border-left: 4px solid #2563eb; padding-left: 10px; margin-bottom:15px;">PRODUCTIVIDAD POR DESPACHADOR</h3>
- <table>
- <thead>
- <tr>
- <th>DESPACHADOR</th>
- <th>HOY</th>
- <th>MES</th>
- <th>RENDIMIENTO</th>
- <th>PRODUCTIVIDAD (%)</th>
- </tr>
- </thead>
- <tbody>
- ${Object.entries(despLog).map(([name, s]) => {
- const prodPerc = total > 0 ? ((s.mes/total)*100).toFixed(1) : 0;
- let semColor = '#ef4444'; let semText = 'BAJO';
- if(prodPerc >= 25) { semColor = '#10b981'; semText = 'ÓPTIMO'; }
- else if(prodPerc >= 10) { semColor = '#fbbf24'; semText = 'MEDIO'; }
- 
- return `
- <tr>
- <td><b>${name}</b></td>
- <td><span class="badge" style="background:#3b82f6">${s.hoy}</span></td>
- <td><span class="badge" style="background:#8b5cf6">${s.mes}</span></td>
- <td><span class="semaforo-dot" style="background:${semColor}"></span><span style="color:${semColor};font-weight:bold;font-size:11px;">${semText}</span></td>
- <td>
- <div class="prog-wrapper">
- <div class="prog-bg"><div style="width:${prodPerc}%;background:${semColor}" class="prog-fill"></div></div>
- <b style="color:${semColor}">${prodPerc}%</b>
- </div>
- </td>
- </tr>`;
- }).join('')}
- </tbody>
- </table>
- <script>
- new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:['Fin','Ruta','Perdida','Otros'],datasets:[{data:[${fin},${desp},${perdidaConteo},${total-fin-desp-perdidaConteo}],backgroundColor:['#10b981','#fbbf24','#ef4444','#475569'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
- new Chart(document.getElementById('c2'),{type:'bar',data:{labels:${JSON.stringify(Object.keys(ofis))},datasets:[{label:'Servicios',data:${JSON.stringify(Object.values(ofis))},backgroundColor:'#3b82f6'}]},options:{scales:{y:{beginAtZero:true,ticks:{color:'#fff'}},x:{ticks:{color:'#fff'}}},plugins:{legend:{display:false}}}});
- </script>
- </body></html>`);
+  <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:20px;">
+  <div><h3 style="color:#f59e0b; border-left: 4px solid #f59e0b; padding-left: 10px; margin-bottom:15px;">CARGAS PENDIENTES POR CLIENTE</h3><table><thead><tr><th>CLIENTE</th><th>SIN PLACA</th></tr></thead><tbody>
+  ${Object.entries(pendientesPorCliente).sort((a,b)=>b[1]-a[1]).map(([cli, cant]) => `<tr><td><b>${cli}</b></td><td><span class="badge cli-badge">${cant}</span></td></tr>`).join('')}
+  </tbody></table></div>
+  <div><h3 style="color:#ef4444; border-left: 4px solid #ef4444; padding-left: 10px; margin-bottom:15px;">VEHÍCULOS FALTANTES DESDE ORIGEN</h3><table><thead><tr><th>ORIGEN</th><th>REQUERIMIENTO</th><th>TOTAL</th></tr></thead><tbody>
+  ${Object.entries(reqPorCiudad).map(([city, types]) => `<tr><td><b>${city}</b></td><td>${Object.entries(types).map(([t, q]) => `<span class="badge req-badge">${q}</span> ${t}`).join(' | ')}</td><td><b style="color:#ef4444">${Object.values(types).reduce((a, b) => a + b, 0)}</b></td></tr>`).join('')}
+  </tbody></table></div></div>
+  <div class="charts"><div class="chart-box"><h4>ESTADO DE OPERACIÓN</h4><canvas id="c1"></canvas></div><div class="chart-box"><h4>SERVICIOS POR OFICINA</h4><canvas id="c2"></canvas></div></div>
+  <table><thead><tr><th>DESPACHADOR</th><th>HOY</th><th>MES</th><th>RENDIMIENTO</th><th>PRODUCTIVIDAD (%)</th></tr></thead><tbody>
+  ${Object.entries(despLog).map(([name, s]) => {
+   const prodPerc = total > 0 ? ((s.mes/total)*100).toFixed(1) : 0;
+   let semColor = prodPerc >= 25 ? '#10b981' : (prodPerc >= 10 ? '#fbbf24' : '#ef4444');
+   return `<tr><td><b>${name}</b></td><td><span class="badge" style="background:#3b82f6">${s.hoy}</span></td><td><span class="badge" style="background:#8b5cf6">${s.mes}</span></td><td><span class="semaforo-dot" style="background:${semColor}"></span></td><td><div class="prog-wrapper"><div class="prog-bg"><div style="width:${prodPerc}%;background:${semColor}" class="prog-fill"></div></div><b>${prodPerc}%</b></div></td></tr>`;
+  }).join('')}
+  </tbody></table>
+  <script>
+  new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:['Fin','Ruta','Perdida','Otros'],datasets:[{data:[${fin},${desp},${perdidaConteo},${total-fin-desp-perdidaConteo}],backgroundColor:['#10b981','#fbbf24','#ef4444','#475569'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
+  new Chart(document.getElementById('c2'),{type:'bar',data:{labels:${JSON.stringify(Object.keys(ofis))},datasets:[{label:'Servicios',data:${JSON.stringify(Object.values(ofis))},backgroundColor:'#3b82f6'}]},options:{scales:{y:{beginAtZero:true,ticks:{color:'#fff'}},x:{ticks:{color:'#fff'}}},plugins:{legend:{display:false}}}});
+  </script></body></html>`);
  } catch (e) { res.send(e.message); }
 });
 
