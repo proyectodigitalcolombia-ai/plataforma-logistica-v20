@@ -580,6 +580,7 @@ app.get('/stats', async (req, res) => {
   sinPlaca.forEach(c => { const ciudad = (c.orig || 'SIN ORIGEN').toUpperCase(); const tipo = (c.t_v || 'NO ESPECIFICADO').toUpperCase(); if(!reqPorCiudad[ciudad]) reqPorCiudad[ciudad] = {}; reqPorCiudad[ciudad][tipo] = (reqPorCiudad[ciudad][tipo] || 0) + 1; });
 
   const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
+  // LOGICA MODIFICADA: La perdida mensual cuenta TODOS los cancelados creados en el mes actual sin importar si se finalizan o se borran visualmente. El reset es automático al cambiar mesActualStr
   const perdidosTotal = cargas.filter(c => cancelTags.includes(c.obs_e));
   const perdidaDiaria = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) === hoyStr).length;
   const perdidaMesActual = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).startsWith(mesActualStr)).length;
