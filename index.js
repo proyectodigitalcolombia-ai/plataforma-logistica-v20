@@ -132,19 +132,23 @@ app.get('/', async (req, res) => {
  const hoy = new Date(); hoy.setHours(0,0,0,0);
  let index = 1;
 
- for (let c of d) {
- const isLocked = (c.f_fin || c.placa) ? 'disabled' : '';
- 
- let displayReal = 'PENDIENTE';
- let stClass = 'background:#475569;color:#cbd5e1'; 
+const fechaCreacion = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
 
- if (c.f_fin) {
- displayReal = 'FINALIZADO';
- stClass = 'background:#1e40af;color:#bfdbfe'; 
- } else if (c.placa) {
- displayReal = 'DESPACHADO';
- stClass = 'background:#065f46;color:#34d399'; 
- }
+let displayReal = 'PENDIENTE';
+let stClass = 'background:#475569;color:#cbd5e1'; 
+
+if (c.f_fin) {
+    displayReal = 'FINALIZADO';
+    stClass = 'background:#1e40af;color:#bfdbfe'; 
+} else if (c.placa) {
+    if (fechaCreacion !== hoyStr) { 
+        displayReal = 'VEHICULO EN RUTA';
+        stClass = 'background:#1e3a8a;color:#93c5fd;border:1px solid #3b82f6'; 
+    } else {
+        displayReal = 'DESPACHADO';
+        stClass = 'background:#065f46;color:#34d399'; 
+    }
+}
  
  let venceStyle = '';
  if (c.vence && !c.f_fin && !c.placa) {
