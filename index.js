@@ -511,9 +511,22 @@ app.get('/stats', async (req, res) => {
  if(mCrea === mesActualStr) despLog[d].mes++;
  });
 
+ const hoyStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
  const total = cargas.length;
  const fin = cargas.filter(c => c.f_fin).length;
- const desp = cargas.filter(c => c.placa && !c.f_fin).length;
+
+ // Despachados hoy: tienen placa y la fecha de creación es igual a hoy
+ const despachadosHoy = cargas.filter(c => {
+  const fCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+  return c.placa && !c.f_fin && fCrea === hoyStr;
+ }).length;
+
+ // En Ruta: tienen placa y la fecha de creación es diferente a hoy (días anteriores)
+ const enRutaPasados = cargas.filter(c => {
+  const fCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+  return c.placa && !c.f_fin && fCrea !== hoyStr;
+ }).length;
+  
  const ofis = {}; cargas.forEach(c => { if(c.oficina) ofis[c.oficina] = (ofis[c.oficina] || 0) + 1; });
 
  res.send(`<html><head><meta charset="UTF-8"><title>KPI - LOGISV20</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -545,20 +558,31 @@ app.get('/stats', async (req, res) => {
  <h2 style="margin:0;">TABLERO DE INDICADORES</h2>
  <a href="/" class="btn-back">VOLVER</a>
  </div>
- <div class="kpi-grid">
- <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
- <div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
- <div class="card"><h3>En Ruta</h3><p style="color:#fbbf24">${desp}</p></div>
- <div class="card lost-card">
- <h3>PÉRDIDA EMERGENTE (DIARIO)</h3>
- <p>${perdidaDiaria}</p>
- <span style="font-size:11px;color:#94a3b8">Total acumulado: ${perdidaConteo}</span>
- </div>
- <div class="card lost-card" style="border-left-color: #f87171;">
- <h3>PÉRDIDA EMERGENTE (MENSUAL)</h3>
- <p>${perdidaMesActual}</p>
- <span style="font-size:11px;color:#94a3b8">Mes: ${mesActualStr}</span>
- </div>
+<div class="kpi-grid">
+  <div class="card">
+    <h3>Total Servicios</h3>
+    <p>${total}</p>
+  </div>
+
+  <div class="card" style="border-bottom: 4px solid #10b981;">
+    <h3>Finalizados</h3>
+    <p style="color:#10b981">${fin}</p>
+  </div>
+
+  <div class="card" style="border-bottom: 4px solid #34d399;">
+    <h3>Despachados (Hoy)</h3>
+    <p style="color:#34d399">${despachadosHoy}</p>
+  </div>
+
+  <div class="card" style="border-bottom: 4px solid #3b82f6;">
+    <h3>Vehículos en Ruta</h3>
+    <p style="color:#3b82f6">${enRutaPasados}</p>
+  </div>
+
+  <div class="card lost-card">
+    <h3>Pérdida Diaria</h3>
+    <p>${perdidaDiaria}</p>
+  </div>
  </div>
 
  <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:20px;">
