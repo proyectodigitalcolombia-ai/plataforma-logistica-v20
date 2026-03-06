@@ -443,14 +443,18 @@ app.get('/finish/:id', async (req, res) => {
  res.redirect('/'); 
 });
 
-// KPI E INDICADORES (Mantenidos sin cambios)
+// --- INDICADORES ---
 app.get('/stats', async (req, res) => {
  try {
  const cargas = await C.findAll();
- const hoyStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+ const hoyDate = new Date();
+ const hoyStr = hoyDate.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
  const mesActualStr = hoyStr.substring(0, 7);
  
+ // Vehículos Faltantes por Origen
  const sinPlaca = cargas.filter(c => (!c.placa || c.placa.trim() === '') && !c.f_fin);
+ 
+ // NUEVO INDICADOR: CARGAS PENDIENTES POR CLIENTE (SIN PLACA)
  const pendientesPorCliente = {};
  sinPlaca.forEach(c => {
   const cliente = (c.cli || 'SIN CLIENTE').toUpperCase();
@@ -461,22 +465,34 @@ app.get('/stats', async (req, res) => {
  sinPlaca.forEach(c => {
  const ciudad = (c.orig || 'SIN ORIGEN').toUpperCase();
  const tipo = (c.t_v || 'NO ESPECIFICADO').toUpperCase();
- if(!reqPorCiudad[city = ciudad]) reqPorCiudad[city] = {};
- reqPorCiudad[city][tipo] = (reqPorCiudad[city][tipo] || 0) + 1;
+ if(!reqPorCiudad[ciudad]) reqPorCiudad[ciudad] = {};
+ reqPorCiudad[ciudad][tipo] = (reqPorCiudad[ciudad][tipo] || 0) + 1;
  });
 
  const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
  const perdidosTotal = cargas.filter(c => cancelTags.includes(c.obs_e));
- const perdidaDiaria = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) === hoyStr).length;
- const perdidaMesActual = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).startsWith(mesActualStr)).length;
+ 
+ // Pérdida diaria (servicios creados hoy que están cancelados)
+ const perdidaDiaria = perdidosTotal.filter(c => {
+ return new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) === hoyStr;
+ }).length;
+
+ // Pérdida mes actual (servicios creados este mes que están cancelados)
+ const perdidaMesActual = perdidosTotal.filter(c => {
+ return new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).startsWith(mesActualStr);
+ }).length;
+
+ const perdidaConteo = perdidosTotal.length;
+ const perdidaPorcentaje = cargas.length > 0 ? ((perdidaConteo / cargas.length) * 100).toFixed(1) : 0;
 
  const despLog = {};
  cargas.forEach(c => {
  const d = c.desp || 'SIN ASIGNAR';
  const fCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+ const mCrea = fCrea.substring(0, 7);
  if(!despLog[d]) despLog[d] = { hoy:0, mes:0 };
  if(fCrea === hoyStr) despLog[d].hoy++;
- if(fCrea.startsWith(mesActualStr)) despLog[d].mes++;
+ if(mCrea === mesActualStr) despLog[d].mes++;
  });
 
  const total = cargas.length;
@@ -517,44 +533,90 @@ app.get('/stats', async (req, res) => {
  <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
  <div class="card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
  <div class="card"><h3>En Ruta</h3><p style="color:#fbbf24">${desp}</p></div>
- <div class="card lost-card"><h3>PERDIDAS HOY</h3><p>${perdidaDiaria}</p></div>
- <div class="card lost-card"><h3>PERDIDAS MES</h3><p>${perdidaMesActual}</p></div>
+ <div class="card lost-card">
+ <h3>PÉRDIDA EMERGENTE (DIARIO)</h3>
+ <p>${perdidaDiaria}</p>
+ <span style="font-size:11px;color:#94a3b8">Total acumulado: ${perdidaConteo}</span>
+ </div>
+ <div class="card lost-card" style="border-left-color: #f87171;">
+ <h3>PÉRDIDA EMERGENTE (MENSUAL)</h3>
+ <p>${perdidaMesActual}</p>
+ <span style="font-size:11px;color:#94a3b8">Mes: ${mesActualStr}</span>
+ </div>
  </div>
 
  <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:20px;">
   <div>
-    <h3 style="color:#f59e0b; border-left: 4px solid #f59e0b; padding-left: 10px; margin-bottom:15px;">PENDIENTES POR CLIENTE</h3>
+    <h3 style="color:#f59e0b; border-left: 4px solid #f59e0b; padding-left: 10px; margin-bottom:15px;">CARGAS PENDIENTES POR CLIENTE</h3>
     <table>
-    <thead><tr><th>CLIENTE</th><th>CANT</th></tr></thead>
+    <thead><tr><th>CLIENTE</th><th>SIN PLACA</th></tr></thead>
     <tbody>
     ${Object.entries(pendientesPorCliente).sort((a,b)=>b[1]-a[1]).map(([cli, cant]) => `
     <tr><td><b>${cli}</b></td><td><span class="badge cli-badge">${cant}</span></td></tr>`).join('')}
+    ${sinPlaca.length === 0 ? '<tr><td colspan="2">Sin pendientes</td></tr>' : ''}
     </tbody></table>
   </div>
   
   <div>
-    <h3 style="color:#ef4444; border-left: 4px solid #ef4444; padding-left: 10px; margin-bottom:15px;">FALTANTES POR ORIGEN</h3>
+    <h3 style="color:#ef4444; border-left: 4px solid #ef4444; padding-left: 10px; margin-bottom:15px;">VEHÍCULOS FALTANTES DESDE ORIGEN</h3>
     <table>
     <thead><tr><th>ORIGEN</th><th>REQUERIMIENTO</th><th>TOTAL</th></tr></thead>
     <tbody>
     ${Object.entries(reqPorCiudad).map(([city, types]) => {
-    const totalC = Object.values(types).reduce((a, b) => a + b, 0);
-    return `<tr><td><b>${city}</b></td><td>${Object.entries(types).map(([t, q]) => `<span class="badge req-badge">${q}</span> ${t}`).join(' | ')}</td><td><b style="color:#ef4444">${totalC}</b></td></tr>`;
+    const totalCiudad = Object.values(types).reduce((a, b) => a + b, 0);
+    return `<tr><td><b>${city}</b></td><td>${Object.entries(types).map(([t, q]) => `<span class="badge req-badge">${q}</span> ${t}`).join(' | ')}</td><td><b style="color:#ef4444">${totalCiudad}</b></td></tr>`;
     }).join('')}
+    ${sinPlaca.length === 0 ? '<tr><td colspan="3">Sin pendientes</td></tr>' : ''}
     </tbody></table>
   </div>
  </div>
 
  <div class="charts">
- <div class="chart-box"><h4>OPERACIÓN</h4><canvas id="c1"></canvas></div>
- <div class="chart-box"><h4>OFICINAS</h4><canvas id="c2"></canvas></div>
+ <div class="chart-box"><h4>ESTADO DE OPERACIÓN</h4><canvas id="c1"></canvas></div>
+ <div class="chart-box"><h4>SERVICIOS POR OFICINA</h4><canvas id="c2"></canvas></div>
  </div>
+
+ <h3 style="color:#3b82f6; border-left: 4px solid #2563eb; padding-left: 10px; margin-bottom:15px;">PRODUCTIVIDAD POR DESPACHADOR</h3>
+ <table>
+ <thead>
+ <tr>
+ <th>DESPACHADOR</th>
+ <th>HOY</th>
+ <th>MES</th>
+ <th>RENDIMIENTO</th>
+ <th>PRODUCTIVIDAD (%)</th>
+ </tr>
+ </thead>
+ <tbody>
+ ${Object.entries(despLog).map(([name, s]) => {
+ const prodPerc = total > 0 ? ((s.mes/total)*100).toFixed(1) : 0;
+ let semColor = '#ef4444'; let semText = 'BAJO';
+ if(prodPerc >= 25) { semColor = '#10b981'; semText = 'ÓPTIMO'; }
+ else if(prodPerc >= 10) { semColor = '#fbbf24'; semText = 'MEDIO'; }
+ 
+ return `
+ <tr>
+ <td><b>${name}</b></td>
+ <td><span class="badge" style="background:#3b82f6">${s.hoy}</span></td>
+ <td><span class="badge" style="background:#8b5cf6">${s.mes}</span></td>
+ <td><span class="semaforo-dot" style="background:${semColor}"></span><span style="color:${semColor};font-weight:bold;font-size:11px;">${semText}</span></td>
+ <td>
+ <div class="prog-wrapper">
+ <div class="prog-bg"><div style="width:${prodPerc}%;background:${semColor}" class="prog-fill"></div></div>
+ <b style="color:${semColor}">${prodPerc}%</b>
+ </div>
+ </td>
+ </tr>`;
+ }).join('')}
+ </tbody>
+ </table>
  <script>
-  new Chart(document.getElementById('c1'), { type: 'doughnut', data: { labels: ['Finalizados', 'En Ruta', 'Pendientes'], datasets: [{ data: [${fin}, ${desp}, ${total - fin - desp}], backgroundColor: ['#10b981', '#fbbf24', '#334155'] }] } });
-  new Chart(document.getElementById('c2'), { type: 'bar', data: { labels: ${JSON.stringify(Object.keys(ofis))}, datasets: [{ label: 'Servicios', data: ${JSON.stringify(Object.values(ofis))}, backgroundColor: '#3b82f6' }] } });
+ new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:['Fin','Ruta','Perdida','Otros'],datasets:[{data:[${fin},${desp},${perdidaConteo},${total-fin-desp-perdidaConteo}],backgroundColor:['#10b981','#fbbf24','#ef4444','#475569'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
+ new Chart(document.getElementById('c2'),{type:'bar',data:{labels:${JSON.stringify(Object.keys(ofis))},datasets:[{label:'Servicios',data:${JSON.stringify(Object.values(ofis))},backgroundColor:'#3b82f6'}]},options:{scales:{y:{beginAtZero:true,ticks:{color:'#fff'}},x:{ticks:{color:'#fff'}}},plugins:{legend:{display:false}}}});
  </script>
-</body></html>`);
+ </body></html>`);
  } catch (e) { res.send(e.message); }
 });
 
-app.listen(process.env.PORT || 3000);
+db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
+
