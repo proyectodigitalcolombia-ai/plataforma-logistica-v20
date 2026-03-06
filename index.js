@@ -271,447 +271,333 @@ const css = `<style>
  tr:hover td { background: #334155; }
 </style>`;
 
+app.get('/', async (req, res) => {
+  try {
+    // Recuperamos todas las cargas ordenadas por fecha de creación descendente
+    const cargas = await C.findAll({ order: [['createdAt', 'DESC']] });
+    
+    // Construcción del HTML Principal con estilos expandidos para mantenimiento
+    res.send(`
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Panel de Gestión de Cargas - LOGISV20</title>
+        <style>
+          :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --accent-blue: #2563eb;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+          }
+
+          body { 
+            background-color: var(--bg-dark); 
+            color: var(--text-main); 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 40px; 
+          }
+
+          .navbar { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: var(--card-bg); 
+            padding: 20px 30px; 
+            border-radius: 12px; 
+            margin-bottom: 30px; 
+            border: 1px solid var(--border-color); 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          }
+
+          .title-section h2 { margin: 0; font-size: 24px; letter-spacing: 0.5px; }
+          .title-section p { margin: 5px 0 0; color: var(--text-dim); font-size: 13px; }
+
+          .btn-nav-kpi { 
+            background: var(--accent-blue); 
+            color: white; 
+            padding: 12px 24px; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            font-weight: 600; 
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+          }
+
+          .btn-nav-kpi:hover { 
+            background: #1d4ed8; 
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+          }
+
+          .table-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            margin-top: 20px;
+          }
+
+          table { width: 100%; border-collapse: collapse; text-align: left; }
+          
+          th { 
+            background: #1e40af; 
+            color: white; 
+            padding: 18px; 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+          }
+
+          td { 
+            padding: 16px 18px; 
+            border-bottom: 1px solid var(--border-color); 
+            font-size: 13px; 
+            color: #e2e8f0;
+          }
+
+          tr:hover { background: #1e293b; }
+
+          .badge { 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            font-size: 10px; 
+            font-weight: 800; 
+            text-transform: uppercase;
+          }
+
+          .status-fin { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; }
+          .status-proc { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid #fbbf24; }
+          .status-pend { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+
+          .empty-state { padding: 50px; text-align: center; color: var(--text-dim); }
+        </style>
+      </head>
+      <body>
+        <div class="navbar">
+          <div class="title-section">
+            <h2>LOGISV20 | PANEL DE GESTIÓN</h2>
+            <p>Monitoreo en tiempo real de unidades y despachos</p>
+          </div>
+          <a href="/stats" class="btn-nav-kpi">
+            <span>VER INDICADORES (KPIs)</span>
+          </a>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID SERVICIO</th>
+                <th>CLIENTE</th>
+                <th>ORIGEN / RUTA</th>
+                <th>PLACA ASIGNADA</th>
+                <th>FECHA DE INGRESO</th>
+                <th>ESTADO ACTUAL</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${cargas.length > 0 ? cargas.map(c => {
+                const statusClass = c.f_fin ? 'status-fin' : (c.placa ? 'status-proc' : 'status-pend');
+                const statusText = c.f_fin ? 'Finalizado' : (c.placa ? 'En Proceso' : 'Sin Placa');
+                return `
+                <tr>
+                  <td><b>#${c.id}</b></td>
+                  <td>${(c.cli || 'CLIENTE NO DEFINIDO').toUpperCase()}</td>
+                  <td>${(c.orig || 'N/A').toUpperCase()}</td>
+                  <td><span style="color: #3b82f6; font-weight: bold;">${c.placa || '---'}</span></td>
+                  <td>${new Date(c.createdAt).toLocaleString('es-CO')}</td>
+                  <td><span class="badge ${statusClass}">${statusText}</span></td>
+                </tr>`;
+              }).join('') : `<tr><td colspan="6" class="empty-state">No hay cargas registradas en la base de datos.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </body>
+      </html>
+    `);
+  } catch (e) {
+    res.status(500).send("<h1>Error del Servidor</h1><p>" + e.message + "</p>");
+  }
+});
+
+/**
+ * RUTA DE INDICADORES (/stats)
+ * Descripción: Dashboard de métricas con lógica de transición a medianoche.
+ */
 app.get('/stats', async (req, res) => {
   try {
-    // 1. OBTENCIÓN DE DATOS DESDE LA BASE DE DATOS
     const cargas = await C.findAll();
-    
-    // 2. CONFIGURACIÓN DE TIEMPO (ZONA HORARIA BOGOTÁ)
     const hoyDate = new Date();
-    
-    const hoyStr = hoyDate.toLocaleDateString('en-CA', { 
-      timeZone: 'America/Bogota' 
-    });
-    
+    const hoyStr = hoyDate.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
     const mesActualStr = hoyStr.substring(0, 7);
 
-    // 3. FILTRADO DE CARGAS PENDIENTES (SIN PLACA ASIGNADA)
-    const sinPlaca = cargas.filter(c => {
-      return (!c.placa || c.placa.trim() === '') && !c.f_fin;
-    });
-
+    // --- FILTRADO DE PENDIENTES ---
+    const sinPlaca = cargas.filter(c => (!c.placa || c.placa.trim() === '') && !c.f_fin);
     const pendientesPorCliente = {};
-    
     sinPlaca.forEach(c => { 
       const cliente = (c.cli || 'SIN CLIENTE').toUpperCase(); 
       pendientesPorCliente[cliente] = (pendientesPorCliente[cliente] || 0) + 1; 
     });
 
-    // 4. REQUERIMIENTOS DE VEHÍCULOS POR CIUDAD DE ORIGEN
     const reqPorCiudad = {};
-    
     sinPlaca.forEach(c => { 
       const ciudad = (c.orig || 'SIN ORIGEN').toUpperCase(); 
       const tipo = (c.t_v || 'NO ESPECIFICADO').toUpperCase(); 
-      
-      if (!reqPorCiudad[ciudad]) {
-        reqPorCiudad[ciudad] = {};
-      }
-      
+      if(!reqPorCiudad[ciudad]) reqPorCiudad[ciudad] = {}; 
       reqPorCiudad[ciudad][tipo] = (reqPorCiudad[ciudad][tipo] || 0) + 1; 
     });
 
-    // 5. GESTIÓN DE PÉRDIDAS EMERGENTES (CANCELACIONES)
-    const cancelTags = [
-      'CANCELADO POR CLIENTE', 
-      'CANCELADO POR NEGLIGENCIA OPERATIVA', 
-      'CANCELADO POR GERENCIA'
-    ];
-
-    const perdidosTotal = cargas.filter(c => {
-      return cancelTags.includes(c.obs_e);
-    });
-
-    const perdidaDiaria = perdidosTotal.filter(c => {
-      const fechaCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { 
-        timeZone: 'America/Bogota' 
-      });
-      return fechaCrea === hoyStr;
-    }).length;
-
-    const perdidaMesActual = perdidosTotal.filter(c => {
-      const fechaCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { 
-        timeZone: 'America/Bogota' 
-      });
-      return fechaCrea.startsWith(mesActualStr);
-    }).length;
-
+    // --- LÓGICA DE CANCELACIONES / PÉRDIDAS ---
+    const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
+    const perdidosTotal = cargas.filter(c => cancelTags.includes(c.obs_e));
+    const perdidaDiaria = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) === hoyStr).length;
+    const perdidaMesActual = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).startsWith(mesActualStr)).length;
     const perdidaConteo = perdidosTotal.length;
 
-    // 6. LOG DE PRODUCTIVIDAD POR DESPACHADOR
+    // --- LOG DE DESPACHADORES ---
     const despLog = {};
-    
     cargas.forEach(c => { 
       const d = c.desp || 'SIN ASIGNAR'; 
-      const fCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { 
-        timeZone: 'America/Bogota' 
-      }); 
-      const mCrea = fCrea.substring(0, 7); 
-      
-      if (!despLog[d]) {
-        despLog[d] = { hoy: 0, mes: 0 };
-      }
-      
-      if (fCrea === hoyStr) {
-        despLog[d].hoy++;
-      }
-      
-      if (mCrea === mesActualStr) {
-        despLog[d].mes++;
-      }
+      const fCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }); 
+      if(!despLog[d]) despLog[d] = { hoy:0, mes:0 }; 
+      if(fCrea === hoyStr) despLog[d].hoy++; 
+      if(fCrea.substring(0, 7) === mesActualStr) despLog[d].mes++; 
     });
 
-    // 7. CONTADORES PRINCIPALES - LÓGICA DE MEDIANOCHE (00:00)
+    // --- CONTADORES CON REGLA DE MEDIANOCHE (00:00) ---
     const total = cargas.length;
     const fin = cargas.filter(c => c.f_fin).length;
 
-    // --- REGLA: SI SE CREÓ HOY ES "DESPACHADO" ---
+    // DESPACHADOS: Placa asignada HOY
     const despachadosCount = cargas.filter(c => {
-      const fechaCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { 
-        timeZone: 'America/Bogota' 
-      });
+      const fechaCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
       return c.placa && !c.f_fin && fechaCrea === hoyStr;
     }).length;
 
-    // --- REGLA: SI SE CREÓ ANTES DE HOY ES "EN RUTA" ---
+    // EN RUTA: Placa asignada en DÍAS ANTERIORES
     const desp = cargas.filter(c => {
-      const fechaCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { 
-        timeZone: 'America/Bogota' 
-      });
+      const fechaCrea = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
       return c.placa && !c.f_fin && fechaCrea < hoyStr;
     }).length;
 
     const ofis = {}; 
-    cargas.forEach(c => { 
-      if (c.oficina) {
-        ofis[c.oficina] = (ofis[c.oficina] || 0) + 1; 
-      }
-    });
+    cargas.forEach(c => { if(c.oficina) ofis[c.oficina] = (ofis[c.oficina] || 0) + 1; });
 
-    // 8. CONSTRUCCIÓN DE LA INTERFAZ (HTML/CSS)
     res.send(`
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>KPI - LOGISV20 - SISTEMA CENTRAL</title>
+        <title>Dashboard KPIs - LOGISV20</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <style>
-          body { 
-            background: #0f172a; 
-            color: #fff; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; 
-            padding: 25px; 
-          }
-          .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 20px; 
-            border-bottom: 1px solid #1e40af; 
-            padding-bottom: 15px; 
-          }
-          .btn-back { 
-            background: #2563eb; 
-            color: white; 
-            padding: 10px 20px; 
-            text-decoration: none; 
-            border-radius: 6px; 
-            font-weight: bold; 
-          }
-          .kpi-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
-            gap: 15px; 
-            margin-bottom: 25px; 
-          }
-          .card { 
-            background: #1e293b; 
-            padding: 20px; 
-            border-radius: 10px; 
-            border: 1px solid #334155; 
-            text-align: center; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-          }
-          .card h3 { 
-            margin: 0; 
-            font-size: 10px; 
-            color: #94a3b8; 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
-          }
-          .card p { 
-            margin: 10px 0 0; 
-            font-size: 32px; 
-            font-weight: bold; 
-            color: #3b82f6; 
-          }
-          .lost-card { 
-            border-left: 5px solid #ef4444; 
-            background: rgba(239, 68, 68, 0.05); 
-          }
-          .lost-card p { 
-            color: #f87171; 
-          }
-          .desp-card { 
-            border-left: 5px solid #3b82f6; 
-            background: rgba(59, 130, 246, 0.15); 
-          }
-          .desp-card p { 
-            color: #60a5fa; 
-          }
-          .charts { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
-            gap: 20px; 
-            margin-bottom: 25px; 
-          }
-          .chart-box { 
-            background: #1e293b; 
-            padding: 20px; 
-            border-radius: 10px; 
-            border: 1px solid #334155; 
-            text-align: center; 
-          }
-          table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            background: #1e293b; 
-            border-radius: 10px; 
-            overflow: hidden; 
-            margin-bottom: 30px; 
-          }
-          th { 
-            background: #1e40af; 
-            padding: 12px; 
-            font-size: 11px; 
-            text-align: center; 
-          }
-          td { 
-            padding: 12px; 
-            border-bottom: 1px solid #334155; 
-            font-size: 13px; 
-            text-align: center; 
-          }
-          .badge { 
-            padding: 4px 10px; 
-            border-radius: 15px; 
-            font-weight: bold; 
-            font-size: 12px; 
-            color: #fff; 
-            margin: 2px; 
-            display: inline-block; 
-          }
-          .req-badge { 
-            background: #ef4444; 
-            font-size: 10px; 
-          }
-          .cli-badge { 
-            background: #f59e0b; 
-            color: #000; 
-            font-size: 11px; 
-          }
-          .prog-wrapper { 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 10px; 
-          }
-          .prog-bg { 
-            width: 150px; 
-            background: #334155; 
-            height: 12px; 
-            border-radius: 6px; 
-            overflow: hidden; 
-          }
-          .prog-fill { 
-            background: #10b981; 
-            height: 100%; 
-            border-radius: 6px; 
-          }
-          .semaforo-dot { 
-            height: 12px; 
-            width: 12px; 
-            border-radius: 50%; 
-            display: inline-block; 
-            margin-right: 5px; 
-          }
+          body { background: #0f172a; color: #fff; font-family: sans-serif; margin: 0; padding: 25px; }
+          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #1e40af; padding-bottom: 20px; }
+          .btn-back { background: #1e293b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; border: 1px solid #334155; font-weight: bold; }
+          
+          .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 30px; }
+          
+          .card { background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #334155; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+          .card h3 { margin: 0; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
+          .card p { margin: 15px 0 0; font-size: 36px; font-weight: 800; color: #3b82f6; }
+          
+          .desp-card { border-top: 4px solid #3b82f6; background: rgba(59, 130, 246, 0.05); }
+          .ruta-card { border-top: 4px solid #fbbf24; }
+          .fin-card { border-top: 4px solid #10b981; }
+          .lost-card { border-top: 4px solid #ef4444; }
+
+          .charts-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px; margin-top: 20px; }
+          .chart-container { background: #1e293b; padding: 25px; border-radius: 12px; border: 1px solid #334155; }
+          
+          table { width: 100%; border-collapse: collapse; margin-top: 30px; background: #1e293b; border-radius: 12px; overflow: hidden; }
+          th { background: #1e40af; padding: 15px; font-size: 12px; }
+          td { padding: 15px; border-bottom: 1px solid #334155; text-align: center; }
+          .badge-num { background: #3b82f6; color: white; padding: 4px 10px; border-radius: 10px; font-weight: bold; }
         </style>
       </head>
       <body>
         <div class="header">
-          <h2 style="margin:0;">TABLERO DE INDICADORES - LOGISV20</h2>
-          <a href="/" class="btn-back">VOLVER</a>
+          <div>
+            <h2 style="margin:0; font-size: 28px;">TABLERO DE INDICADORES</h2>
+            <p style="margin:5px 0 0; color:#94a3b8;">Corte automático de medianoche activo</p>
+          </div>
+          <a href="/" class="btn-back">← VOLVER AL PANEL</a>
         </div>
 
         <div class="kpi-grid">
-          <div class="card">
-            <h3>Total Servicios</h3>
-            <p>${total}</p>
-          </div>
-          <div class="card">
-            <h3>Finalizados</h3>
-            <p style="color:#10b981">${fin}</p>
-          </div>
-          
-          <div class="card desp-card">
-            <h3>Despachados</h3>
-            <p>${despachadosCount}</p>
-          </div>
-          
-          <div class="card">
-            <h3>En Ruta</h3>
-            <p style="color:#fbbf24">${desp}</p>
-          </div>
-          
-          <div class="card lost-card">
-            <h3>Pérdida (Día)</h3>
-            <p>${perdidaDiaria}</p>
-          </div>
-          <div class="card lost-card" style="border-left-color: #f87171;">
-            <h3>Pérdida (Mes)</h3>
-            <p>${perdidaMesActual}</p>
-          </div>
+          <div class="card"><h3>Total Servicios</h3><p>${total}</p></div>
+          <div class="card fin-card"><h3>Finalizados</h3><p style="color:#10b981">${fin}</p></div>
+          <div class="card desp-card"><h3>Despachados (Hoy)</h3><p style="color:#60a5fa">${despachadosCount}</p></div>
+          <div class="card ruta-card"><h3>En Ruta (Transito)</h3><p style="color:#fbbf24">${desp}</p></div>
+          <div class="card lost-card"><h3>Pérdida Diaria</h3><p style="color:#f87171">${perdidaDiaria}</p></div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:20px;">
-          <div>
-            <h3 style="color:#f59e0b; border-left: 4px solid #f59e0b; padding-left: 10px; margin-bottom:15px;">CARGAS PENDIENTES POR CLIENTE</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>CLIENTE</th>
-                  <th>SIN PLACA</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${Object.entries(pendientesPorCliente).sort((a,b)=>b[1]-a[1]).map(([cli, cant]) => `
-                  <tr>
-                    <td><b>${cli}</b></td>
-                    <td><span class="badge cli-badge">${cant}</span></td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-          
-          <div>
-            <h3 style="color:#ef4444; border-left: 4px solid #ef4444; padding-left: 10px; margin-bottom:15px;">VEHÍCULOS FALTANTES</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>ORIGEN</th>
-                  <th>DETALLE</th>
-                  <th>TOTAL</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${Object.entries(reqPorCiudad).map(([city, types]) => `
-                  <tr>
-                    <td><b>${city}</b></td>
-                    <td>
-                      ${Object.entries(types).map(([t, q]) => `
-                        <span class="badge req-badge">${q}</span> ${t}
-                      `).join(' | ')}
-                    </td>
-                    <td>
-                      <b style="color:#ef4444">${Object.values(types).reduce((a, b) => a + b, 0)}</b>
-                    </td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="charts">
-          <div class="chart-box">
-            <h4>ESTADO DE OPERACIÓN</h4>
+        <div class="charts-section">
+          <div class="chart-container">
+            <h4 style="margin-top:0; text-align:center; color:#94a3b8;">ESTADO GLOBAL DE OPERACIONES</h4>
             <canvas id="c1"></canvas>
           </div>
-          <div class="chart-box">
-            <h4>SERVICIOS POR OFICINA</h4>
+          <div class="chart-container">
+            <h4 style="margin-top:0; text-align:center; color:#94a3b8;">DISTRIBUCIÓN POR OFICINA</h4>
             <canvas id="c2"></canvas>
           </div>
         </div>
 
         <table>
           <thead>
-            <tr>
-              <th>DESPACHADOR</th>
-              <th>HOY</th>
-              <th>MES</th>
-              <th>ESTADO</th>
-              <th>PRODUCTIVIDAD (%)</th>
-            </tr>
+            <tr><th>DESPACHADOR</th><th>SERVICIOS HOY</th><th>ACUMULADO MES</th><th>PRODUCTIVIDAD</th></tr>
           </thead>
           <tbody>
-            ${Object.entries(despLog).map(([name, s]) => {
-              const prodPerc = total > 0 ? ((s.mes/total)*100).toFixed(1) : 0;
-              let semColor = prodPerc >= 25 ? '#10b981' : (prodPerc >= 10 ? '#fbbf24' : '#ef4444');
-              return `
-                <tr>
-                  <td><b>${name}</b></td>
-                  <td><span class="badge" style="background:#3b82f6">${s.hoy}</span></td>
-                  <td><span class="badge" style="background:#8b5cf6">${s.mes}</span></td>
-                  <td><span class="semaforo-dot" style="background:${semColor}"></span></td>
-                  <td>
-                    <div class="prog-wrapper">
-                      <div class="prog-bg">
-                        <div style="width:${prodPerc}%;background:${semColor}" class="prog-fill"></div>
-                      </div>
-                      <b>${prodPerc}%</b>
-                    </div>
-                  </td>
-                </tr>
-              `;
-            }).join('')}
+            ${Object.entries(despLog).map(([name, s]) => `
+              <tr>
+                <td><b>${name}</b></td>
+                <td><span class="badge-num">${s.hoy}</span></td>
+                <td><span class="badge-num" style="background:#8b5cf6">${s.mes}</span></td>
+                <td><div style="width:100px; background:#334155; height:8px; border-radius:4px; margin:auto;">
+                  <div style="width:${(s.mes/total*100).toFixed(0)}%; background:#10b981; height:100%; border-radius:4px;"></div>
+                </div></td>
+              </tr>
+            `).join('')}
           </tbody>
         </table>
 
         <script>
-          new Chart(document.getElementById('c1'), {
+          const ctx1 = document.getElementById('c1').getContext('2d');
+          new Chart(ctx1, {
             type: 'doughnut',
             data: {
-              labels: ['Finalizado', 'En Ruta', 'Despachado', 'Pérdida', 'Otros'],
+              labels: ['Finalizados', 'En Ruta', 'Despachados', 'Pérdidas'],
               datasets: [{
-                data: [
-                  ${fin},
-                  ${desp},
-                  ${despachadosCount},
-                  ${perdidaConteo},
-                  ${total - fin - desp - despachadosCount - perdidaConteo}
-                ],
-                backgroundColor: ['#10b981', '#fbbf24', '#3b82f6', '#ef4444', '#475569'],
+                data: [${fin}, ${desp}, ${despachadosCount}, ${perdidaConteo}],
+                backgroundColor: ['#10b981', '#fbbf24', '#3b82f6', '#ef4444'],
                 borderWidth: 0
               }]
             },
-            options: {
-              plugins: {
-                legend: {
-                  position: 'bottom',
-                  labels: { color: '#fff' }
-                }
-              }
-            }
+            options: { plugins: { legend: { position: 'bottom', labels: { color: '#fff', padding: 20 } } } }
           });
 
-          new Chart(document.getElementById('c2'), {
+          const ctx2 = document.getElementById('c2').getContext('2d');
+          new Chart(ctx2, {
             type: 'bar',
             data: {
               labels: ${JSON.stringify(Object.keys(ofis))},
               datasets: [{
-                label: 'Servicios',
+                label: 'Cargas',
                 data: ${JSON.stringify(Object.values(ofis))},
-                backgroundColor: '#3b82f6'
+                backgroundColor: '#3b82f6',
+                borderRadius: 5
               }]
             },
             options: {
               scales: {
-                y: { beginAtZero: true, ticks: { color: '#fff' } },
-                x: { ticks: { color: '#fff' } }
+                y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } },
+                x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
               },
               plugins: { legend: { display: false } }
             }
@@ -720,14 +606,12 @@ app.get('/stats', async (req, res) => {
       </body>
       </html>
     `);
-  } catch (e) { 
-    res.send(e.message); 
-  }
+  } catch (e) { res.send("Error en Estadísticas: " + e.message); }
 });
 
-// 9. SINCRONIZACIÓN Y ARRANQUE DEL SERVIDOR
+// SINCRONIZACIÓN DE BASE DE DATOS Y ARRANQUE DEL SERVIDOR
 db.sync({ alter: true }).then(() => {
   app.listen(process.env.PORT || 3000, () => {
-    console.log("Servidor KPI Node 20 corriendo...");
+    console.log("Servidor LogisV20 operando en puerto 3000");
   });
 });
