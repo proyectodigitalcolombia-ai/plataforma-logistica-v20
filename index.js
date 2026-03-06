@@ -230,9 +230,9 @@ try {
    </tr>`;
   }
 
-const total = d.length;
-const fin = d.filter(c => c.f_fin).length;
-const desp = d.filter(c => c.placa && !c.f_fin).length;
+ const total = d.length;
+ const fin = d.filter(c => c.f_fin).length;
+ const desp = d.filter(c => c.placa && !c.f_fin).length;
  
  res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
  <h2 style="color:#3b82f6; margin: 0 0 10px 0;">SISTEMA LOGISTICO DE YEGO ECO T S.A.S</h2>
