@@ -511,7 +511,6 @@ app.get('/stats', async (req, res) => {
  if(mCrea === mesActualStr) despLog[d].mes++;
  });
 
- const hoyStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
  const total = cargas.length;
  const fin = cargas.filter(c => c.f_fin).length;
 
