@@ -301,7 +301,11 @@ app.get('/', async (req, res) => {
    }
 
    const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
-   let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
+   // LOGICA DE BOTON FIN: Solo aparece si hay placa O si es Perdida Emergente (Cancelados)
+   const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
+   const permiteFin = (c.placa || cancelTags.includes(c.obs_e));
+   let accionFin = c.f_fin ? `✓` : (permiteFin ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
+   
    const idUnico = c.id.toString().padStart(4, '0');
    const fechaLocal = new Date(c.createdAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' });
 
@@ -560,7 +564,13 @@ app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.ob
 
 app.get('/finish/:id', async (req, res) => { 
  const ahora = getNow(); 
- await C.update({ f_fin: ahora, obs_e: 'FINALIZADO SIN NOVEDAD', est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); 
+ const c = await C.findByPk(req.params.id);
+ if(!c) return res.redirect('/');
+ const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
+ // VALIDACIÓN: Solo finaliza si tiene placa O si es Perdida Emergente (Cancelado)
+ if(c.placa || cancelTags.includes(c.obs_e)) {
+  await C.update({ f_fin: ahora, est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); 
+ }
  res.redirect('/'); 
 });
 
@@ -580,9 +590,9 @@ app.get('/stats', async (req, res) => {
   sinPlaca.forEach(c => { const ciudad = (c.orig || 'SIN ORIGEN').toUpperCase(); const tipo = (c.t_v || 'NO ESPECIFICADO').toUpperCase(); if(!reqPorCiudad[ciudad]) reqPorCiudad[ciudad] = {}; reqPorCiudad[ciudad][tipo] = (reqPorCiudad[ciudad][tipo] || 0) + 1; });
 
   const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
-  // LOGICA MODIFICADA: La perdida mensual cuenta TODOS los cancelados creados en el mes actual sin importar si se finalizan o se borran visualmente. El reset es automático al cambiar mesActualStr
   const perdidosTotal = cargas.filter(c => cancelTags.includes(c.obs_e));
   const perdidaDiaria = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }) === hoyStr).length;
+  // LOGICA MANTENIDA: El reseteo ocurre solo cuando cambia mesActualStr (a final de mes 24:00)
   const perdidaMesActual = perdidosTotal.filter(c => new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' }).startsWith(mesActualStr)).length;
   const perdidaConteo = perdidosTotal.length;
 
