@@ -286,17 +286,32 @@ try {
  </button>
  </form>
 
- <div class="sc fs" id="st"><div class="fc"></div></div>
- <div class="sc" id="sm">
- <table id="tabla">
- <thead>
- <tr>
- <th class="col-num">#</th><th class="col-id">ID</th><th class="col-reg">FECHA REGISTRO</th><th>OFICINA</th><th class="col-emp">EMPRESA</th><th>COMERCIAL</th><th>PUERTO</th><th>REFLEJA</th><th>FECHA DOCUMENTO</th><th>HORA DOCUMENTO</th><th>DO / BL</th><th>CLIENTE</th><th>SUBCLIENTE</th><th>MODALIDAD</th><th>LCL / FCL</th><th>CONTENEDOR</th><th>PESO</th><th>UNIDAD</th><th>PRODUCTO</th><th>ESQUEMA</th><th>VENCIMIENTO</th><th>ORIGEN</th><th>DESTINO</th><th>TIPO VEHÍCULO</th><th>PEDIDO</th><th>FECHA CARGUE</th><th>HORA CARGUE</th><th>FECHA DESPACHO</th><th>HORA DESPACHO</th><th class="col-placa">PLACA</th><th>FLETE A PAGAR</th><th>FLETE A FACTURAR</th><th class="col-est">ESTADO OPERATIVO</th><th>ACTUALIZACIÓN</th><th>ESTADO FINAL</th><th>OBSERVACIONES</th><th>CONDICIONES</th><th>HORARIO</th><th>MUC</th><th class="col-desp">DESPACHADOR</th><th>FINALIZAR</th><th class="col-hfin">HORA FIN</th><th class="col-acc">ACCIONES</th>
- </tr>
- </thead>
- <tbody>${rows}</tbody>
- </table>
- </div>
+<div class="kpi-grid">
+  <div class="card">
+    <h3>Total Servicios</h3>
+    <p>${total}</p>
+  </div>
+
+  <div class="card" style="border-bottom: 4px solid #10b981;">
+    <h3>Finalizados</h3>
+    <p style="color:#10b981">${fin}</p>
+  </div>
+
+  <div class="card" style="border-bottom: 4px solid #34d399;">
+    <h3>Despachados (Hoy)</h3>
+    <p style="color:#34d399">${despachadosHoy}</p>
+  </div>
+
+  <div class="card" style="border-bottom: 4px solid #3b82f6;">
+    <h3>En Ruta (Pasados)</h3>
+    <p style="color:#3b82f6">${enRutaPasados}</p>
+  </div>
+
+  <div class="card lost-card">
+    <h3>Pérdida Diaria</h3>
+    <p style="color:#f87171">${perdidaDiaria}</p>
+  </div>
+</div>
 
  <script>
  const CLAVE_ADMIN = "ADMIN123";
