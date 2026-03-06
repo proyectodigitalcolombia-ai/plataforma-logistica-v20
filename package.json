@@ -1,20 +1,22 @@
 {
-  "name": "logistica-v20",
+  "name": "sistema-logistico-yego",
   "version": "1.0.0",
-  "description": "Sistema de Control de Cargas",
+  "description": "Sistema de gestión logística y seguimiento de carga",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "engines": {
     "node": "20.x"
   },
   "dependencies": {
-    "axios": "^1.6.2",
     "express": "^4.18.2",
-    "pg": "^8.11.0",
+    "sequelize": "^6.33.0",
+    "pg": "^8.11.3",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.32.1",
-    "cors": "^2.8.5"
-  }
+    "node-cron": "^3.0.3"
+  },
+  "author": "",
+  "license": "ISC"
 }
