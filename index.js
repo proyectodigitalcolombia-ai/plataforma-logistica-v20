@@ -126,101 +126,109 @@ const css = `<style>
 </style>`;
 
 app.get('/', async (req, res) => {
- try {
- const d = await C.findAll({ order: [['id', 'DESC']] });
- let rows = '';
- const hoy = new Date(); hoy.setHours(0,0,0,0);
- let index = 1;
+try {
+  const d = await C.findAll({ order: [['id', 'DESC']] });
+  let rows = '';
+  let index = 1;
 
-const fechaCreacion = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+  // 1. Definimos hoyStr UNA SOLA VEZ antes del bucle
+  const hoyStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+  const hoyParaVence = new Date(); hoyParaVence.setHours(0,0,0,0);
 
-let displayReal = 'PENDIENTE';
-let stClass = 'background:#475569;color:#cbd5e1'; 
+  for (let c of d) {
+   // 2. Definimos isLocked y fechaCreacion DENTRO del bucle para cada registro
+   const isLocked = c.f_fin ? 'disabled' : '';
+   const fechaCreacion = new Date(c.createdAt).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
 
-if (c.f_fin) {
+   // 3. Lógica de estado automático
+   let displayReal = 'PENDIENTE';
+   let stClass = 'background:#475569;color:#cbd5e1'; 
+
+   if (c.f_fin) {
     displayReal = 'FINALIZADO';
     stClass = 'background:#1e40af;color:#bfdbfe'; 
-} else if (c.placa) {
+   } else if (c.placa) {
     if (fechaCreacion !== hoyStr) { 
-        displayReal = 'VEHICULO EN RUTA';
-        stClass = 'background:#1e3a8a;color:#93c5fd;border:1px solid #3b82f6'; 
+     displayReal = 'VEHICULO EN RUTA';
+     stClass = 'background:#1e3a8a;color:#93c5fd;border:1px solid #3b82f6'; 
     } else {
-        displayReal = 'DESPACHADO';
-        stClass = 'background:#065f46;color:#34d399'; 
+     displayReal = 'DESPACHADO';
+     stClass = 'background:#065f46;color:#34d399'; 
     }
-}
- 
- let venceStyle = '';
- if (c.vence && !c.f_fin && !c.placa) {
- const fVence = new Date(c.vence);
- const diffDays = Math.ceil((fVence - hoy) / 864e5);
- if (diffDays <= 2) venceStyle = 'vence-rojo';
- else if (diffDays <= 6) venceStyle = 'vence-amarillo';
- }
+   }
 
- const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
- let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
- const idUnico = c.id.toString().padStart(4, '0');
- const fechaLocal = new Date(c.createdAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' });
+   // 4. Lógica de vencimiento
+   let venceStyle = '';
+   if (c.vence && !c.f_fin && !c.placa) {
+    const fVence = new Date(c.vence);
+    const diffDays = Math.ceil((fVence - hoyParaVence) / 864e5);
+    if (diffDays <= 2) venceStyle = 'vence-rojo';
+    else if (diffDays <= 6) venceStyle = 'vence-amarillo';
+   }
 
- const ed = (field, val) => `<td><form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="${field}" value="${val||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked} oninput="this.value=this.value.toUpperCase()"></form></td>`;
+   const selectEstado = `<select class="sel-est" ${isLocked} onchange="updState(${c.id}, this.value)">${opts.estados.map(st => `<option value="${st}" ${c.obs_e === st ? 'selected' : ''}>${st}</option>`).join('')}</select>`;
+   let accionFin = c.f_fin ? `✓` : (c.placa ? `<a href="/finish/${c.id}" style="background:#10b981;color:white;padding:3px 6px;border-radius:4px;text-decoration:none;font-size:9px" onclick="return confirm('¿Finalizar?')">FIN</a>` : `...`);
+   const idUnico = c.id.toString().padStart(4, '0');
+   const fechaLocal = new Date(c.createdAt).toLocaleString('es-CO', { timeZone: 'America/Bogota' });
 
- rows += `<tr class="fila-datos">
- <td class="col-num">${index++}</td>
- <td class="col-id">${idUnico}</td>
- <td class="col-reg">${fechaLocal}</td>
- ${ed('oficina', c.oficina)}
- ${ed('emp_gen', c.emp_gen)}
- ${ed('comercial', c.comercial)}
- ${ed('pto', c.pto)}
- ${ed('refleja', c.refleja)}
- ${ed('f_doc', c.f_doc)}
- ${ed('h_doc', c.h_doc)}
- ${ed('do_bl', c.do_bl)}
- ${ed('cli', c.cli)}
- ${ed('subc', c.subc)}
- ${ed('mod', c.mod)}
- ${ed('lcl', c.lcl)}
- ${ed('cont', c.cont)}
- ${ed('peso', c.peso)}
- ${ed('unid', c.unid)}
- ${ed('prod', c.prod)}
- ${ed('esq', c.esq)}
- <td class="${venceStyle}" onclick="silenciar(this)" style="padding:6px; min-width:80px;">${c.vence||''}</td>
- ${ed('orig', c.orig)}
- ${ed('dest', c.dest)}
- ${ed('t_v', c.t_v)}
- ${ed('ped', c.ped)}
- ${ed('f_c', c.f_c)}
- ${ed('h_c', c.h_c)}
- ${ed('f_d', c.f_d)}
- ${ed('h_d', c.h_d)}
- <td class="col-placa">
- <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:4px;justify-content:center;align-items:center">
- <input name="placa" class="in-placa" value="${c.placa||''}" ${c.f_fin ? 'disabled' : ''} placeholder="PLACA" oninput="this.value=this.value.toUpperCase()">
- <button ${c.f_fin ? 'disabled' : ''} style="background:#10b981;color:#fff;border:none;padding:5px;border-radius:3px;cursor:pointer;font-weight:bold">OK</button>
- </form>
- </td>
- ${ed('f_p', c.f_p)}
- ${ed('f_f', c.f_f)}
- <td class="col-est">${selectEstado}</td>
- <td style="width:115px;color:#fbbf24;padding:6px">${c.f_act||''}</td>
- <td style="width:100px"><span style="padding:2px 6px;border-radius:10px;font-weight:bold;font-size:8px;${stClass}">${displayReal}</span></td>
- ${ed('obs', c.obs)}
- ${ed('cond', c.cond)}
- ${ed('h_t', c.h_t)}
- ${ed('muc', c.muc)}
- <td class="col-desp" style="padding:6px;">${c.desp||''}</td>
- <td>${accionFin}</td>
- <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
- <td class="col-acc">
- <div class="acc-cell">
- <a href="#" style="color:#f87171;text-decoration:none;font-size:10px" onclick="eliminarConClave(${c.id})">🗑️</a>
- <input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()">
- </div>
- </td>
- </tr>`;
- }
+   const ed = (field, val) => `<td><form action="/edit-live/${c.id}" method="POST" style="margin:0"><input name="${field}" value="${val||''}" class="editable-cell" onchange="this.form.submit()" ${isLocked} oninput="this.value=this.value.toUpperCase()"></form></td>`;
+
+   rows += `<tr class="fila-datos">
+    <td class="col-num">${index++}</td>
+    <td class="col-id">${idUnico}</td>
+    <td class="col-reg">${fechaLocal}</td>
+    ${ed('oficina', c.oficina)}
+    ${ed('emp_gen', c.emp_gen)}
+    ${ed('comercial', c.comercial)}
+    ${ed('pto', c.pto)}
+    ${ed('refleja', c.refleja)}
+    ${ed('f_doc', c.f_doc)}
+    ${ed('h_doc', c.h_doc)}
+    ${ed('do_bl', c.do_bl)}
+    ${ed('cli', c.cli)}
+    ${ed('subc', c.subc)}
+    ${ed('mod', c.mod)}
+    ${ed('lcl', c.lcl)}
+    ${ed('cont', c.cont)}
+    ${ed('peso', c.peso)}
+    ${ed('unid', c.unid)}
+    ${ed('prod', c.prod)}
+    ${ed('esq', c.esq)}
+    <td class="${venceStyle}" onclick="silenciar(this)" style="padding:6px; min-width:80px;">${c.vence||''}</td>
+    ${ed('orig', c.orig)}
+    ${ed('dest', c.dest)}
+    ${ed('t_v', c.t_v)}
+    ${ed('ped', c.ped)}
+    ${ed('f_c', c.f_c)}
+    ${ed('h_c', c.h_c)}
+    ${ed('f_d', c.f_d)}
+    ${ed('h_d', c.h_d)}
+    <td class="col-placa">
+     <form action="/u/${c.id}" method="POST" style="margin:0;display:flex;gap:4px;justify-content:center;align-items:center">
+      <input name="placa" class="in-placa" value="${c.placa||''}" ${isLocked} placeholder="PLACA" oninput="this.value=this.value.toUpperCase()">
+      <button ${isLocked} style="background:#10b981;color:#fff;border:none;padding:5px;border-radius:3px;cursor:pointer;font-weight:bold">OK</button>
+     </form>
+    </td>
+    ${ed('f_p', c.f_p)}
+    ${ed('f_f', c.f_f)}
+    <td class="col-est">${selectEstado}</td>
+    <td style="width:115px;color:#fbbf24;padding:6px">${c.f_act||''}</td>
+    <td style="width:100px"><span style="padding:2px 6px;border-radius:10px;font-weight:bold;font-size:8px;${stClass}">${displayReal}</span></td>
+    ${ed('obs', c.obs)}
+    ${ed('cond', c.cond)}
+    ${ed('h_t', c.h_t)}
+    ${ed('muc', c.muc)}
+    <td class="col-desp" style="padding:6px;">${c.desp||''}</td>
+    <td>${accionFin}</td>
+    <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
+    <td class="col-acc">
+     <div class="acc-cell">
+      <a href="#" style="color:#f87171;text-decoration:none;font-size:10px" onclick="eliminarConClave(${c.id})">🗑️</a>
+      <input type="checkbox" class="row-check" value="${c.id}" onclick="toggleDelBtn()">
+     </div>
+    </td>
+   </tr>`;
+  }
 
  res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
  <h2 style="color:#3b82f6; margin: 0 0 10px 0;">SISTEMA LOGISTICO DE YEGO ECO T S.A.S</h2>
