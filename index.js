@@ -1,5 +1,6 @@
 const express = require('express');
 const { Sequelize, DataTypes, Op } = require('sequelize');
+const cron = require('node-cron');
 const app = express();
 
 // --- INSERCIÓN A: LLAMADO ASISTENTE GPS ---
@@ -215,7 +216,7 @@ async function autoTransitoRuta() {
     where: {
       placa: { [Op.ne]: null, [Op.not]: "" },
       f_fin: null,
-      obs_e: { [Op.notIn]: ['VEHICULO EN RUTA', 'FINALIZADO SIN NOVEDAD', 'FINALIZADO CON NOVEDAD'] }
+      obs_e: 'DESPACHADO'
     }
   });
 
@@ -229,6 +230,14 @@ async function autoTransitoRuta() {
     }
   }
 }
+
+// PROGRAMACIÓN CRON: SE EJECUTA A LAS 00:00 TODOS LOS DÍAS
+cron.schedule('0 0 * * *', () => {
+  autoTransitoRuta();
+}, {
+  scheduled: true,
+  timezone: "America/Bogota"
+});
 
 const css = `<style>
  body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}
@@ -554,7 +563,7 @@ app.post('/edit-live/:id', async (req, res) => {
 });
 
 app.post('/u/:id', async (req, res) => { 
- await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); 
+ await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', obs_e: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); 
  const carga = await C.findByPk(req.params.id);
  if(carga && carga.placa) { enviarAMonitor(carga); }
  res.redirect('/'); 
