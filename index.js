@@ -378,7 +378,7 @@ app.get('/', async (req, res) => {
   }
 
   res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
-  <h2 style="color:#3b82f6; margin: 0 0 10px 0;">SISTEMA LOGISTICO DE YEGO ECO T S.A.S</h2>
+  <h2 style="color:#3b82f6; margin: 0 0 10px 0;">SISTEMA LOGISTICO DE TRANSPORTES SARVI</h2>
   <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">
    <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Filtrar por Placa, Cliente, ID...">
    <button class="btn-xls" onclick="exportExcel()">Excel</button>
