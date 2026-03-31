@@ -9,6 +9,14 @@ const { enviarAMonitor } = require('./gpsService');
 app.use(express.urlencoded({ extended: true })); 
 app.use(express.json());
 
+  // Serve SafeNode logo
+  const _logoData = require('fs').readFileSync(require('path').join(__dirname, 'logo-safenode.png'));
+  app.get('/logo.png', (req, res) => {
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.send(_logoData);
+  });
+
 const db = new Sequelize(process.env.DATABASE_URL, { 
  dialect: 'postgres', 
  logging: false, 
@@ -785,13 +793,19 @@ cron.schedule('0 0 * * *', () => {
 });
 
 const css = `<style>
- body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:20px}
- .sc{width:100%;overflow-x:auto;background:#1e293b;border:1px solid #334155;border-radius:8px}
+ @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+   *{font-family:'Inter','Segoe UI',sans-serif;}
+ body{background:#0D1117;color:#fff;font-family:'Inter',sans-serif;margin:0;padding:20px}
+ ::-webkit-scrollbar{width:8px;height:8px}
+   ::-webkit-scrollbar-track{background:#0D1117}
+   ::-webkit-scrollbar-thumb{background:#0076B6;border-radius:4px}
+   ::-webkit-scrollbar-thumb:hover{background:#00B4D8}
+ .sc{width:100%;overflow-x:auto;background:#0d1e30;border:1px solid #1a3d56;border-radius:8px}
  .fs{height:12px;margin-bottom:5px}
  .fc{width:8600px;height:1px}
  table{border-collapse:collapse;min-width:8600px;font-size:10px;table-layout: fixed;}
- th{background:#1e40af;padding:10px 5px;text-align:center;position:sticky;top:0;border-right:1px solid #3b82f6; word-wrap: break-word; white-space: normal; vertical-align: middle;}
- td{padding:0px;border:1px solid #334155;white-space:nowrap;text-align:center; overflow: hidden; text-overflow: ellipsis;}
+ th{background:#003d6b;padding:10px 5px;text-align:center;position:sticky;top:0;border-right:1px solid #0076B6; word-wrap: break-word; white-space: normal; vertical-align: middle;}
+ td{padding:0px;border:1px solid #1a3d56;white-space:nowrap;text-align:center; overflow: hidden; text-overflow: ellipsis;}
  .col-num { width: 30px; padding:6px; }
  .col-id { width: 40px; font-weight: bold; padding:6px; }
  .col-reg { width: 110px; font-size: 9px; padding:6px; }
@@ -799,30 +813,30 @@ const css = `<style>
  .col-placa { width: 120px; }
  .in-placa { width: 75px !important; font-size: 11px !important; font-weight: bold; height: 25px; }
  .col-est { width: 210px; padding: 0 !important; }
- .sel-est { background:#334155; color:#fff; border:none; padding:4px; font-size:9px; width:100%; height: 100%; cursor:pointer; text-align: center; }
+ .sel-est { background:#1a3d56; color:#fff; border:none; padding:4px; font-size:9px; width:100%; height: 100%; cursor:pointer; text-align: center; }
  .col-desp { width: 130px; padding:6px; }
  .col-hfin { width: 115px; font-size: 9px; padding:6px; }
  .col-acc { width: 70px; }
  .acc-cell { display: flex; align-items: center; justify-content: center; gap: 8px; height: 35px; }
- .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#1e293b;padding:20px;border-radius:8px;border:1px solid #2563eb}
+ .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:25px;background:#0d1e30;padding:20px;border-radius:8px;border:1px solid #0076B6}
  .fg{display:flex;flex-direction:column;gap:4px}
  label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:700}
  input,select,textarea{padding:8px;border-radius:4px;border:none;font-size:11px;color:#000;text-align:center}
- .btn-submit-serious{ grid-column:1/-1; background:#1e40af; color:#fff; padding:12px; cursor:pointer; border:none; font-weight:700; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:10px; transition: background 0.2s; }
- .btn-submit-serious:hover{ background:#1d4ed8; }
+ .btn-submit-serious{ grid-column:1/-1; background:#003d6b; color:#fff; padding:12px; cursor:pointer; border:none; font-weight:700; border-radius:6px; display:flex; align-items:center; justify-content:center; gap:10px; transition: background 0.2s; }
+ .btn-submit-serious:hover{ background:#005a8e; }
  .icon-serious{ width:20px; height:20px; fill:#fff; }
  .btn-xls{background:#556b2f;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;height:38px;box-sizing:border-box;}
  .btn-stats{background:#4c1d95;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;text-decoration:none;font-size:13px;height:38px;box-sizing:border-box;display:flex;align-items:center;}
- .container-check-all{background:#2563eb;padding:5px 10px;border-radius:6px;display:flex;align-items:center;gap:5px;height:38px;box-sizing:border-box;}
+ .container-check-all{background:#0076B6;padding:5px 10px;border-radius:6px;display:flex;align-items:center;gap:5px;height:38px;box-sizing:border-box;}
  .btn-del-mult{background:#ef4444;color:white;padding:10px 15px;border-radius:6px;font-weight:bold;border:none;cursor:pointer;display:none;height:38px;box-sizing:border-box;}
- #busq{padding:10px;width:250px;border-radius:6px;border:1px solid #3b82f6;background:#1e293b;color:white;font-weight:bold;height:38px;box-sizing:border-box;}
+ #busq{padding:10px;width:250px;border-radius:6px;border:1px solid #0076B6;background:#0d1e30;color:white;font-weight:bold;height:38px;box-sizing:border-box;}
  .vence-rojo{background:#dc2626 !important;color:#fff !important;font-weight:bold;animation: blink 2s infinite;cursor:pointer}
  .vence-amarillo{background:#fbbf24 !important;color:#000 !important;font-weight:bold}
  .editable-cell { background: transparent !important; color: #fff !important; border: none !important; width: 100%; height: 32px; text-align: center; cursor: pointer; padding: 0; font-size: 10px; }
- .editable-cell:focus { background: #334155 !important; outline: 1px solid #3b82f6 !important; color: #fff !important; }
+ .editable-cell:focus { background: #1a3d56 !important; outline: 1px solid #0076B6 !important; color: #fff !important; }
  .editable-cell:disabled { color: #94a3b8 !important; cursor: default; }
  @keyframes blink { 0% {opacity:1} 50% {opacity:0.6} 100% {opacity:1} }
- tr:hover td { background: #334155; }
+ tr:hover td { background: #1a3d56; }
 </style>`;
 
 app.get('/', async (req, res) => {
@@ -840,7 +854,7 @@ app.get('/', async (req, res) => {
 
    if (c.f_fin) {
     displayReal = 'FINALIZADO';
-    stClass = 'background:#1e40af;color:#bfdbfe'; 
+    stClass = 'background:#003d6b;color:#bfdbfe'; 
    } else if (c.placa) {
     displayReal = 'DESPACHADO';
     stClass = 'background:#065f46;color:#34d399'; 
@@ -912,7 +926,7 @@ app.get('/', async (req, res) => {
     ${ed('muc', c.muc)}
     <td class="col-desp" style="padding:6px;">${c.desp||''}</td>
     <td>${accionFin}</td>
-    <td class="col-hfin"><b style="color:#3b82f6">${c.f_fin||'--'}</b></td>
+    <td class="col-hfin"><b style="color:#0076B6">${c.f_fin||'--'}</b></td>
     <td class="col-acc">
      <div class="acc-cell">
       <a href="#" style="color:#f87171;text-decoration:none;font-size:10px" onclick="eliminarConClave(${c.id})">🗑️</a>
@@ -923,7 +937,13 @@ app.get('/', async (req, res) => {
   }
 
   res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
-  <h2 style="color:#3b82f6; margin: 0 0 10px 0;">SISTEMA LOGISTICO DE TRANSPORTES SARVI</h2>
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;background:linear-gradient(135deg,#0d1e30 0%,#001e3c 100%);padding:14px 18px;border-radius:10px;border:1px solid #1a3d56;box-shadow:0 2px 16px rgba(0,118,182,0.18);">
+      <img src="/logo.png" alt="SafeNode" style="height:44px;width:auto;object-fit:contain;">
+      <div>
+        <div style="color:#00B4D8;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:2px;">SafeNode ITR</div>
+        <div style="color:#f1f5f9;font-size:16px;font-weight:700;letter-spacing:0.3px;">SISTEMA LOGÍSTICO — TRANSPORTES SARVI</div>
+      </div>
+    </div>
   <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">
    <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Filtrar por Placa, Cliente, ID...">
    <button class="btn-xls" onclick="exportExcel()">Excel</button>
@@ -1192,27 +1212,27 @@ app.get('/stats', async (req, res) => {
 
     res.send(`<html><head><meta charset="UTF-8"><title>KPI - LOGISV20</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-    body{background:#0f172a;color:#fff;font-family:sans-serif;margin:0;padding:25px;}
-    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid #1e40af;padding-bottom:15px;}
-    .btn-back{background:#2563eb;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:bold;}
+    body{background:#0D1117;color:#fff;font-family:sans-serif;margin:0;padding:25px;}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;border-bottom:1px solid #003d6b;padding-bottom:15px;}
+    .btn-back{background:#0076B6;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;font-weight:bold;}
     .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:25px;}
-    .card{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;display:flex;flex-direction:column;justify-content:center;}
+    .card{background:#0d1e30;padding:20px;border-radius:10px;border:1px solid #1a3d56;text-align:center;display:flex;flex-direction:column;justify-content:center;}
     .card h3{margin:0;font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;}
-    .card p{margin:10px 0 0;font-size:32px;font-weight:bold;color:#3b82f6;}
+    .card p{margin:10px 0 0;font-size:32px;font-weight:bold;color:#0076B6;}
     .lost-card{border-left: 5px solid #ef4444; background: rgba(239, 68, 68, 0.05);}
     .lost-card p{color:#f87171;}
-    .desp-card{border-left: 5px solid #3b82f6; background: rgba(59, 130, 246, 0.1);}
+    .desp-card{border-left: 5px solid #0076B6; background: rgba(59, 130, 246, 0.1);}
     .desp-card p{color:#60a5fa;}
     .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:20px;margin-bottom:25px;}
-    .chart-box{background:#1e293b;padding:20px;border-radius:10px;border:1px solid #334155;text-align:center;}
-    table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:10px;overflow:hidden;margin-bottom:30px;}
-    th{background:#1e40af;padding:12px;font-size:11px;text-align:center;}
-    td{padding:12px;border-bottom:1px solid #334155;font-size:13px;text-align:center;}
+    .chart-box{background:#0d1e30;padding:20px;border-radius:10px;border:1px solid #1a3d56;text-align:center;}
+    table{width:100%;border-collapse:collapse;background:#0d1e30;border-radius:10px;overflow:hidden;margin-bottom:30px;}
+    th{background:#003d6b;padding:12px;font-size:11px;text-align:center;}
+    td{padding:12px;border-bottom:1px solid #1a3d56;font-size:13px;text-align:center;}
     .badge{padding:4px 10px;border-radius:15px;font-weight:bold;font-size:12px;color:#fff;margin:2px;display:inline-block;}
     .req-badge{background:#ef4444; font-size:10px;}
     .cli-badge{background:#f59e0b; color:#000; font-size:11px;}
     .prog-wrapper{display:flex;align-items:center;justify-content:center;gap:10px;}
-    .prog-bg{width:150px;background:#334155;height:12px;border-radius:6px;overflow:hidden;}
+    .prog-bg{width:150px;background:#1a3d56;height:12px;border-radius:6px;overflow:hidden;}
     .prog-fill{background:#10b981;height:100%;border-radius:6px;}
     .semaforo-dot{height:12px;width:12px;border-radius:50%;display:inline-block;margin-right:5px;}
     </style></head>
@@ -1240,12 +1260,12 @@ app.get('/stats', async (req, res) => {
     ${Object.entries(despLog).map(([name, s]) => {
      const prodPerc = total > 0 ? ((s.mes/total)*100).toFixed(1) : 0;
      let semColor = prodPerc >= 25 ? '#10b981' : (prodPerc >= 10 ? '#fbbf24' : '#ef4444');
-     return `<tr><td><b>${name}</b></td><td><span class="badge" style="background:#3b82f6">${s.hoy}</span></td><td><span class="badge" style="background:#8b5cf6">${s.mes}</span></td><td><span class="semaforo-dot" style="background:${semColor}"></span></td><td><div class="prog-wrapper"><div class="prog-bg"><div style="width:${prodPerc}%;background:${semColor}" class="prog-fill"></div></div><b>${prodPerc}%</b></div></td></tr>`;
+     return `<tr><td><b>${name}</b></td><td><span class="badge" style="background:#0076B6">${s.hoy}</span></td><td><span class="badge" style="background:#8b5cf6">${s.mes}</span></td><td><span class="semaforo-dot" style="background:${semColor}"></span></td><td><div class="prog-wrapper"><div class="prog-bg"><div style="width:${prodPerc}%;background:${semColor}" class="prog-fill"></div></div><b>${prodPerc}%</b></div></td></tr>`;
     }).join('')}
     </tbody></table>
     <script>
-    new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:['Fin','Ruta','Despachados','Perdida','Otros'],datasets:[{data:[${fin},${desp},${despachadosCount},${perdidaConteo},${total-fin-desp-despachadosCount-perdidaConteo}],backgroundColor:['#10b981','#fbbf24','#3b82f6','#ef4444','#475569'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
-    new Chart(document.getElementById('c2'),{type:'bar',data:{labels:${JSON.stringify(Object.keys(ofis))},datasets:[{label:'Servicios',data:${JSON.stringify(Object.values(ofis))},backgroundColor:'#3b82f6'}]},options:{scales:{y:{beginAtZero:true,ticks:{color:'#fff'}},x:{ticks:{color:'#fff'}}},plugins:{legend:{display:false}}}});
+    new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:['Fin','Ruta','Despachados','Perdida','Otros'],datasets:[{data:[${fin},${desp},${despachadosCount},${perdidaConteo},${total-fin-desp-despachadosCount-perdidaConteo}],backgroundColor:['#10b981','#fbbf24','#0076B6','#ef4444','#475569'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
+    new Chart(document.getElementById('c2'),{type:'bar',data:{labels:${JSON.stringify(Object.keys(ofis))},datasets:[{label:'Servicios',data:${JSON.stringify(Object.values(ofis))},backgroundColor:'#0076B6'}]},options:{scales:{y:{beginAtZero:true,ticks:{color:'#fff'}},x:{ticks:{color:'#fff'}}},plugins:{legend:{display:false}}}});
     </script></body></html>`);
   } catch (e) { res.send(e.message); }
 });
