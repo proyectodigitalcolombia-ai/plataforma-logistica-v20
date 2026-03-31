@@ -940,7 +940,7 @@ app.get('/', async (req, res) => {
   <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;background:linear-gradient(135deg,#0d1e30 0%,#001e3c 100%);padding:14px 18px;border-radius:10px;border:1px solid #1a3d56;box-shadow:0 2px 16px rgba(0,118,182,0.18);">
       <img src="/logo.png" alt="SafeNode" style="height:44px;width:auto;object-fit:contain;">
       <div>
-        <div style="color:#00B4D8;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:2px;">SafeNode ITR</div>
+        <div style="color:#00B4D8;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:2px;">SafeNode SAS</div>
         <div style="color:#f1f5f9;font-size:16px;font-weight:700;letter-spacing:0.3px;">SISTEMA LOGÍSTICO — TRANSPORTES SARVI</div>
       </div>
     </div>
