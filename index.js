@@ -4,7 +4,48 @@ const cron = require('node-cron');
 const app = express();
 
 // --- INSERCIÓN A: LLAMADO ASISTENTE GPS ---
-const { enviarAMonitor } = require('./gpsService'); 
+const { enviarAMonitor } = require('./gpsService');
+// --- INSERCIÓN B: NOTIFICACIÓN A TRANSCONTROL ---
+async function notificarTranscontrol(carga) {
+  const url    = process.env.TRANSCONTROL_WEBHOOK_URL;
+  const codigo = process.env.TRANSCONTROL_EMPRESA_CODIGO;
+  const secret = process.env.TRANSCONTROL_WEBHOOK_SECRET;
+  if (!url || !codigo) return; // No configurado — ignorar silenciosamente
+  try {
+    const payload = {
+      placa:         carga.placa || '',
+      origen:        carga.orig  || '',
+      destino:       carga.dest  || '',
+      cliente:       carga.cli   || '',
+      producto:      carga.prod  || '',
+      peso:          carga.peso  || '',
+      manifiesto:    carga.do_bl || '',
+      contenedor:    carga.cont  || '',
+      fecha_despacho: carga.f_d  || '',
+      hora_despacho:  carga.h_d  || '',
+      fuente:        'logisv20',
+      observaciones: carga.obs   || '',
+    };
+    const resp = await fetch(url, {
+      method:  'POST',
+      headers: {
+        'Content-Type':      'application/json',
+        'x-empresa-codigo':  codigo,
+        'x-webhook-secret':  secret || '',
+      },
+      body: JSON.stringify(payload),
+    });
+    const txt = await resp.text();
+    if (resp.ok) {
+      console.log('[TRANSCONTROL] ✅ Despacho enviado — placa:', carga.placa, '| status:', resp.status);
+    } else {
+      console.warn('[TRANSCONTROL] ⚠️  Error HTTP', resp.status, ':', txt.slice(0, 200));
+    }
+  } catch(e) {
+    console.warn('[TRANSCONTROL] ⚠️  No se pudo notificar:', e.message);
+  }
+}
+ 
 
 app.use(express.urlencoded({ extended: true })); 
 app.use(express.json());
@@ -1130,7 +1171,7 @@ app.post('/edit-live/:id', async (req, res) => {
 app.post('/u/:id', async (req, res) => { 
  await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', obs_e: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); 
  const carga = await C.findByPk(req.params.id);
- if(carga && carga.placa) { enviarAMonitor(carga); }
+ if(carga && carga.placa) { enviarAMonitor(carga); notificarTranscontrol(carga); }
  res.redirect('/'); 
 });
 
