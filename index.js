@@ -4,51 +4,23 @@ const cron = require('node-cron');
 const app = express();
 
 // --- INSERCIÓN A: LLAMADO ASISTENTE GPS ---
-const { enviarAMonitor } = require('./gpsService');
-// --- INSERCIÓN B: NOTIFICACIÓN A TRANSCONTROL ---
-async function notificarTranscontrol(carga) {
-  const url    = process.env.TRANSCONTROL_WEBHOOK_URL;
-  const codigo = process.env.TRANSCONTROL_EMPRESA_CODIGO;
-  const secret = process.env.TRANSCONTROL_WEBHOOK_SECRET;
-  if (!url || !codigo) return; // No configurado — ignorar silenciosamente
-  try {
-    const payload = {
-      placa:         carga.placa || '',
-      origen:        carga.orig  || '',
-      destino:       carga.dest  || '',
-      cliente:       carga.cli   || '',
-      producto:      carga.prod  || '',
-      peso:          carga.peso  || '',
-      manifiesto:    carga.do_bl || '',
-      contenedor:    carga.cont  || '',
-      fecha_despacho: carga.f_d  || '',
-      hora_despacho:  carga.h_d  || '',
-      fuente:        'logisv20',
-      observaciones: carga.obs   || '',
-    };
-    const resp = await fetch(url, {
-      method:  'POST',
-      headers: {
-        'Content-Type':      'application/json',
-        'x-empresa-codigo':  codigo,
-        'x-webhook-secret':  secret || '',
-      },
-      body: JSON.stringify(payload),
-    });
-    const txt = await resp.text();
-    if (resp.ok) {
-      console.log('[TRANSCONTROL] ✅ Despacho enviado — placa:', carga.placa, '| status:', resp.status);
-    } else {
-      console.warn('[TRANSCONTROL] ⚠️  Error HTTP', resp.status, ':', txt.slice(0, 200));
-    }
-  } catch(e) {
-    console.warn('[TRANSCONTROL] ⚠️  No se pudo notificar:', e.message);
-  }
-}
- 
+const { enviarAMonitor } = require('./gpsService'); 
 
 app.use(express.urlencoded({ extended: true })); 
 app.use(express.json());
+
+// ── SESIONES MULTI-EMPRESA ──────────────────────────────────────────────────
+const session = require('express-session');
+const PgSession = require('connect-pg-simple')(session);
+const pgPool = new (require('pg').Pool)({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+app.use(session({
+  store: new PgSession({ pool: pgPool, tableName: 'session', createTableIfMissing: true }),
+  secret: process.env.SESSION_SECRET || 'logisv20-secret-2025',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false, maxAge: 8 * 60 * 60 * 1000 }
+}));
+
 
   // Serve SafeNode logo
   const _logoData = require('fs').readFileSync(require('path').join(__dirname, 'logo-safenode.png'));
@@ -106,8 +78,35 @@ const C = db.define('Carga', {
  est_real: { type: DataTypes.STRING, defaultValue: 'PENDIENTE' },
  url_plataforma: DataTypes.STRING,
  usuario_gps: DataTypes.STRING,
- clave_gps: DataTypes.STRING
+ clave_gps: DataTypes.STRING,
+ empresa_id: { type: DataTypes.INTEGER, allowNull: true }
 }, { timestamps: true });
+
+// ── MODELO EMPRESA ──────────────────────────────────────────────────────────
+const Empresa = db.define('Empresa', {
+  codigo:       { type: DataTypes.STRING, unique: true, allowNull: false },
+  nombre:       { type: DataTypes.STRING, allowNull: false },
+  logo_url:     { type: DataTypes.STRING, allowNull: true },
+  api_key:      { type: DataTypes.STRING, unique: true },
+  activa:       { type: DataTypes.BOOLEAN, defaultValue: true },
+}, { timestamps: true, tableName: 'logisv20_empresas' });
+
+// ── MODELO USUARIO ──────────────────────────────────────────────────────────
+const bcrypt = require('bcryptjs');
+const Usuario = db.define('Usuario', {
+  email:        { type: DataTypes.STRING, unique: true, allowNull: false },
+  password_hash:{ type: DataTypes.STRING, allowNull: false },
+  nombre:       { type: DataTypes.STRING },
+  rol:          { type: DataTypes.STRING, defaultValue: 'admin' },
+  empresa_id:   { type: DataTypes.INTEGER, allowNull: true },
+  activo:       { type: DataTypes.BOOLEAN, defaultValue: true },
+}, { timestamps: true, tableName: 'logisv20_usuarios' });
+
+Empresa.hasMany(C, { foreignKey: 'empresa_id' });
+C.belongsTo(Empresa, { foreignKey: 'empresa_id' });
+Empresa.hasMany(Usuario, { foreignKey: 'empresa_id' });
+Usuario.belongsTo(Empresa, { foreignKey: 'empresa_id' });
+
 
 const opts = {
  oficina: [
@@ -880,10 +879,132 @@ const css = `<style>
  tr:hover td { background: #1a3d56; }
 </style>`;
 
-app.get('/', async (req, res) => {
+
+
+// Sirve logo por empresa
+app.get('/api/logo/:codigo', async (req, res) => {
+  try {
+    const emp = await Empresa.findOne({ where: { codigo: req.params.codigo } });
+    if (emp && emp.logo_url) {
+      return res.redirect(emp.logo_url);
+    }
+  } catch(e) {}
+  const _logoData = require('fs').readFileSync(require('path').join(__dirname, 'logo-safenode.png'));
+  res.setHeader('Content-Type', 'image/png');
+  res.send(_logoData);
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// AUTH MIDDLEWARE + RUTAS DE AUTENTICACIÓN
+// ══════════════════════════════════════════════════════════════════════
+
+function requireAuth(req, res, next) {
+  if (req.session && req.session.usuario_id) return next();
+  res.redirect('/login');
+}
+
+// ── LOGIN PAGE ──────────────────────────────────────────────────────
+app.get('/login', (req, res) => {
+  if (req.session && req.session.usuario_id) return res.redirect('/');
+  const err = req.query.err || '';
+  const errMsg = err === '1' ? '<div style="color:#f87171;margin-bottom:12px;font-size:13px;">Credenciales incorrectas.</div>' : '';
+  res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>LOGISV20 — Acceso</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#07131f;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;}
+    .box{background:#0d1e30;border:1px solid #1a3d56;border-radius:12px;padding:40px;width:360px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.5);}
+    .logo{height:50px;margin-bottom:20px;}
+    h2{color:#f1f5f9;font-size:18px;margin-bottom:6px;}
+    p{color:#64748b;font-size:12px;margin-bottom:24px;}
+    input{width:100%;padding:10px 14px;margin-bottom:12px;background:#0f2337;border:1px solid #1a3d56;border-radius:6px;color:#f1f5f9;font-size:14px;outline:none;}
+    input:focus{border-color:#0076B6;}
+    button{width:100%;padding:11px;background:#0076B6;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:1px;}
+    button:hover{background:#005a8e;}
+  </style>
+  </head><body>
+  <div class="box">
+    <img src="/logo.png" class="logo" alt="Logo">
+    <h2>LOGISV20</h2>
+    <p>Plataforma logística — Ingrese sus credenciales</p>
+    ${errMsg}
+    <form method="POST" action="/login">
+      <input type="email" name="email" placeholder="Correo electrónico" required autofocus>
+      <input type="password" name="password" placeholder="Contraseña" required>
+      <button type="submit">INGRESAR</button>
+    </form>
+  </div></body></html>`);
+});
+
+app.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const u = await Usuario.findOne({ where: { email: email.toLowerCase().trim(), activo: true }, include: [Empresa] });
+    if (!u) return res.redirect('/login?err=1');
+    const ok = await bcrypt.compare(password, u.password_hash);
+    if (!ok) return res.redirect('/login?err=1');
+    req.session.usuario_id = u.id;
+    req.session.usuario_nombre = u.nombre || u.email;
+    req.session.empresa_id = u.empresa_id;
+    req.session.empresa_nombre = u.Empresa ? u.Empresa.nombre : 'Mi Empresa';
+    req.session.empresa_logo = u.Empresa ? (u.Empresa.logo_url || null) : null;
+    req.session.empresa_codigo = u.Empresa ? u.Empresa.codigo : null;
+    res.redirect('/');
+  } catch(e) { console.error('[LOGIN]', e.message); res.redirect('/login?err=1'); }
+});
+
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/login'));
+});
+
+// ── PROVISIONAR EMPRESA (llamado desde TransControl) ────────────────
+app.post('/api/provision', async (req, res) => {
+  try {
+    const apiKey = req.headers['x-api-key'];
+    if (!apiKey || apiKey !== process.env.PROVISION_API_KEY) {
+      return res.status(401).json({ error: 'No autorizado' });
+    }
+    const { codigo, nombre, logo_url, admin_email, admin_password } = req.body;
+    if (!codigo || !nombre || !admin_email || !admin_password) {
+      return res.status(400).json({ error: 'Faltan campos requeridos' });
+    }
+    // Buscar o crear empresa
+    let empresa = await Empresa.findOne({ where: { codigo } });
+    if (!empresa) {
+      empresa = await Empresa.create({
+        codigo, nombre, logo_url: logo_url || null,
+        api_key: require('crypto').randomBytes(24).toString('hex'),
+      });
+    } else {
+      await empresa.update({ nombre, logo_url: logo_url || empresa.logo_url });
+    }
+    // Crear o actualizar admin
+    const hash = await bcrypt.hash(admin_password, 10);
+    let usuario = await Usuario.findOne({ where: { email: admin_email.toLowerCase() } });
+    if (!usuario) {
+      usuario = await Usuario.create({
+        email: admin_email.toLowerCase(),
+        password_hash: hash,
+        nombre: nombre + ' — Admin',
+        rol: 'admin',
+        empresa_id: empresa.id,
+        activo: true,
+      });
+    } else {
+      await usuario.update({ password_hash: hash, empresa_id: empresa.id, activo: true });
+    }
+    res.json({ ok: true, empresa_id: empresa.id, empresa_codigo: empresa.codigo });
+  } catch(e) {
+    console.error('[PROVISION]', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/', requireAuth, async (req, res) => {
  try {
   await autoTransitoRuta(); 
-  const d = await C.findAll({ order: [['id', 'DESC']] });
+  const empresaId = req.session.empresa_id;
+  const d = await C.findAll({ where: empresaId ? { empresa_id: empresaId } : {}, order: [['id', 'DESC']] });
   let rows = '';
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   let index = 1;
@@ -977,14 +1098,21 @@ app.get('/', async (req, res) => {
    </tr>`;
   }
 
+  const empLogo = req.session.empresa_logo ? `<img src="/api/logo/${req.session.empresa_codigo}" alt="Logo" style="height:44px;width:auto;object-fit:contain;">` : `<img src="/logo.png" alt="SafeNode" style="height:44px;width:auto;object-fit:contain;">`;
   res.send(`<html><head><meta charset="UTF-8"><title>LOGISV20</title>${css}</head><body onclick="activarAudio()">
-  <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;background:linear-gradient(135deg,#0d1e30 0%,#001e3c 100%);padding:14px 18px;border-radius:10px;border:1px solid #1a3d56;box-shadow:0 2px 16px rgba(0,118,182,0.18);">
-      <img src="/logo.png" alt="SafeNode" style="height:44px;width:auto;object-fit:contain;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;background:linear-gradient(135deg,#0d1e30 0%,#001e3c 100%);padding:14px 18px;border-radius:10px;border:1px solid #1a3d56;box-shadow:0 2px 16px rgba(0,118,182,0.18);">
+    <div style="display:flex;align-items:center;gap:14px;">
+      ${empLogo}
       <div>
         <div style="color:#00B4D8;font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:2px;">SafeNode SAS</div>
-        <div style="color:#f1f5f9;font-size:16px;font-weight:700;letter-spacing:0.3px;">SISTEMA LOGÍSTICO — TRANSPORTES SARVI</div>
+        <div style="color:#f1f5f9;font-size:16px;font-weight:700;letter-spacing:0.3px;">SISTEMA LOGÍSTICO — ${req.session.empresa_nombre || 'Mi Empresa'}</div>
       </div>
     </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="color:#64748b;font-size:12px;">${req.session.usuario_nombre || ''}</span>
+      <a href="/logout" style="background:#1e3a5f;color:#93c5fd;border:1px solid #1a3d56;padding:6px 14px;border-radius:6px;font-size:12px;text-decoration:none;font-weight:700;">SALIR</a>
+    </div>
+  </div>
   <div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">
    <input type="text" id="busq" onkeyup="buscar()" placeholder="🔍 Filtrar por Placa, Cliente, ID...">
    <button class="btn-xls" onclick="exportExcel()">Excel</button>
@@ -1155,44 +1283,44 @@ app.get('/', async (req, res) => {
 });
 
 // RUTAS CRUD
-app.post('/add', async (req, res) => { req.body.f_act = getNow(); await C.create(req.body); res.redirect('/'); });
-app.get('/d/:id', async (req, res) => { await C.destroy({ where: { id: req.params.id } }); res.redirect('/'); });
-app.post('/delete-multiple', async (req, res) => { await C.destroy({ where: { id: { [Op.in]: req.body.ids } } }); res.sendStatus(200); });
+app.post('/add', requireAuth, async (req, res) => { req.body.f_act = getNow(); req.body.empresa_id = req.session.empresa_id; await C.create(req.body); res.redirect('/'); });
+app.get('/d/:id', requireAuth, async (req, res) => { await C.destroy({ where: { id: req.params.id, empresa_id: req.session.empresa_id } }); res.redirect('/'); });
+app.post('/delete-multiple', requireAuth, async (req, res) => { await C.destroy({ where: { id: { [Op.in]: req.body.ids }, empresa_id: req.session.empresa_id } }); res.sendStatus(200); });
 
-app.post('/edit-live/:id', async (req, res) => {
+app.post('/edit-live/:id', requireAuth, async (req, res) => {
  try {
   const updates = {};
   for (let key in req.body) { updates[key] = req.body[key].toUpperCase(); }
-  await C.update(updates, { where: { id: req.params.id } });
+  await C.update(updates, { where: { id: req.params.id, empresa_id: req.session.empresa_id } });
   res.redirect('/');
  } catch (e) { res.status(500).send("Error: " + e.message); }
 });
 
-app.post('/u/:id', async (req, res) => { 
- await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', obs_e: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id } }); 
+app.post('/u/:id', requireAuth, async (req, res) => { 
+ await C.update({ placa: req.body.placa.toUpperCase(), est_real: 'DESPACHADO', obs_e: 'DESPACHADO', f_act: getNow() }, { where: { id: req.params.id, empresa_id: req.session.empresa_id } }); 
  const carga = await C.findByPk(req.params.id);
- if(carga && carga.placa) { enviarAMonitor(carga); notificarTranscontrol(carga); }
+ if(carga && carga.placa) { enviarAMonitor(carga); }
  res.redirect('/'); 
 });
 
-app.post('/state/:id', async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id } }); res.sendStatus(200); });
+app.post('/state/:id', requireAuth, async (req, res) => { await C.update({ obs_e: req.body.obs_e, f_act: getNow() }, { where: { id: req.params.id, empresa_id: req.session.empresa_id } }); res.sendStatus(200); });
 
-app.get('/finish/:id', async (req, res) => { 
+app.get('/finish/:id', requireAuth, async (req, res) => { 
  const ahora = getNow(); 
- const c = await C.findByPk(req.params.id);
+ const c = await C.findOne({ where: { id: req.params.id, empresa_id: req.session.empresa_id } });
  if(!c) return res.redirect('/');
  const cancelTags = ['CANCELADO POR CLIENTE', 'CANCELADO POR NEGLIGENCIA OPERATIVA', 'CANCELADO POR GERENCIA'];
  // VALIDACIÓN: Solo finaliza si tiene placa O si es Perdida Emergente (Cancelado)
  if(c.placa || cancelTags.includes(c.obs_e)) {
-  await C.update({ f_fin: ahora, est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id } }); 
+  await C.update({ f_fin: ahora, est_real: 'FINALIZADO', f_act: ahora }, { where: { id: req.params.id, empresa_id: req.session.empresa_id } }); 
  }
  res.redirect('/'); 
 });
 
 // INDICADORES
-app.get('/stats', async (req, res) => {
+app.get('/stats', requireAuth, async (req, res) => {
   try {
-    const cargas = await C.findAll();
+    const cargas = await C.findAll({ where: req.session.empresa_id ? { empresa_id: req.session.empresa_id } : {} });
     const hoyDate = new Date();
     const hoyStr = hoyDate.toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
     const mesActualStr = hoyStr.substring(0, 7);
@@ -1311,4 +1439,27 @@ app.get('/stats', async (req, res) => {
   } catch (e) { res.send(e.message); }
 });
 
-db.sync({ alter: true }).then(() => app.listen(process.env.PORT || 3000));
+db.sync({ alter: true }).then(async () => {
+  // Auto-crear empresa y usuario por defecto si no existen
+  const defaultCodigo = process.env.DEFAULT_EMPRESA_CODIGO || 'sarvi';
+  const defaultNombre = process.env.DEFAULT_EMPRESA_NOMBRE || 'Transportes Sarvi';
+  const defaultEmail  = process.env.DEFAULT_ADMIN_EMAIL    || 'admin@logisv20.co';
+  const defaultPass   = process.env.DEFAULT_ADMIN_PASSWORD || 'Admin123!';
+  let emp = await Empresa.findOne({ where: { codigo: defaultCodigo } }).catch(()=>null);
+  if (!emp) {
+    emp = await Empresa.create({ codigo: defaultCodigo, nombre: defaultNombre, api_key: require('crypto').randomBytes(24).toString('hex') }).catch(()=>null);
+    console.log('[LOGISV20] Empresa por defecto creada:', defaultCodigo);
+  }
+  if (emp) {
+    const existeU = await Usuario.findOne({ where: { email: defaultEmail } }).catch(()=>null);
+    if (!existeU) {
+      const hash = await require('bcryptjs').hash(defaultPass, 10);
+      await Usuario.create({ email: defaultEmail, password_hash: hash, nombre: defaultNombre + ' Admin', rol: 'admin', empresa_id: emp.id }).catch(()=>null);
+      console.log('[LOGISV20] Admin por defecto creado:', defaultEmail);
+    }
+    // Migrar cargas sin empresa_id a empresa por defecto
+    await C.update({ empresa_id: emp.id }, { where: { empresa_id: null } }).catch(()=>null);
+    console.log('[LOGISV20] Cargas existentes migradas a empresa:', defaultCodigo);
+  }
+  app.listen(process.env.PORT || 3000, () => console.log('[LOGISV20] Servidor listo'));
+});
